@@ -15,6 +15,7 @@ class Player(x: Float, y: Float, var weapon: Weapon = Pistol(), var facingDirect
         sprite = Sprite(Texture(Gdx.files.internal("images/player_placeholder.png")))
         sprite.setSize(32f, 64f)
         sprite.setPosition(x, y)
+        sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
     }
 
     fun setPosition(x: Float, y: Float) {

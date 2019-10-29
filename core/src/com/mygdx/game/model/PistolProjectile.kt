@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Circle
 import com.badlogic.gdx.math.Vector2
 
-class PistolProjectile(x: Float, y: Float, xSpeed: Float = 0f, ySpeed: Float = 0f) {
+class PistolProjectile(x: Float = 0f, y: Float = 0f, xSpeed: Float = 0f, ySpeed: Float = 0f) {
     val bounds: Circle
     val sprite: Sprite
     val speed: Vector2
