@@ -5,15 +5,14 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Rectangle
 
-class Player(x: Float, y: Float) {
-
+class Player(x: Float, y: Float, var facingDirectionAngle: Float = 0f) {
     var sprite: Sprite
     val bounds: Rectangle
 
     init {
         bounds = Rectangle(x, y, 32f, 64f)
         // todo should be changed to loading assets from assetManager
-        sprite = Sprite(Texture(Gdx.files.internal("player_placeholder.png")))
+        sprite = Sprite(Texture(Gdx.files.internal("images/player_placeholder.png")))
         sprite.setSize(32f, 64f)
         sprite.setPosition(x, y)
     }
