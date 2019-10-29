@@ -18,12 +18,11 @@ import ktx.app.KtxScreen
 import ktx.inject.Context
 
 class Game : KtxGame<KtxScreen>() {
-    private val backendServer = Server()
     private val context = Context()
 
     override fun create() {
-        backendServer.connectionSocket()
-        backendServer.configSocketEvents()
+        Server.connectionSocket()
+        Server.configSocketEvents()
         context.register {
             bindSingleton(this@Game)
             bindSingleton(SpriteBatch())

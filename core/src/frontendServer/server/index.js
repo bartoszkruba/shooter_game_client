@@ -9,6 +9,7 @@ io.on('connection', (socket) => {
     console.log("Player connected")
 
     socket.emit('socketID', { id: socket.id})
+    socket.broadcast.emit('newPlayer', { id: socket.id})
     socket.on('disconnect', () =>
         console.log("Player disconnected"))
     });
