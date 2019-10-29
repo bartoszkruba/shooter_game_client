@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Circle
 import com.badlogic.gdx.math.Vector2
 
-class Projectile(x: Float, y: Float, xSpeed: Float = 0f, ySpeed: Float = 0f) {
+class PistolProjectile(x: Float, y: Float, xSpeed: Float = 0f, ySpeed: Float = 0f) {
     val bounds: Circle
     val sprite: Sprite
     val speed: Vector2
@@ -21,5 +21,11 @@ class Projectile(x: Float, y: Float, xSpeed: Float = 0f, ySpeed: Float = 0f) {
         sprite = Sprite(texture)
         sprite.setPosition(x - 4f, y - 4f)
         speed = Vector2(xSpeed, ySpeed)
+    }
+
+    fun setPosition(x: Float, y: Float) {
+        bounds.x = x
+        bounds.y = y
+        sprite.setPosition(x - 4f, y - 4f)
     }
 }

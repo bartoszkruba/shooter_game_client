@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Rectangle
 
-class Player(x: Float, y: Float, var facingDirectionAngle: Float = 0f) {
+class Player(x: Float, y: Float, var weapon: Weapon = Pistol(), var facingDirectionAngle: Float = 0f) {
     var sprite: Sprite
     val bounds: Rectangle
 
@@ -21,4 +21,7 @@ class Player(x: Float, y: Float, var facingDirectionAngle: Float = 0f) {
         sprite.setPosition(x, y)
         bounds.setPosition(x, y)
     }
+
+    fun canShoot() = weapon.canShoot()
+    fun shoot() = weapon.shoot()
 }
