@@ -17,10 +17,13 @@ import com.mygdx.game.settings.PISTOL_BULLET_SPEED
 import com.mygdx.game.settings.PLAYER_MOVEMENT_SPEED
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
+import io.socket.client.IO
+import io.socket.client.Socket
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
+import org.json.JSONObject
 
 class GameScreen(
         val game: Game,
@@ -28,7 +31,10 @@ class GameScreen(
         val font: BitmapFont,
         val camera: OrthographicCamera) : KtxScreen {
 
-    val player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f)
+    private lateinit var socket: Socket
+    val opponents:HashMap<String,Player> = HashMap()
+
+    lateinit var player: Player
     val mousePosition = Vector2()
 
     val pistolProjectilePool = pool { PistolProjectile() }
@@ -36,16 +42,54 @@ class GameScreen(
 
     override fun render(delta: Float) {
         camera.update()
-        getMousePosInGameWorld()
-        setPlayerRotation()
-        calculatePistolProjectilesPosition(delta)
-        checkControls(delta)
+        if (::player.isInitialized){
+            getMousePosInGameWorld()
+            setPlayerRotation()
+            calculatePistolProjectilesPosition(delta)
+            checkControls(delta)
+        }
 
         batch.projectionMatrix = camera.combined
 
-        batch.use {
-            drawPlayer(it, player)
-            drawProjectiles(it)
+        if (::player.isInitialized) {
+            batch.use {
+                drawPlayer(it, player)
+                drawProjectiles(it)
+                for (value in opponents.values) {
+                    drawPlayer(it, value)
+                }
+            }
+        }
+    }
+
+    fun configSocketEvents() {
+        socket.on(Socket.EVENT_CONNECT) {
+            Gdx.app.log("SocketIO", "Connected")
+            player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f)
+        }
+                .on("socketID") { data ->
+                    val obj: JSONObject = data[0] as JSONObject
+                    val playerId = obj.getString("id")
+
+                    Gdx.app.log("SocketIO", "My ID: $playerId")
+                }
+                .on("newPlayer") { data ->
+                    val obj: JSONObject = data[0] as JSONObject
+                    val playerId = obj.getString("id")
+                    Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
+                    opponents[playerId] = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f)
+                    for (v in opponents.values)
+                    {
+                        Gdx.app.log("player", "$v")
+                    }
+                }
+    }
+
+    fun connectionSocket() {
+        try {
+            socket = IO.socket("http://localhost:8080");
+            socket.connect();
+        } catch (e: Exception) {
         }
     }
 

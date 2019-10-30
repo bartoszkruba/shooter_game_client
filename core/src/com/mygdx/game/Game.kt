@@ -21,15 +21,17 @@ class Game : KtxGame<KtxScreen>() {
     private val context = Context()
 
     override fun create() {
-        Server.connectionSocket()
-        Server.configSocketEvents()
         context.register {
             bindSingleton(this@Game)
             bindSingleton(SpriteBatch())
             bindSingleton(BitmapFont())
             bindSingleton(OrthographicCamera().apply { setToOrtho(false, WINDOW_WIDTH, WINDOW_HEIGHT) })
 
-            addScreen(GameScreen(inject(), inject(), inject(), inject()))
+            val game = GameScreen(inject(), inject(), inject(), inject())
+            addScreen(game)
+            game.connectionSocket()
+            game.configSocketEvents()
+
         }
 
         changeToGameScreen()
