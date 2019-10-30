@@ -14,10 +14,13 @@ import com.badlogic.gdx.utils.Array
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
+import io.socket.client.IO
+import io.socket.client.Socket
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
+import org.json.JSONArray
 import org.json.JSONObject
 
 class GameScreen(
@@ -29,7 +32,7 @@ class GameScreen(
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
 
     private lateinit var socket: Socket
-    val opponents:HashMap<String,Player> = HashMap()
+    private val opponents: HashMap<String,Player> = HashMap()
 
     lateinit var player: Player
     val mousePosition = Vector2()
@@ -37,12 +40,10 @@ class GameScreen(
     val pistolProjectilePool = pool { PistolProjectile() }
 
     val pistolProjectiles = Array<PistolProjectile>()
-    val opponents = Array<Opponent>()
     val walls = Array<Wall>()
 
     init {
-        repeat(5) { opponents.add(generateRandomOpponent()) }
-        generateWalls()
+        generateWalls();
     }
 
     private var pressedKeys = 0
@@ -54,10 +55,10 @@ class GameScreen(
             setPlayerRotation()
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
+            camera.position.set(player.bounds.x, player.bounds.y, 0f)
+            camera.update()
         }
 
-        camera.position.set(player.bounds.x, player.bounds.y, 0f)
-        camera.update()
         batch.projectionMatrix = camera.combined
 
         if (::player.isInitialized) {
@@ -76,7 +77,7 @@ class GameScreen(
     fun configSocketEvents() {
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
-            player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f)
+            player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
         }
                 .on("socketID") { data ->
                     val obj: JSONObject = data[0] as JSONObject
@@ -88,10 +89,26 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
                     Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
-                    opponents[playerId] = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f)
-                    for (v in opponents.values)
-                    {
-                        Gdx.app.log("player", "$v")
+                    opponents[playerId] = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+                }
+                .on("playerDisconnected") { data ->
+                    val obj: JSONObject = data[0] as JSONObject
+                    val playerId = obj.getString("id")
+                    opponents.remove(playerId)
+                }
+                .on("getPlayers") { data ->
+                    val obj: JSONArray = data[0] as JSONArray
+                    Gdx.app.log("Other players: ", "${data[0]}")
+                    for (i in 0 until obj.length()) {
+                        val newPlayer = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+                        val vector = Vector2()
+                        vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
+                        vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
+                        newPlayer.setPosition(vector.x, vector.y)
+
+                        val playerId = obj.getJSONObject(i).getString("id")
+                        opponents[playerId] = newPlayer
+
                     }
                 }
     }
@@ -172,7 +189,7 @@ class GameScreen(
 
     private fun drawProjectiles(batch: Batch) = pistolProjectiles.forEach { it.sprite.draw(batch) }
 
-    private fun drawOpponents(batch: Batch) = opponents.forEach { it.sprite.draw(batch) }
+    //private fun drawOpponents(batch: Batch) = opponents.forEach { it.sprite.draw(batch) }
 
     private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 

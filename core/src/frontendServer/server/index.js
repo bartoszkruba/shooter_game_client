@@ -16,14 +16,17 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Player disconnected');
         socket.broadcast.emit('playerDisconnected', {id: socket.id})
-        players.forEach(s => {
-            if(s.id === socket.id){
-                players.splice(s.index, 1)
+        for (let i=0; i < players.length; i++){
+            if(players[i].id === socket.id){
+                players.splice(i,1)
             }
-        })
-    })
+        }
+    });
 
-    players.push(player(socket.id, (1280 / 2 - 16), (720 / 2 - 32) ))
+    players.push(new player(socket.id, (1280 / 2 - 16), (720 / 2 - 32) ))
+    for (let i=0; i < players.length; i++){
+        console.log(players[i])
+    }
     });
 
 function player(id, x, y) {
