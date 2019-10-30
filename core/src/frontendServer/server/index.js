@@ -13,6 +13,16 @@ io.on('connection', (socket) => {
     socket.emit('socketID', { id: socket.id})
     socket.emit('getPlayers', players)
     socket.broadcast.emit('newPlayer', { id: socket.id})
+    socket.on('playerMoved', (data) =>{
+        data.id = socket.id
+        socket.broadcast.emit('playerMoved', data)
+        for (let i=0; i < players.length; i++){
+            if(players[i].id === data.id){
+                players[i].x = data.x
+                players[i].y = data.y
+            }
+        }
+    })
     socket.on('disconnect', () => {
         console.log('Player disconnected');
         socket.broadcast.emit('playerDisconnected', {id: socket.id})
@@ -29,11 +39,11 @@ io.on('connection', (socket) => {
     }
     });
 
-function player(id, x, y) {
-    this.id = id
-    this.x = x
-    this.y = y
-}
+    function player(id, x, y) {
+        this.id = id
+        this.x = x
+        this.y = y
+    }
 
 
 

@@ -79,7 +79,7 @@ class GameScreen(
     private fun updateServer(dt: Float){
         timer += dt
         if (timer >= UPDATE_TIME && ::player.isInitialized && hasMoved()){
-            val data: JSONObject = JSONObject()
+            val data = JSONObject()
             data.put("x", player.sprite.x)
             data.put("y", player.sprite.y)
             socket.emit("playerMoved", data)
@@ -130,8 +130,6 @@ class GameScreen(
 
             if(opponents[playerId] != null)
                 opponents[playerId]!!.setPosition(x.toFloat(), y.toFloat())
-
-            Gdx.app.log("SocketIO", "My ID: $playerId")
         }
     }
 
@@ -140,7 +138,6 @@ class GameScreen(
                 || Gdx.input.isKeyPressed(Input.Keys.S)
                 || Gdx.input.isKeyPressed(Input.Keys.A)
                 || Gdx.input.isKeyPressed(Input.Keys.D))
-
     }
 
     fun connectionSocket() {
