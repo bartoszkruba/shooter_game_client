@@ -11,14 +11,8 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Array
 import com.mygdx.game.Game
-import com.mygdx.game.model.PistolProjectile
-import com.mygdx.game.model.Agent
-import com.mygdx.game.model.Opponent
-import com.mygdx.game.model.Player
-import com.mygdx.game.settings.PISTOL_BULLET_SPEED
-import com.mygdx.game.settings.PLAYER_MOVEMENT_SPEED
-import com.mygdx.game.settings.WINDOW_HEIGHT
-import com.mygdx.game.settings.WINDOW_WIDTH
+import com.mygdx.game.model.*
+import com.mygdx.game.settings.*
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
@@ -34,12 +28,14 @@ class GameScreen(
     val mousePosition = Vector2()
 
     val pistolProjectilePool = pool { PistolProjectile() }
-    val pistolProjectiles = Array<PistolProjectile>()
 
+    val pistolProjectiles = Array<PistolProjectile>()
     val opponents = Array<Opponent>()
+    val walls = Array<Wall>()
 
     init {
         repeat(5) { opponents.add(generateRandomOpponent()) }
+        generateWalls()
     }
 
     private var pressedKeys = 0
@@ -58,10 +54,10 @@ class GameScreen(
             drawProjectiles(it)
             drawOpponents(it)
             drawPlayer(it, player)
+            drawWalls(it)
         }
     }
 
-    private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
 
     private fun getMousePosInGameWorld() {
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
@@ -126,14 +122,30 @@ class GameScreen(
         pistolProjectiles.add(projectile)
     }
 
+    private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
+
     private fun drawProjectiles(batch: Batch) = pistolProjectiles.forEach { it.sprite.draw(batch) }
 
     private fun drawOpponents(batch: Batch) = opponents.forEach { it.sprite.draw(batch) }
+
+    private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 
     fun generateRandomOpponent(): Opponent {
         val minPosition = Vector2(0f, 0f)
         val maxPosition = Vector2(WINDOW_WIDTH - 32f, WINDOW_HEIGHT - 64f)
 
         return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y))
+    }
+
+    // todo should be gone later
+    private fun generateWalls() {
+        for (i in 0 until MAP_HEIGHT step 50) {
+            walls.add(Wall(0f, i.toFloat()))
+            walls.add(Wall(MAP_WIDTH - 50f, i.toFloat()))
+        }
+        for (i in 50 until MAP_WIDTH - 50 step 50) {
+            walls.add(Wall(i.toFloat(), 0f))
+            walls.add(Wall(i.toFloat(), MAP_HEIGHT - 50f))
+        }
     }
 }
