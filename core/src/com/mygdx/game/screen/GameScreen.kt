@@ -33,6 +33,7 @@ class GameScreen(
 
     private lateinit var socket: Socket
     private val opponents: HashMap<String,Player> = HashMap()
+    private var timer: Float = 0.0f
 
     lateinit var player: Player
     val mousePosition = Vector2()
@@ -49,6 +50,7 @@ class GameScreen(
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
+        updateServer(delta)
         camera.update()
         if (::player.isInitialized){
             getMousePosInGameWorld()
@@ -74,43 +76,71 @@ class GameScreen(
         }
     }
 
+    private fun updateServer(dt: Float){
+        timer += dt
+        if (timer >= UPDATE_TIME && ::player.isInitialized && hasMoved()){
+            val data: JSONObject = JSONObject()
+            data.put("x", player.sprite.x)
+            data.put("y", player.sprite.y)
+            socket.emit("playerMoved", data)
+        }
+    }
+
     fun configSocketEvents() {
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
             player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
         }
-                .on("socketID") { data ->
-                    val obj: JSONObject = data[0] as JSONObject
-                    val playerId = obj.getString("id")
+        .on("socketID") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
 
-                    Gdx.app.log("SocketIO", "My ID: $playerId")
-                }
-                .on("newPlayer") { data ->
-                    val obj: JSONObject = data[0] as JSONObject
-                    val playerId = obj.getString("id")
-                    Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
-                    opponents[playerId] = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
-                }
-                .on("playerDisconnected") { data ->
-                    val obj: JSONObject = data[0] as JSONObject
-                    val playerId = obj.getString("id")
-                    opponents.remove(playerId)
-                }
-                .on("getPlayers") { data ->
-                    val obj: JSONArray = data[0] as JSONArray
-                    Gdx.app.log("Other players: ", "${data[0]}")
-                    for (i in 0 until obj.length()) {
-                        val newPlayer = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
-                        val vector = Vector2()
-                        vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
-                        vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
-                        newPlayer.setPosition(vector.x, vector.y)
+            Gdx.app.log("SocketIO", "My ID: $playerId")
+        }
+        .on("newPlayer") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+            Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
+            opponents[playerId] = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+        }
+        .on("playerDisconnected") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+            opponents.remove(playerId)
+        }
+        .on("getPlayers") { data ->
+            val obj: JSONArray = data[0] as JSONArray
+            Gdx.app.log("Other players: ", "${data[0]}")
+            for (i in 0 until obj.length()) {
+                val newPlayer = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+                val vector = Vector2()
+                vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
+                vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
+                newPlayer.setPosition(vector.x, vector.y)
 
-                        val playerId = obj.getJSONObject(i).getString("id")
-                        opponents[playerId] = newPlayer
+                val playerId = obj.getJSONObject(i).getString("id")
+                opponents[playerId] = newPlayer
+            }
+        }
+        .on("playerMoved") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+            val x = obj.getDouble("x")
+            val y = obj.getDouble("y")
 
-                    }
-                }
+            if(opponents[playerId] != null)
+                opponents[playerId]!!.setPosition(x.toFloat(), y.toFloat())
+
+            Gdx.app.log("SocketIO", "My ID: $playerId")
+        }
+    }
+
+    private fun hasMoved(): Boolean {
+        return (Gdx.input.isKeyPressed(Input.Keys.W)
+                || Gdx.input.isKeyPressed(Input.Keys.S)
+                || Gdx.input.isKeyPressed(Input.Keys.A)
+                || Gdx.input.isKeyPressed(Input.Keys.D))
+
     }
 
     fun connectionSocket() {
