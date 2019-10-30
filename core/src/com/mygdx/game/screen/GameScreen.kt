@@ -12,6 +12,8 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Array
 import com.mygdx.game.Game
 import com.mygdx.game.model.PistolProjectile
+import com.mygdx.game.model.Agent
+import com.mygdx.game.model.Opponent
 import com.mygdx.game.model.Player
 import com.mygdx.game.settings.PISTOL_BULLET_SPEED
 import com.mygdx.game.settings.PLAYER_MOVEMENT_SPEED
@@ -34,22 +36,32 @@ class GameScreen(
     val pistolProjectilePool = pool { PistolProjectile() }
     val pistolProjectiles = Array<PistolProjectile>()
 
+    val opponents = Array<Opponent>()
+
+    init {
+        repeat(5) { opponents.add(generateRandomOpponent()) }
+    }
+
+    private var pressedKeys = 0
+
     override fun render(delta: Float) {
-        camera.update()
         getMousePosInGameWorld()
         setPlayerRotation()
         calculatePistolProjectilesPosition(delta)
         checkControls(delta)
 
+        camera.position.set(player.bounds.x, player.bounds.y, 0f)
+        camera.update()
         batch.projectionMatrix = camera.combined
 
         batch.use {
-            drawPlayer(it, player)
             drawProjectiles(it)
+            drawOpponents(it)
+            drawPlayer(it, player)
         }
     }
 
-    private fun drawPlayer(batch: Batch, player: Player) = player.sprite.draw(batch)
+    private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
 
     private fun getMousePosInGameWorld() {
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
@@ -77,14 +89,14 @@ class GameScreen(
 
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
-        var pressedkeys = 0
+        pressedKeys = 0
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedkeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedkeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedkeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedkeys++
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedKeys++
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedKeys++
 
-        if (pressedkeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
+        if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
         if (Gdx.input.isKeyPressed(Input.Keys.W))
             player.setPosition(player.bounds.x, player.bounds.y + movementSpeed * delta)
@@ -114,9 +126,14 @@ class GameScreen(
         pistolProjectiles.add(projectile)
     }
 
-    private fun drawProjectiles(batch: Batch) {
-        pistolProjectiles.iterate { projectile, iterator ->
-            projectile.sprite.draw(batch)
-        }
+    private fun drawProjectiles(batch: Batch) = pistolProjectiles.forEach { it.sprite.draw(batch) }
+
+    private fun drawOpponents(batch: Batch) = opponents.forEach { it.sprite.draw(batch) }
+
+    fun generateRandomOpponent(): Opponent {
+        val minPosition = Vector2(0f, 0f)
+        val maxPosition = Vector2(WINDOW_WIDTH - 32f, WINDOW_HEIGHT - 64f)
+
+        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y))
     }
 }
