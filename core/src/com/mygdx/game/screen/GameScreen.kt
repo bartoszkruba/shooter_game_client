@@ -19,6 +19,8 @@ import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
+import java.util.*
+import kotlin.collections.HashMap
 
 class GameScreen(
         val game: Game,
@@ -33,12 +35,12 @@ class GameScreen(
 
     val pistolProjectilePool = pool { PistolProjectile() }
 
-    val pistolProjectiles = Array<PistolProjectile>()
-    val opponents = Array<Opponent>()
+    val projectiles = Array<Projectile>()
+    val opponents = HashMap<String, Opponent>()
     val walls = Array<Wall>()
 
     init {
-        repeat(50) { opponents.add(generateRandomOpponent()) }
+        repeat(50) { opponents.put(UUID.randomUUID().toString(), generateRandomOpponent()) }
         generateWalls()
     }
 
@@ -117,21 +119,25 @@ class GameScreen(
 
 
     fun calculatePistolProjectilesPosition(delta: Float) {
-        pistolProjectiles.iterate { projectile, iterator ->
+        projectiles.iterate { projectile, iterator ->
             projectile.setPosition(
-                    projectile.bounds.x + projectile.speed.x * delta * PISTOL_BULLET_SPEED,
-                    projectile.bounds.y + projectile.speed.y * delta * PISTOL_BULLET_SPEED)
+                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
+                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
 
             if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
                     projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
-                pistolProjectilePool.free(projectile)
+                // todo should check projectile type
+                pistolProjectilePool.free(projectile as PistolProjectile)
                 iterator.remove()
+                return
             }
 
-            for (opponent in opponents) {
+            for (opponent in opponents.values) {
                 if (Intersector.overlaps(projectile.bounds, opponent.bounds)) {
-                    pistolProjectilePool.free(projectile)
+                    // todo should check projectile type
+                    pistolProjectilePool.free(projectile as PistolProjectile)
                     iterator.remove()
+                    return
                 }
             }
         }
@@ -140,15 +146,15 @@ class GameScreen(
     private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
         val projectile = pistolProjectilePool.obtain()
         projectile.setPosition(x, y)
-        projectile.speed.set(xSpeed, ySpeed)
-        pistolProjectiles.add(projectile)
+        projectile.velocity.set(xSpeed, ySpeed)
+        projectiles.add(projectile)
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
 
-    private fun drawProjectiles(batch: Batch) = pistolProjectiles.forEach { it.sprite.draw(batch) }
+    private fun drawProjectiles(batch: Batch) = projectiles.forEach { it.sprite.draw(batch) }
 
-    private fun drawOpponents(batch: Batch) = opponents.forEach { it.sprite.draw(batch) }
+    private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
     private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 
@@ -160,7 +166,6 @@ class GameScreen(
                 , 0f, 0f, playerTexture)
     }
 
-    // todo should be gone later
     private fun generateWalls() {
         for (i in 0 until MAP_HEIGHT step 50) {
             walls.add(Wall(0f, i.toFloat()))
@@ -178,5 +183,10 @@ class GameScreen(
 
         if (player.bounds.y > WINDOW_HEIGHT / 2f && player.bounds.y < MAP_HEIGHT - WINDOW_HEIGHT / 2f)
             camera.position.y = player.bounds.y
+    }
+
+    override fun dispose() {
+        playerTexture.dispose()
+        super.dispose()
     }
 }
