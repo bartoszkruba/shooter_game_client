@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.math.Intersector
 import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
@@ -22,6 +23,8 @@ import ktx.collections.iterate
 import ktx.graphics.use
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.*
+import kotlin.collections.HashMap
 
 class GameScreen(
         val game: Game,
@@ -32,7 +35,7 @@ class GameScreen(
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
 
     private lateinit var socket: Socket
-    private val opponents: HashMap<String,Player> = HashMap()
+    private val opponents = HashMap<String,Player>()
     private var timer: Float = 0.0f
 
     lateinit var player: Player
@@ -40,8 +43,9 @@ class GameScreen(
 
     val pistolProjectilePool = pool { PistolProjectile() }
 
-    val pistolProjectiles = Array<PistolProjectile>()
     val walls = Array<Wall>()
+    val projectiles = Array<Projectile>()
+    //val opponents = HashMap<String, Opponent>()
 
     init {
         generateWalls();
@@ -57,6 +61,7 @@ class GameScreen(
             setPlayerRotation()
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
+            setCameraPosition()
             camera.position.set(player.bounds.x, player.bounds.y, 0f)
             camera.update()
         }
@@ -89,7 +94,8 @@ class GameScreen(
     fun configSocketEvents() {
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
-            player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+            player = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
         }
         .on("socketID") { data ->
             val obj: JSONObject = data[0] as JSONObject
@@ -101,7 +107,8 @@ class GameScreen(
             val obj: JSONObject = data[0] as JSONObject
             val playerId = obj.getString("id")
             Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
-            opponents[playerId] = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+            opponents[playerId] = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
         }
         .on("playerDisconnected") { data ->
             val obj: JSONObject = data[0] as JSONObject
@@ -112,7 +119,8 @@ class GameScreen(
             val obj: JSONArray = data[0] as JSONArray
             Gdx.app.log("Other players: ", "${data[0]}")
             for (i in 0 until obj.length()) {
-                val newPlayer = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+                val newPlayer = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+                        WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
                 val vector = Vector2()
                 vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
                 vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
@@ -185,58 +193,94 @@ class GameScreen(
         if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
         if (Gdx.input.isKeyPressed(Input.Keys.W))
-            player.setPosition(player.bounds.x, player.bounds.y + movementSpeed * delta)
+            movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta)
 
         if (Gdx.input.isKeyPressed(Input.Keys.S))
-            player.setPosition(player.bounds.x, player.bounds.y - movementSpeed * delta)
+            movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta)
 
         if (Gdx.input.isKeyPressed(Input.Keys.A))
-            player.setPosition(player.bounds.x - movementSpeed * delta, player.bounds.y)
+            movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y)
 
         if (Gdx.input.isKeyPressed(Input.Keys.D))
-            player.setPosition(player.bounds.x + movementSpeed * delta, player.bounds.y)
+            movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
     }
 
+    private fun movePlayer(x: Float, y: Float) = player.setPosition(
+            MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
+            MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
+
+
     fun calculatePistolProjectilesPosition(delta: Float) {
-        pistolProjectiles.iterate { projectile, iterator ->
+        projectiles.iterate { projectile, iterator ->
             projectile.setPosition(
-                    projectile.bounds.x + projectile.speed.x * delta * PISTOL_BULLET_SPEED,
-                    projectile.bounds.y + projectile.speed.y * delta * PISTOL_BULLET_SPEED)
+                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
+                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
+
+            if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
+                    projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
+                // todo should check projectile type
+                pistolProjectilePool.free(projectile as PistolProjectile)
+                iterator.remove()
+                return
+            }
+
+            for (opponent in opponents.values) {
+                if (Intersector.overlaps(projectile.bounds, opponent.bounds)) {
+                    // todo should check projectile type
+                    pistolProjectilePool.free(projectile as PistolProjectile)
+                    iterator.remove()
+                    return
+                }
+            }
         }
     }
 
     private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
         val projectile = pistolProjectilePool.obtain()
         projectile.setPosition(x, y)
-        projectile.speed.set(xSpeed, ySpeed)
-        pistolProjectiles.add(projectile)
+        projectile.velocity.set(xSpeed, ySpeed)
+        projectiles.add(projectile)
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
 
-    private fun drawProjectiles(batch: Batch) = pistolProjectiles.forEach { it.sprite.draw(batch) }
+    private fun drawProjectiles(batch: Batch) = projectiles.forEach { it.sprite.draw(batch) }
 
-    //private fun drawOpponents(batch: Batch) = opponents.forEach { it.sprite.draw(batch) }
+    private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
     private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 
     fun generateRandomOpponent(): Opponent {
-        val minPosition = Vector2(0f, 0f)
-        val maxPosition = Vector2(WINDOW_WIDTH - 32f, WINDOW_HEIGHT - 64f)
+        val minPosition = Vector2(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
+        val maxPosition = Vector2(
+                MAP_WIDTH - PLAYER_SPRITE_WIDTH - WALL_SPRITE_WIDTH,
+                MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
 
         return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
                 , 0f, 0f, playerTexture)
     }
 
-    // todo should be gone later
     private fun generateWalls() {
-        for (i in 0 until MAP_HEIGHT step 50) {
+        for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
             walls.add(Wall(0f, i.toFloat()))
-            walls.add(Wall(MAP_WIDTH - 50f, i.toFloat()))
+            walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat()))
         }
-        for (i in 50 until MAP_WIDTH - 50 step 50) {
+        for (i in WALL_SPRITE_WIDTH.toInt() until MAP_WIDTH - WALL_SPRITE_WIDTH.toInt() step WALL_SPRITE_WIDTH.toInt()) {
             walls.add(Wall(i.toFloat(), 0f))
-            walls.add(Wall(i.toFloat(), MAP_HEIGHT - 50f))
+            walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT))
         }
+    }
+
+    private fun setCameraPosition() {
+        if (player.bounds.x > WINDOW_WIDTH / 2f && player.bounds.x < MAP_WIDTH - WINDOW_WIDTH / 2f)
+            camera.position.x = player.bounds.x
+
+        if (player.bounds.y > WINDOW_HEIGHT / 2f && player.bounds.y < MAP_HEIGHT - WINDOW_HEIGHT / 2f)
+            camera.position.y = player.bounds.y
+    }
+
+    override fun dispose() {
+        playerTexture.dispose()
+        super.dispose()
     }
 }
