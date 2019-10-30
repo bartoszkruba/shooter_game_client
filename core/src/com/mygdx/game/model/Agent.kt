@@ -5,14 +5,14 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Rectangle
 
-abstract class Agent(x: Float, y: Float, var weapon: Weapon, var facingDirectionAngle: Float) {
+abstract class Agent(x: Float, y: Float, texture: Texture, var weapon: Weapon, var facingDirectionAngle: Float) {
     var sprite: Sprite
     val bounds: Rectangle
 
     init {
         bounds = Rectangle(x, y, 32f, 64f)
         // todo should be changed to loading assets from assetManager
-        sprite = Sprite(Texture(Gdx.files.internal("images/player_placeholder.png")))
+        sprite = Sprite(texture)
         sprite.setSize(32f, 64f)
         sprite.setPosition(x, y)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)

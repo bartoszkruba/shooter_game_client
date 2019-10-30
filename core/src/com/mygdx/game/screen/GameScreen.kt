@@ -3,6 +3,7 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.OrthographicCamera
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
@@ -24,7 +25,9 @@ class GameScreen(
         val font: BitmapFont,
         val camera: OrthographicCamera) : KtxScreen {
 
-    val player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f)
+    val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
+
+    val player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
     val mousePosition = Vector2()
 
     val pistolProjectilePool = pool { PistolProjectile() }
@@ -134,7 +137,8 @@ class GameScreen(
         val minPosition = Vector2(0f, 0f)
         val maxPosition = Vector2(WINDOW_WIDTH - 32f, WINDOW_HEIGHT - 64f)
 
-        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y))
+        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
+                , 0f, 0f, playerTexture)
     }
 
     // todo should be gone later
