@@ -30,7 +30,9 @@ class GameScreen(
 
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
 
-    val player = Player(WINDOW_WIDTH / 2f - 16f, WINDOW_HEIGHT / 2f - 32f, playerTexture)
+    val player = Player(
+            WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
     val mousePosition = Vector2()
 
     val pistolProjectilePool = pool { PistolProjectile() }
@@ -114,8 +116,8 @@ class GameScreen(
     }
 
     private fun movePlayer(x: Float, y: Float) = player.setPosition(
-            MathUtils.clamp(x, 50f, MAP_WIDTH - 50f - 32f),
-            MathUtils.clamp(y, 50f, MAP_HEIGHT - 50f - 64f))
+            MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
+            MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
 
 
     fun calculatePistolProjectilesPosition(delta: Float) {
@@ -159,21 +161,23 @@ class GameScreen(
     private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 
     fun generateRandomOpponent(): Opponent {
-        val minPosition = Vector2(50f, 50f)
-        val maxPosition = Vector2(MAP_WIDTH - 32f - 50f, MAP_HEIGHT - 64f - 50f)
+        val minPosition = Vector2(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
+        val maxPosition = Vector2(
+                MAP_WIDTH - PLAYER_SPRITE_WIDTH - WALL_SPRITE_WIDTH,
+                MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
 
         return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
                 , 0f, 0f, playerTexture)
     }
 
     private fun generateWalls() {
-        for (i in 0 until MAP_HEIGHT step 50) {
+        for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
             walls.add(Wall(0f, i.toFloat()))
-            walls.add(Wall(MAP_WIDTH - 50f, i.toFloat()))
+            walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat()))
         }
-        for (i in 50 until MAP_WIDTH - 50 step 50) {
+        for (i in WALL_SPRITE_WIDTH.toInt() until MAP_WIDTH - WALL_SPRITE_WIDTH.toInt() step WALL_SPRITE_WIDTH.toInt()) {
             walls.add(Wall(i.toFloat(), 0f))
-            walls.add(Wall(i.toFloat(), MAP_HEIGHT - 50f))
+            walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT))
         }
     }
 
