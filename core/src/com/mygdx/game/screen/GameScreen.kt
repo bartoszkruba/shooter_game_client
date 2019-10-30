@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.math.Intersector
 import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
@@ -37,7 +38,7 @@ class GameScreen(
     val walls = Array<Wall>()
 
     init {
-        repeat(5) { opponents.add(generateRandomOpponent()) }
+        repeat(50) { opponents.add(generateRandomOpponent()) }
         generateWalls()
     }
 
@@ -49,7 +50,7 @@ class GameScreen(
         calculatePistolProjectilesPosition(delta)
         checkControls(delta)
 
-        camera.position.set(player.bounds.x, player.bounds.y, 0f)
+        setCameraPosition()
         camera.update()
         batch.projectionMatrix = camera.combined
 
@@ -98,23 +99,41 @@ class GameScreen(
         if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
         if (Gdx.input.isKeyPressed(Input.Keys.W))
-            player.setPosition(player.bounds.x, player.bounds.y + movementSpeed * delta)
+            movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta)
 
         if (Gdx.input.isKeyPressed(Input.Keys.S))
-            player.setPosition(player.bounds.x, player.bounds.y - movementSpeed * delta)
+            movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta)
 
         if (Gdx.input.isKeyPressed(Input.Keys.A))
-            player.setPosition(player.bounds.x - movementSpeed * delta, player.bounds.y)
+            movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y)
 
         if (Gdx.input.isKeyPressed(Input.Keys.D))
-            player.setPosition(player.bounds.x + movementSpeed * delta, player.bounds.y)
+            movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
     }
+
+    private fun movePlayer(x: Float, y: Float) = player.setPosition(
+            MathUtils.clamp(x, 50f, MAP_WIDTH - 50f - 32f),
+            MathUtils.clamp(y, 50f, MAP_HEIGHT - 50f - 64f))
+
 
     fun calculatePistolProjectilesPosition(delta: Float) {
         pistolProjectiles.iterate { projectile, iterator ->
             projectile.setPosition(
                     projectile.bounds.x + projectile.speed.x * delta * PISTOL_BULLET_SPEED,
                     projectile.bounds.y + projectile.speed.y * delta * PISTOL_BULLET_SPEED)
+
+            if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
+                    projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
+                pistolProjectilePool.free(projectile)
+                iterator.remove()
+            }
+
+            for (opponent in opponents) {
+                if (Intersector.overlaps(projectile.bounds, opponent.bounds)) {
+                    pistolProjectilePool.free(projectile)
+                    iterator.remove()
+                }
+            }
         }
     }
 
@@ -134,8 +153,8 @@ class GameScreen(
     private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 
     fun generateRandomOpponent(): Opponent {
-        val minPosition = Vector2(0f, 0f)
-        val maxPosition = Vector2(WINDOW_WIDTH - 32f, WINDOW_HEIGHT - 64f)
+        val minPosition = Vector2(50f, 50f)
+        val maxPosition = Vector2(MAP_WIDTH - 32f - 50f, MAP_HEIGHT - 64f - 50f)
 
         return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
                 , 0f, 0f, playerTexture)
@@ -151,5 +170,13 @@ class GameScreen(
             walls.add(Wall(i.toFloat(), 0f))
             walls.add(Wall(i.toFloat(), MAP_HEIGHT - 50f))
         }
+    }
+
+    private fun setCameraPosition() {
+        if (player.bounds.x > WINDOW_WIDTH / 2f && player.bounds.x < MAP_WIDTH - WINDOW_WIDTH / 2f)
+            camera.position.x = player.bounds.x
+
+        if (player.bounds.y > WINDOW_HEIGHT / 2f && player.bounds.y < MAP_HEIGHT - WINDOW_HEIGHT / 2f)
+            camera.position.y = player.bounds.y
     }
 }
