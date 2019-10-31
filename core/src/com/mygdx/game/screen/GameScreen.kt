@@ -62,8 +62,6 @@ class GameScreen(
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
-            camera.position.set(player.bounds.x, player.bounds.y, 0f)
-            camera.update()
         }
 
         batch.projectionMatrix = camera.combined
@@ -236,7 +234,6 @@ class GameScreen(
                     // todo should check projectile type
                     pistolProjectilePool.free(projectile as PistolProjectile)
                     iterator.remove()
-                    opponents.remove(opponent.key)
                     return
                 }
             }
