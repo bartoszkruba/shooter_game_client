@@ -7,10 +7,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.math.Intersector
-import com.badlogic.gdx.math.MathUtils
-import com.badlogic.gdx.math.Vector2
-import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
@@ -25,6 +22,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
 import kotlin.collections.HashMap
+import com.mygdx.game.model.Opponent
+import kotlin.math.tan
+
 
 class GameScreen(
         val game: Game,
@@ -166,7 +166,10 @@ class GameScreen(
     private fun setPlayerRotation() {
         val originX = player.sprite.originX + player.sprite.x
         val originY = player.sprite.originY + player.sprite.y
-        val angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
+        var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
+
+        if (angle < 0) angle += 360
+
         player.facingDirectionAngle = angle
     }
 
@@ -175,6 +178,10 @@ class GameScreen(
             player.shoot()
             val xCentre = player.bounds.x + player.bounds.width / 2f
             val yCentre = player.bounds.y + player.bounds.height / 2f
+            val edgePoint = projectToRectEdgeRad(player.facingDirectionAngle.toDouble(), player.bounds)
+
+            edgePoint.x += xCentre - player.bounds.width / 2
+            edgePoint.y += yCentre - player.bounds.height / 2
             spawnPistolProjectile(
                     xCentre, yCentre,
                     MathUtils.cosDeg(player.facingDirectionAngle),
@@ -224,11 +231,12 @@ class GameScreen(
                 return
             }
 
-            for (opponent in opponents.values) {
-                if (Intersector.overlaps(projectile.bounds, opponent.bounds)) {
+            for (opponent in opponents.entries) {
+                if (Intersector.overlaps(projectile.bounds, opponent.value.bounds)) {
                     // todo should check projectile type
                     pistolProjectilePool.free(projectile as PistolProjectile)
                     iterator.remove()
+                    opponents.remove(opponent.key)
                     return
                 }
             }
@@ -282,5 +290,49 @@ class GameScreen(
     override fun dispose() {
         playerTexture.dispose()
         super.dispose()
+    }
+
+    fun projectToRectEdgeRad(angle: Double, rect: Rectangle): Vector2 {
+
+        var theta = angle * MathUtils.degreesToRadians
+
+        while (theta < -MathUtils.PI) theta += MathUtils.PI2
+        while (theta > MathUtils.PI) theta -= MathUtils.PI2
+
+        val rectAtan = MathUtils.atan2(rect.height, rect.width)
+        val tanTheta = tan(theta)
+        val region: Int
+
+        region = if ((theta > -rectAtan) && (theta <= rectAtan)) 1
+        else if ((theta > rectAtan) && (theta <= (Math.PI - rectAtan))) 2
+        else if ((theta > (Math.PI - rectAtan)) || (theta <= -(Math.PI - rectAtan))) 3
+        else 4
+
+        val edgePoint = Vector2().apply {
+            x = rect.width / 2f
+            y = rect.height / 2f
+        }
+        var xFactor = 1
+        var yFactor = 1
+
+        when (region) {
+            3, 4 -> {
+                xFactor = -1
+                yFactor = -1
+            }
+        }
+
+        when (region) {
+            1, 3 -> {
+                edgePoint.x += xFactor * (rect.width / 2f)
+                edgePoint.y += yFactor * (rect.width / 2f) * tanTheta.toFloat()
+            }
+            else -> {
+                edgePoint.x += xFactor * (rect.height / (2f * tanTheta.toFloat()))
+                edgePoint.y += yFactor * (rect.height / 2f)
+            }
+        }
+
+        return edgePoint
     }
 }
