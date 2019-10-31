@@ -20,7 +20,6 @@ import ktx.collections.iterate
 import ktx.graphics.use
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.*
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
 import kotlin.math.tan
@@ -37,6 +36,12 @@ class GameScreen(
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Player>()
     private var timer: Float = 0.0f
+    private var wWasPressed = false
+    private var aWasPressed = false
+    private var dWasPressed = false
+    private var sWasPressed = false
+    private var mouseWasPressed = false
+    private var forIf = true
 
     lateinit var player: Player
     val mousePosition = Vector2()
@@ -57,6 +62,9 @@ class GameScreen(
         updateServer(delta)
         camera.update()
         if (::player.isInitialized) {
+            updateServerRotation()
+            updateServerMoves()
+            updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
             calculatePistolProjectilesPosition(delta)
@@ -76,6 +84,84 @@ class GameScreen(
                     drawPlayer(it, value)
                 }
             }
+        }
+    }
+
+    private fun updateServerRotation() {
+        if(forIf) {
+            forIf = false
+            val b = true
+            val thread = Thread {
+                while (b) {
+                    val data = JSONObject()
+                    data.put("degrees", player.facingDirectionAngle)
+                    socket.emit("playerRotation", data)
+                    Thread.sleep(100)
+                }
+            }
+            thread.start()
+        }
+    }
+
+    private fun updateServerMouse() {
+        val isMouseWPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT));
+        val wWasReleased = mouseWasPressed && !isMouseWPressed;
+        mouseWasPressed = isMouseWPressed;
+
+        if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
+            val data = JSONObject()
+            data.put("Mouse", true)
+            socket.emit("mouseStart", data)
+        }
+        if (wWasReleased){
+            val data = JSONObject()
+            data.put("Mouse", true)
+            socket.emit("mouseStop", data)
+        }
+    }
+
+    private fun updateServerMoves() {
+        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W);
+        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A);
+        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S);
+        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D);
+
+        val wWasReleased = wWasPressed && !isWPressed;
+        val aWasReleased = aWasPressed && !isAPressed;
+        val sWasReleased = sWasPressed && !isSPressed;
+        val dWasReleased = dWasPressed && !isDPressed;
+
+        wWasPressed = isWPressed;
+        aWasPressed = isAPressed;
+        sWasPressed = isSPressed;
+        dWasPressed = isDPressed;
+
+        checkKeyJustPressed(Input.Keys.W, "W")
+        checkKeyJustReleased(wWasReleased, "W")
+
+        checkKeyJustPressed(Input.Keys.A, "A")
+        checkKeyJustReleased(aWasReleased, "A")
+
+        checkKeyJustPressed(Input.Keys.S, "S")
+        checkKeyJustReleased(sWasReleased, "S")
+
+        checkKeyJustPressed(Input.Keys.D, "D")
+        checkKeyJustReleased(dWasReleased, "D")
+    }
+
+    private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
+        if (Gdx.input.isKeyJustPressed(keyNumber)){
+            val data = JSONObject()
+            data.put(keyLetter, true)
+            socket.emit("startKey", data)
+        }
+    }
+
+    private fun checkKeyJustReleased(keyJustPressed: Boolean, key: String) {
+        if (keyJustPressed) {
+            val data = JSONObject()
+            data.put(key, true)
+            socket.emit("stopKey", data)
         }
     }
 
@@ -154,7 +240,6 @@ class GameScreen(
         }
     }
 
-
     private fun getMousePosInGameWorld() {
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
         mousePosition.x = position.x
@@ -165,9 +250,7 @@ class GameScreen(
         val originX = player.sprite.originX + player.sprite.x
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
-
-        if (angle < 0) angle += 360
-
+        if(angle < 0) angle += 360f
         player.facingDirectionAngle = angle
     }
 
