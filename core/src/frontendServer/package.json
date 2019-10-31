@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "matter-js": "^0.14.2",
+    "shortid": "^2.2.15",
     "socket.io": "^2.3.0"
   }
 }
