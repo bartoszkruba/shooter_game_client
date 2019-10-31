@@ -23,11 +23,11 @@ io.on('connection', (socket) => {
             }
         }
     })
-    socket.on('startW', (data) =>{
-        console.log("K key is pressed down: ", data)
+    socket.on('startKey', (data) =>{
+        console.log( Object.keys(data)[0] + " key is pressed down")
     })
-    socket.on('stopW', (data) =>{
-        console.log("K key is released: ", data)
+    socket.on('stopKey', (data) =>{
+        console.log( Object.keys(data)[0] + " key is released")
     })
 
     socket.on('disconnect', () => {

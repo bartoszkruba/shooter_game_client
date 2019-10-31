@@ -23,7 +23,6 @@ import ktx.collections.iterate
 import ktx.graphics.use
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.*
 import kotlin.collections.HashMap
 
 class GameScreen(
@@ -37,7 +36,10 @@ class GameScreen(
     private lateinit var socket: Socket
     private val opponents = HashMap<String,Player>()
     private var timer: Float = 0.0f
-    private var wasPressed = false
+    private var wWasPressed = false
+    private var aWasPressed = false
+    private var dWasPressed = false
+    private var sWasPressed = false
 
     lateinit var player: Player
     val mousePosition = Vector2()
@@ -84,19 +86,47 @@ class GameScreen(
     }
 
     private fun checkMove() {
-        val isPressed = Gdx.input.isKeyPressed(Input.Keys.W);
-        val released = wasPressed && !isPressed;
-        wasPressed = isPressed;
+        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W);
+        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A);
+        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S);
+        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D);
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.W)){
+        val wWasReleased = wWasPressed && !isWPressed;
+        val aWasReleased = aWasPressed && !isAPressed;
+        val sWasReleased = sWasPressed && !isSPressed;
+        val dWasReleased = dWasPressed && !isDPressed;
+
+        wWasPressed = isWPressed;
+        aWasPressed = isAPressed;
+        sWasPressed = isSPressed;
+        dWasPressed = isDPressed;
+
+        checkKeyJustPressed(Input.Keys.W, "W")
+        checkKeyJustReleased(wWasReleased, "W")
+
+        checkKeyJustPressed(Input.Keys.A, "A")
+        checkKeyJustReleased(aWasReleased, "A")
+
+        checkKeyJustPressed(Input.Keys.S, "S")
+        checkKeyJustReleased(sWasReleased, "S")
+
+        checkKeyJustPressed(Input.Keys.D, "D")
+        checkKeyJustReleased(dWasReleased, "D")
+    }
+
+    private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
+        if (Gdx.input.isKeyJustPressed(keyNumber)){
             val data = JSONObject()
-            data.put("startW", true)
-            socket.emit("startW", data)
+            data.put(keyLetter, true)
+            socket.emit("startKey", data)
         }
-        else if (released) {
+    }
+
+    private fun checkKeyJustReleased(keyJustPressed: Boolean, key: String) {
+        if (keyJustPressed) {
             val data = JSONObject()
-            data.put("stopW", true)
-            socket.emit("stopW", data)
+            data.put(key, true)
+            socket.emit("stopKey", data)
         }
     }
 
