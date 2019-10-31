@@ -40,6 +40,7 @@ class GameScreen(
     private var aWasPressed = false
     private var dWasPressed = false
     private var sWasPressed = false
+    private var mouseWasPressed = false
 
     lateinit var player: Player
     val mousePosition = Vector2()
@@ -60,7 +61,8 @@ class GameScreen(
         updateServer(delta)
         camera.update()
         if (::player.isInitialized){
-            checkMove()
+            updateServerMoves()
+            updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
             calculatePistolProjectilesPosition(delta)
@@ -85,7 +87,24 @@ class GameScreen(
         }
     }
 
-    private fun checkMove() {
+    private fun updateServerMouse() {
+        val isMouseWPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT));
+        val wWasReleased = mouseWasPressed && !isMouseWPressed;
+        mouseWasPressed = isMouseWPressed;
+
+        if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
+            val data = JSONObject()
+            data.put("Mouse", true)
+            socket.emit("mouseStart", data)
+        }
+        if (wWasReleased){
+            val data = JSONObject()
+            data.put("Mouse", true)
+            socket.emit("mouseStop", data)
+        }
+    }
+
+    private fun updateServerMoves() {
         val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W);
         val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A);
         val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S);

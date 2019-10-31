@@ -24,14 +24,21 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('startKey', (data) =>{
-        console.log( Object.keys(data)[0] + " key is pressed down")
+        //console.log( Object.keys(data)[0] + " key is pressed down")
     })
     socket.on('stopKey', (data) =>{
-        console.log( Object.keys(data)[0] + " key is released")
+        //console.log( Object.keys(data)[0] + " key is released")
+    })
+
+    socket.on('mouseStart', (data) =>{
+        //console.log( Object.keys(data)[0] + " just pressed")
+    })
+    socket.on('mouseStop', (data) =>{
+        //console.log( Object.keys(data)[0] + " just released")
     })
 
     socket.on('disconnect', () => {
-        console.log('Player disconnected');
+        console.log('Player disconnected with id:', socket.id);
         socket.broadcast.emit('playerDisconnected', {id: socket.id})
         for (let i=0; i < players.length; i++){
             if(players[i].id === socket.id){
