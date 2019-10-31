@@ -1,19 +1,21 @@
 const Matter = require('matter-js');
 const constants = require('../settings/constants');
-const Pistol = require('Pistol');
+const Pistol = require('./Pistol');
+const BaseObject = require('./BaseObject');
 
-export default class Agent {
+class Agent extends BaseObject {
 
-    isWPressed = false;
-    isAPressed = false;
-    isSPressed = false;
-    isDPressed = false;
-    isLMPressed = false;
-
-    constructor(x = 0, y = 0, weapon = Pistol(), facingDirectionAngle = 0) {
+    constructor(x = 0, y = 0, weapon = Pistol(), facingDirectionAngle = 0, id) {
+        super(id);
         this.bounds = Matter.Body.rectangle(x, y, constants.PLAYER_SPRITE_WIDTH, constants.PLAYER_SPRITE_HEIGHT);
         this.weapon = weapon;
         this.facingDirectionAngle = facingDirectionAngle;
+
+        this.isWPressed = false;
+        this.isAPressed = false;
+        this.isSPressed = false;
+        this.isDPressed = false;
+        this.isLMPressed = false;
     }
 
     canShoot() {
@@ -24,3 +26,5 @@ export default class Agent {
         this.weapon.shoot();
     }
 }
+
+module.exports = Agent;

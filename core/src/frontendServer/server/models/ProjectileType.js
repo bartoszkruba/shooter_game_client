@@ -1,1 +1,3 @@
-export const PISTOL = "PISTOL";
+module.exports = {
+    PISTOL: "PISTOL"
+};
