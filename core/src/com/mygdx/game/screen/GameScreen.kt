@@ -12,10 +12,14 @@ import com.badlogic.gdx.utils.Array
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
+import io.socket.client.IO
+import io.socket.client.Socket
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.*
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
@@ -30,39 +34,125 @@ class GameScreen(
 
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
 
-    val player = Player(
-            WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
+    private lateinit var socket: Socket
+    private val opponents = HashMap<String,Player>()
+    private var timer: Float = 0.0f
+
+    lateinit var player: Player
     val mousePosition = Vector2()
 
     val pistolProjectilePool = pool { PistolProjectile() }
 
-    val projectiles = Array<Projectile>()
-    val opponents = HashMap<String, Opponent>()
     val walls = Array<Wall>()
+    val projectiles = Array<Projectile>()
+    //val opponents = HashMap<String, Opponent>()
 
     init {
-        repeat(50) { opponents.put(UUID.randomUUID().toString(), generateRandomOpponent()) }
-        generateWalls()
+        generateWalls();
     }
 
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
-        getMousePosInGameWorld()
-        setPlayerRotation()
-        calculatePistolProjectilesPosition(delta)
-        checkControls(delta)
-
-        setCameraPosition()
+        updateServer(delta)
         camera.update()
+        if (::player.isInitialized){
+            getMousePosInGameWorld()
+            setPlayerRotation()
+            calculatePistolProjectilesPosition(delta)
+            checkControls(delta)
+            setCameraPosition()
+            camera.position.set(player.bounds.x, player.bounds.y, 0f)
+            camera.update()
+        }
+
         batch.projectionMatrix = camera.combined
 
-        batch.use {
-            drawProjectiles(it)
-            drawOpponents(it)
-            drawPlayer(it, player)
-            drawWalls(it)
+        if (::player.isInitialized) {
+            batch.use {
+                drawProjectiles(it)
+                //drawOpponents(it)
+                drawPlayer(it, player)
+                drawWalls(it)
+                for (value in opponents.values) {
+                    drawPlayer(it, value)
+                }
+            }
+        }
+    }
+
+    private fun updateServer(dt: Float){
+        timer += dt
+        if (timer >= UPDATE_TIME && ::player.isInitialized && hasMoved()){
+            val data = JSONObject()
+            data.put("x", player.sprite.x)
+            data.put("y", player.sprite.y)
+            socket.emit("playerMoved", data)
+        }
+    }
+
+    fun configSocketEvents() {
+        socket.on(Socket.EVENT_CONNECT) {
+            Gdx.app.log("SocketIO", "Connected")
+            player = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
+        }
+        .on("socketID") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+
+            Gdx.app.log("SocketIO", "My ID: $playerId")
+        }
+        .on("newPlayer") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+            Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
+            opponents[playerId] = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
+        }
+        .on("playerDisconnected") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+            opponents.remove(playerId)
+        }
+        .on("getPlayers") { data ->
+            val obj: JSONArray = data[0] as JSONArray
+            Gdx.app.log("Other players: ", "${data[0]}")
+            for (i in 0 until obj.length()) {
+                val newPlayer = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+                        WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
+                val vector = Vector2()
+                vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
+                vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
+                newPlayer.setPosition(vector.x, vector.y)
+
+                val playerId = obj.getJSONObject(i).getString("id")
+                opponents[playerId] = newPlayer
+            }
+        }
+        .on("playerMoved") { data ->
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+            val x = obj.getDouble("x")
+            val y = obj.getDouble("y")
+
+            if(opponents[playerId] != null)
+                opponents[playerId]!!.setPosition(x.toFloat(), y.toFloat())
+        }
+    }
+
+    private fun hasMoved(): Boolean {
+        return (Gdx.input.isKeyPressed(Input.Keys.W)
+                || Gdx.input.isKeyPressed(Input.Keys.S)
+                || Gdx.input.isKeyPressed(Input.Keys.A)
+                || Gdx.input.isKeyPressed(Input.Keys.D))
+    }
+
+    fun connectionSocket() {
+        try {
+            socket = IO.socket("http://localhost:8080");
+            socket.connect();
+        } catch (e: Exception) {
         }
     }
 
