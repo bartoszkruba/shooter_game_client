@@ -37,6 +37,10 @@ io.on('connection', (socket) => {
         //console.log( Object.keys(data)[0] + " just released")
     })
 
+    socket.on('playerRotation', (data) =>{
+        console.log("playerId:",socket.id, ",,,  ", Object.keys(data)[0] + " is", Object.values(data)[0])
+    })
+
     socket.on('disconnect', () => {
         console.log('Player disconnected with id:', socket.id);
         socket.broadcast.emit('playerDisconnected', {id: socket.id})

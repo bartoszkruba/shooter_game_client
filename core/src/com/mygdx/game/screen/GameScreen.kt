@@ -41,6 +41,7 @@ class GameScreen(
     private var dWasPressed = false
     private var sWasPressed = false
     private var mouseWasPressed = false
+    private var forIf = true
 
     lateinit var player: Player
     val mousePosition = Vector2()
@@ -53,6 +54,7 @@ class GameScreen(
 
     init {
         generateWalls();
+
     }
 
     private var pressedKeys = 0
@@ -61,6 +63,7 @@ class GameScreen(
         updateServer(delta)
         camera.update()
         if (::player.isInitialized){
+            updateServerRotation()
             updateServerMoves()
             updateServerMouse()
             getMousePosInGameWorld()
@@ -84,6 +87,22 @@ class GameScreen(
                     drawPlayer(it, value)
                 }
             }
+        }
+    }
+
+    private fun updateServerRotation() {
+        if(forIf) {
+            forIf = false
+            val b = true
+            val thread = Thread {
+                while (b) {
+                    val data = JSONObject()
+                    data.put("degrees", player.facingDirectionAngle)
+                    socket.emit("playerRotation", data)
+                    Thread.sleep(100)
+                }
+            }
+            thread.start()
         }
     }
 
@@ -224,7 +243,6 @@ class GameScreen(
         }
     }
 
-
     private fun getMousePosInGameWorld() {
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
         mousePosition.x = position.x
@@ -234,7 +252,8 @@ class GameScreen(
     private fun setPlayerRotation() {
         val originX = player.sprite.originX + player.sprite.x
         val originY = player.sprite.originY + player.sprite.y
-        val angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
+        var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
+        if(angle < 0) angle += 360f
         player.facingDirectionAngle = angle
     }
 
