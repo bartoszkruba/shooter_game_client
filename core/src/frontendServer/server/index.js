@@ -23,6 +23,13 @@ io.on('connection', (socket) => {
             }
         }
     })
+    socket.on('startW', (data) =>{
+        console.log("K key is pressed down: ", data)
+    })
+    socket.on('stopW', (data) =>{
+        console.log("K key is released: ", data)
+    })
+
     socket.on('disconnect', () => {
         console.log('Player disconnected');
         socket.broadcast.emit('playerDisconnected', {id: socket.id})

@@ -37,6 +37,7 @@ class GameScreen(
     private lateinit var socket: Socket
     private val opponents = HashMap<String,Player>()
     private var timer: Float = 0.0f
+    private var wasPressed = false
 
     lateinit var player: Player
     val mousePosition = Vector2()
@@ -57,6 +58,7 @@ class GameScreen(
         updateServer(delta)
         camera.update()
         if (::player.isInitialized){
+            checkMove()
             getMousePosInGameWorld()
             setPlayerRotation()
             calculatePistolProjectilesPosition(delta)
@@ -78,6 +80,23 @@ class GameScreen(
                     drawPlayer(it, value)
                 }
             }
+        }
+    }
+
+    private fun checkMove() {
+        val isPressed = Gdx.input.isKeyPressed(Input.Keys.W);
+        val released = wasPressed && !isPressed;
+        wasPressed = isPressed;
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.W)){
+            val data = JSONObject()
+            data.put("startW", true)
+            socket.emit("startW", data)
+        }
+        else if (released) {
+            val data = JSONObject()
+            data.put("stopW", true)
+            socket.emit("stopW", data)
         }
     }
 
