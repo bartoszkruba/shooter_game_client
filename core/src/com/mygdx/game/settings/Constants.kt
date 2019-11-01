@@ -14,7 +14,6 @@ const val UPDATE_TIME = 1/20f
 const val PLAYER_SPRITE_WIDTH = 32f
 const val PLAYER_SPRITE_HEIGHT = 64f
 
-const val HEALTH_BAR_SPRITE_WIDTH = 182f
 const val HEALTH_BAR_SPRITE_HEIGHT = -16f
 
 const val WALL_SPRITE_WIDTH = 50f
