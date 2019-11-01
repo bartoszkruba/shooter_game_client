@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.SnapshotArray
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
@@ -21,6 +22,7 @@ import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
 import java.util.concurrent.ConcurrentHashMap
+//import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.tan
 
 
@@ -51,6 +53,7 @@ class GameScreen(
     val walls = Array<Wall>()
     val socketProjectiles = ConcurrentHashMap<String, Projectile>()
     var clientProjectiles = HashMap<String, Projectile>()
+    val ghostProjectiles = SnapshotArray<Projectile>()
 
     var projectilesUpdated = false
 
@@ -62,6 +65,10 @@ class GameScreen(
 
     override fun render(delta: Float) {
         if (projectilesUpdated) {
+            for (projectile in ghostProjectiles) {
+                pistolProjectilePool.free(projectile as PistolProjectile)
+                ghostProjectiles.clear()
+            }
             projectilesUpdated = false
             clientProjectiles = HashMap(socketProjectiles)
         }
@@ -80,6 +87,7 @@ class GameScreen(
         camera.update()
         batch.projectionMatrix = camera.combined
 
+        ghostProjectiles.begin()
         if (::player.isInitialized) {
             batch.use {
                 drawProjectiles(it)
@@ -91,6 +99,7 @@ class GameScreen(
                 }
             }
         }
+        ghostProjectiles.end()
     }
 
     private fun updateServerRotation() {
@@ -244,8 +253,8 @@ class GameScreen(
                         val id = projectile.getString("id")
                         val x = projectile.getLong("x").toFloat()
                         val y = projectile.getLong("y").toFloat()
-                        val xSpeed = projectile.getLong("xSpeed").toFloat()
-                        val ySpeed = projectile.getLong("ySpeed").toFloat()
+                        val xSpeed = projectile.getDouble("xSpeed").toFloat()
+                        val ySpeed = projectile.getDouble("ySpeed").toFloat()
 
                         if (socketProjectiles[id] == null) {
                             socketProjectiles[id] = pistolProjectilePool.obtain().apply {
@@ -347,6 +356,12 @@ class GameScreen(
                     projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
         }
 
+        for (projectile in ghostProjectiles) {
+            projectile.setPosition(
+                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
+                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
+        }
+
 //        projectiles.iterate { projectile, iterator ->
 //            projectile.setPosition(
 //                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
@@ -375,16 +390,21 @@ class GameScreen(
         val projectile = pistolProjectilePool.obtain()
         projectile.setPosition(x, y)
         projectile.velocity.set(xSpeed, ySpeed)
-//        projectiles.add(projectile)
+        ghostProjectiles.add(projectile)
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
 
-    private fun drawProjectiles(batch: Batch) = clientProjectiles.values.forEach { it.sprite.draw(batch) }
+    private fun drawProjectiles(batch: Batch) {
+        clientProjectiles.values.forEach { it.sprite.draw(batch) }
+        for (i in 0 until ghostProjectiles.size) ghostProjectiles[i].sprite.draw(batch)
+    }
 
     private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
-    private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
+    private fun drawWalls(batch: Batch) {
+        for (i in 0 until walls.size) walls[i].sprite.draw(batch)
+    }
 
     private fun generateWalls() {
         for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {

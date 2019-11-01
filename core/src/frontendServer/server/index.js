@@ -18,7 +18,6 @@ server.listen(8080, () =>
 io.on('connection', (socket) => {
     console.log("Player connected");
 
-
     socket.emit('socketID', {id: socket.id});
 
     // socket.emit('getPlayers', players);
@@ -173,6 +172,7 @@ async function gameDataLoop(socket) {
         const projectileData = [];
 
         for (projectile of projectiles) {
+
             projectileData.push({
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,
@@ -183,7 +183,7 @@ async function gameDataLoop(socket) {
         }
 
         socket.broadcast.emit("gameData", {agentData, projectileData});
-        await sleep(1000 / 60)
+        await sleep(100)
     }
 
 }
