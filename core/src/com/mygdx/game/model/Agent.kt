@@ -6,7 +6,13 @@ import com.badlogic.gdx.math.Rectangle
 import com.mygdx.game.settings.PLAYER_SPRITE_HEIGHT
 import com.mygdx.game.settings.PLAYER_SPRITE_WIDTH
 
-abstract class Agent(x: Float, y: Float, texture: Texture, var weapon: Weapon, var facingDirectionAngle: Float) {
+abstract class Agent(
+        x: Float,
+        y: Float, texture: Texture,
+        var weapon: Weapon,
+        var facingDirectionAngle: Float,
+        var id: String) {
+
     var sprite: Sprite = Sprite(texture)
     val bounds: Rectangle = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
 

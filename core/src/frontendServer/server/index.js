@@ -21,20 +21,20 @@ io.on('connection', (socket) => {
 
     socket.emit('socketID', {id: socket.id});
 
-    socket.emit('getPlayers', players);
+    // socket.emit('getPlayers', players);
 
-    socket.broadcast.emit('newPlayer', {id: socket.id});
+    // socket.broadcast.emit('newPlayer', {id: socket.id});
 
-    socket.on('playerMoved', (data) => {
-        data.id = socket.id;
-        socket.broadcast.emit('playerMoved', data);
-        for (let i = 0; i < players.length; i++) {
-            if (players[i].id === data.id) {
-                players[i].x = data.x;
-                players[i].y = data.y;
-            }
-        }
-    });
+    // socket.on('playerMoved', (data) => {
+    //     data.id = socket.id;
+    //     socket.broadcast.emit('playerMoved', data);
+    //     for (let i = 0; i < players.length; i++) {
+    //         if (players[i].id === data.id) {
+    //             players[i].x = data.x;
+    //             players[i].y = data.y;
+    //         }
+    //     }
+    // });
 
     socket.on('startKey', (data) => {
         switch (Object.keys(data)[0]) {
@@ -67,11 +67,11 @@ io.on('connection', (socket) => {
                 }
                 break;
         }
-        console.log(Object.keys(data)[0] + " key is pressed down")
+        // console.log(Object.keys(data)[0] + " key is pressed down")
     });
 
     socket.on('stopKey', (data) => {
-        console.log(Object.keys(data)[0] + " key is released")
+        // console.log(Object.keys(data)[0] + " key is released")
 
         switch (Object.keys(data)[0]) {
             case "W":
@@ -106,7 +106,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('mouseStart', (data) => {
-        console.log(Object.keys(data)[0] + " just pressed");
+        // console.log(Object.keys(data)[0] + " just pressed");
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].isLMPressed = true;
@@ -115,7 +115,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('mouseStop', (data) => {
-        console.log(Object.keys(data)[0] + " just released")
+        // console.log(Object.keys(data)[0] + " just released")
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].isLMPressed = false;
@@ -133,7 +133,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('Player disconnected with id:', socket.id);
+        // console.log('Player disconnected with id:', socket.id);
         socket.broadcast.emit('playerDisconnected', {id: socket.id});
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
@@ -142,8 +142,8 @@ io.on('connection', (socket) => {
         }
     });
 
-    const agent = new Agent(constants.MAP_WIDTH / 2, constants.MAP_HEIGHT / 2, new Pistol(),
-        0, socket.id);
+    console.log("Adding new player with id " + socket.id);
+    const agent = new Agent(500, 500, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
