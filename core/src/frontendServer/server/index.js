@@ -183,7 +183,7 @@ async function gameDataLoop(socket) {
         }
 
         socket.broadcast.emit("gameData", {agentData, projectileData});
-        await sleep(100)
+        await sleep(1000 / 60)
     }
 
 }

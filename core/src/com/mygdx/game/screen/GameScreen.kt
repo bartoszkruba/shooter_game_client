@@ -16,11 +16,11 @@ import io.socket.client.IO
 import io.socket.client.Socket
 import ktx.app.KtxScreen
 import ktx.assets.pool
-import ktx.collections.iterate
 import ktx.graphics.use
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.tan
 
 
@@ -49,7 +49,10 @@ class GameScreen(
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
 
     val walls = Array<Wall>()
-    val projectiles = Array<Projectile>()
+    val socketProjectiles = ConcurrentHashMap<String, Projectile>()
+    var clientProjectiles = HashMap<String, Projectile>()
+
+    var projectilesUpdated = false
 
     init {
         generateWalls();
@@ -58,14 +61,18 @@ class GameScreen(
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
-        updateServer(delta)
+        if (projectilesUpdated) {
+            projectilesUpdated = false
+            clientProjectiles = HashMap(socketProjectiles)
+        }
+
         if (::player.isInitialized) {
             updateServerRotation()
             updateServerMoves()
             updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
-//            calculatePistolProjectilesPosition(delta)
+            calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
         }
@@ -164,16 +171,6 @@ class GameScreen(
         }
     }
 
-    private fun updateServer(dt: Float) {
-        timer += dt
-        if (timer >= UPDATE_TIME && ::player.isInitialized && hasMoved()) {
-            val data = JSONObject()
-            data.put("x", player.sprite.x)
-            data.put("y", player.sprite.y)
-            socket.emit("playerMoved", data)
-        }
-    }
-
     fun configSocketEvents() {
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
@@ -241,26 +238,31 @@ class GameScreen(
                         }
                     }
 
-
-                    for (projectile in projectiles) {
-                        pistolProjectilePool.free(projectile as PistolProjectile)
-                    }
-
-                    projectiles.clear()
-
                     val proj = obj.getJSONArray("projectileData")
                     for (i in 0 until proj.length()) {
                         val projectile = proj[i] as JSONObject
+                        val id = projectile.getString("id")
                         val x = projectile.getLong("x").toFloat()
                         val y = projectile.getLong("y").toFloat()
                         val xSpeed = projectile.getLong("xSpeed").toFloat()
                         val ySpeed = projectile.getLong("ySpeed").toFloat()
-                        projectiles.add(pistolProjectilePool.obtain().apply {
-                            setPosition(x, y)
-                            velocity.x = xSpeed
-                            velocity.y = ySpeed
-                        })
+
+                        if (socketProjectiles[id] == null) {
+                            socketProjectiles[id] = pistolProjectilePool.obtain().apply {
+                                setPosition(x, y)
+                                velocity.x = xSpeed
+                                velocity.y = ySpeed
+                            }
+                        } else {
+                            socketProjectiles[id]?.apply {
+                                setPosition(x, y)
+                                velocity.x = xSpeed
+                                velocity.y = ySpeed
+                            }
+                        }
                     }
+
+                    projectilesUpdated = true
                 }
     }
 
@@ -339,46 +341,46 @@ class GameScreen(
 
     fun calculatePistolProjectilesPosition(delta: Float) {
 
-        for (projectile in projectiles) {
+        for (projectile in clientProjectiles.values) {
             projectile.setPosition(
                     projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
                     projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
         }
 
-        projectiles.iterate { projectile, iterator ->
-            projectile.setPosition(
-                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
-                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
-
-            if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
-                    projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
-                // todo should check projectile type
-                pistolProjectilePool.free(projectile as PistolProjectile)
-                iterator.remove()
-                return
-            }
-
-            for (opponent in opponents.entries) {
-                if (Intersector.overlaps(projectile.bounds, opponent.value.bounds)) {
-                    // todo should check projectile type
-                    pistolProjectilePool.free(projectile as PistolProjectile)
-                    iterator.remove()
-                    return
-                }
-            }
-        }
+//        projectiles.iterate { projectile, iterator ->
+//            projectile.setPosition(
+//                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
+//                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
+//
+//            if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
+//                    projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
+//                // todo should check projectile type
+//                pistolProjectilePool.free(projectile as PistolProjectile)
+//                iterator.remove()
+//                return
+//            }
+//
+//            for (opponent in opponents.entries) {
+//                if (Intersector.overlaps(projectile.bounds, opponent.value.bounds)) {
+//                    // todo should check projectile type
+//                    pistolProjectilePool.free(projectile as PistolProjectile)
+//                    iterator.remove()
+//                    return
+//                }
+//            }
+//        }
     }
 
     private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
         val projectile = pistolProjectilePool.obtain()
         projectile.setPosition(x, y)
         projectile.velocity.set(xSpeed, ySpeed)
-        projectiles.add(projectile)
+//        projectiles.add(projectile)
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
 
-    private fun drawProjectiles(batch: Batch) = projectiles.forEach { it.sprite.draw(batch) }
+    private fun drawProjectiles(batch: Batch) = clientProjectiles.values.forEach { it.sprite.draw(batch) }
 
     private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
