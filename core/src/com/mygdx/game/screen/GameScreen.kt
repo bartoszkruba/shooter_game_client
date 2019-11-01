@@ -31,6 +31,7 @@ class GameScreen(
         val camera: OrthographicCamera) : KtxScreen {
 
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
+    val projectileTexture = Texture(Gdx.files.internal("images/standard_projectile.jpg"))
 
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Opponent>()
@@ -45,11 +46,10 @@ class GameScreen(
     lateinit var player: Player
     val mousePosition = Vector2()
 
-    val pistolProjectilePool = pool { PistolProjectile() }
+    val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
 
     val walls = Array<Wall>()
     val projectiles = Array<Projectile>()
-    //val opponents = HashMap<String, Opponent>()
 
     init {
         generateWalls();
@@ -65,7 +65,7 @@ class GameScreen(
             updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
-            calculatePistolProjectilesPosition(delta)
+//            calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
         }
@@ -241,19 +241,24 @@ class GameScreen(
                         }
                     }
 
-                    projectiles.iterate { projectile, iterator ->
+
+                    for (projectile in projectiles) {
                         pistolProjectilePool.free(projectile as PistolProjectile)
-                        iterator.remove()
                     }
+
+                    projectiles.clear()
 
                     val proj = obj.getJSONArray("projectileData")
                     for (i in 0 until proj.length()) {
                         val projectile = proj[i] as JSONObject
-                        val id = projectile.getString("id")
                         val x = projectile.getLong("x").toFloat()
                         val y = projectile.getLong("y").toFloat()
+                        val xSpeed = projectile.getLong("xSpeed").toFloat()
+                        val ySpeed = projectile.getLong("ySpeed").toFloat()
                         projectiles.add(pistolProjectilePool.obtain().apply {
                             setPosition(x, y)
+                            velocity.x = xSpeed
+                            velocity.y = ySpeed
                         })
                     }
                 }
@@ -333,6 +338,13 @@ class GameScreen(
 
 
     fun calculatePistolProjectilesPosition(delta: Float) {
+
+        for (projectile in projectiles) {
+            projectile.setPosition(
+                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
+                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
+        }
+
         projectiles.iterate { projectile, iterator ->
             projectile.setPosition(
                     projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,

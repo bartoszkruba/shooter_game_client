@@ -176,7 +176,9 @@ async function gameDataLoop(socket) {
             projectileData.push({
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,
-                id: projectile.id
+                id: projectile.id,
+                xSpeed: projectile.velocity.x,
+                ySpeed: projectile.velocity.y
             })
         }
 
