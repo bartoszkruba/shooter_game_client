@@ -248,6 +248,10 @@ class GameScreen(
                     }
 
                     val proj = obj.getJSONArray("projectileData")
+
+                    socketProjectiles.values.forEach { pistolProjectilePool.free(it as PistolProjectile) }
+                    socketProjectiles.clear()
+
                     for (i in 0 until proj.length()) {
                         val projectile = proj[i] as JSONObject
                         val id = projectile.getString("id")
@@ -362,7 +366,7 @@ class GameScreen(
                     projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
         }
 
-//        projectiles.iterate { projectile, iterator ->
+//        clientProjectiles.iterate { projectile, iterator ->
 //            projectile.setPosition(
 //                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
 //                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
