@@ -162,6 +162,7 @@ async function gameDataLoop(socket) {
         const agentData = [];
 
         for (agent of agents) {
+
             agentData.push({
                 x: agent.bounds.position.x,
                 y: agent.bounds.position.y,

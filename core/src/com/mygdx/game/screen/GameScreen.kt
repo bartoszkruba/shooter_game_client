@@ -22,9 +22,8 @@ import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
 import java.util.concurrent.ConcurrentHashMap
-//import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.tan
 
+import kotlin.math.tan
 
 class GameScreen(
         val game: Game,
