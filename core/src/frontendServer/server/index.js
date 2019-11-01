@@ -180,9 +180,6 @@ async function gameDataLoop(socket) {
             })
         }
 
-        console.log('Emitting data');
-        console.log("agentData size: " + agentData.length);
-        console.log("projectileData size: " + projectileData.length);
         socket.broadcast.emit("gameData", {agentData, projectileData});
         await sleep(100)
     }

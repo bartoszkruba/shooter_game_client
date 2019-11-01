@@ -30,8 +30,8 @@ async function physicLoop() {
 
 function calculateProjectilePositions(delta) {
     for (projectile of projectiles) {
-        projectile.bounds.position.x = projectile.bounds.position.x + projectile.velocity * delta * projectile.speed;
-        projectile.bounds.position.y = projectile.bounds.position.y + projectile.velocity * delta * projectile.speed;
+        projectile.bounds.position.x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
+        projectile.bounds.position.y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
 
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
