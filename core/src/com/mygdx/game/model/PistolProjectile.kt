@@ -9,12 +9,13 @@ class PistolProjectile(
         x: Float = 0f,
         y: Float = 0f,
         xSpeed: Float = 0f,
-        ySpeed: Float = 0f) : Projectile(
+        ySpeed: Float = 0f,
+        texture: Texture) : Projectile(
         x,
         y,
         xSpeed,
         ySpeed,
-        Texture(Gdx.files.internal("images/standard_projectile.jpg")),
+        texture,
         STANDARD_PROJECTILE_WIDTH / 2,
         ProjectileType.PISTOL,
         PISTOL_BULLET_SPEED)

@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.SnapshotArray
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
@@ -16,12 +17,12 @@ import io.socket.client.IO
 import io.socket.client.Socket
 import ktx.app.KtxScreen
 import ktx.assets.pool
-import ktx.collections.iterate
 import ktx.graphics.use
-import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
+import java.util.concurrent.ConcurrentHashMap
+//import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.tan
 
 
@@ -32,9 +33,10 @@ class GameScreen(
         val camera: OrthographicCamera) : KtxScreen {
 
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
+    val projectileTexture = Texture(Gdx.files.internal("images/standard_projectile.jpg"))
 
     private lateinit var socket: Socket
-    private val opponents = HashMap<String, Player>()
+    private val opponents = HashMap<String, Opponent>()
     private var timer: Float = 0.0f
     private var wWasPressed = false
     private var aWasPressed = false
@@ -46,11 +48,14 @@ class GameScreen(
     lateinit var player: Player
     val mousePosition = Vector2()
 
-    val pistolProjectilePool = pool { PistolProjectile() }
+    val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
 
     val walls = Array<Wall>()
-    val projectiles = Array<Projectile>()
-    //val opponents = HashMap<String, Opponent>()
+    val socketProjectiles = ConcurrentHashMap<String, Projectile>()
+    var clientProjectiles = HashMap<String, Projectile>()
+    val ghostProjectiles = SnapshotArray<Projectile>()
+
+    var projectilesUpdated = false
 
     init {
         generateWalls();
@@ -59,8 +64,15 @@ class GameScreen(
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
-        updateServer(delta)
-        camera.update()
+        if (projectilesUpdated) {
+            for (projectile in ghostProjectiles) {
+                pistolProjectilePool.free(projectile as PistolProjectile)
+                ghostProjectiles.clear()
+            }
+            projectilesUpdated = false
+            clientProjectiles = HashMap(socketProjectiles)
+        }
+
         if (::player.isInitialized) {
             updateServerRotation()
             updateServerMoves()
@@ -72,12 +84,14 @@ class GameScreen(
             setCameraPosition()
         }
 
+        camera.update()
         batch.projectionMatrix = camera.combined
 
+        ghostProjectiles.begin()
         if (::player.isInitialized) {
             batch.use {
                 drawProjectiles(it)
-                //drawOpponents(it)
+                drawOpponents(it)
                 drawPlayer(it, player)
                 drawWalls(it)
                 for (value in opponents.values) {
@@ -85,10 +99,11 @@ class GameScreen(
                 }
             }
         }
+        ghostProjectiles.end()
     }
 
     private fun updateServerRotation() {
-        if(forIf) {
+        if (forIf) {
             forIf = false
             val b = true
             val thread = Thread {
@@ -113,7 +128,7 @@ class GameScreen(
             data.put("Mouse", true)
             socket.emit("mouseStart", data)
         }
-        if (wWasReleased){
+        if (wWasReleased) {
             val data = JSONObject()
             data.put("Mouse", true)
             socket.emit("mouseStop", data)
@@ -150,7 +165,7 @@ class GameScreen(
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
-        if (Gdx.input.isKeyJustPressed(keyNumber)){
+        if (Gdx.input.isKeyJustPressed(keyNumber)) {
             val data = JSONObject()
             data.put(keyLetter, true)
             socket.emit("startKey", data)
@@ -165,63 +180,102 @@ class GameScreen(
         }
     }
 
-    private fun updateServer(dt: Float) {
-        timer += dt
-        if (timer >= UPDATE_TIME && ::player.isInitialized && hasMoved()) {
-            val data = JSONObject()
-            data.put("x", player.sprite.x)
-            data.put("y", player.sprite.y)
-            socket.emit("playerMoved", data)
-        }
-    }
-
     fun configSocketEvents() {
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
-            player = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
         }
                 .on("socketID") { data ->
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, playerTexture, playerId)
+
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
-                .on("newPlayer") { data ->
-                    val obj: JSONObject = data[0] as JSONObject
-                    val playerId = obj.getString("id")
-                    Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
-                    opponents[playerId] = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-                            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
-                }
+//                .on("newPlayer") { data ->
+//                    val obj: JSONObject = data[0] as JSONObject
+//                    val playerId = obj.getString("id")
+//                    Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
+//                    opponents[playerId] = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+//                            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, playerId)
+//                }
                 .on("playerDisconnected") { data ->
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
                     opponents.remove(playerId)
                 }
-                .on("getPlayers") { data ->
-                    val obj: JSONArray = data[0] as JSONArray
-                    Gdx.app.log("Other players: ", "${data[0]}")
-                    for (i in 0 until obj.length()) {
-                        val newPlayer = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-                                WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
-                        val vector = Vector2()
-                        vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
-                        vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
-                        newPlayer.setPosition(vector.x, vector.y)
-
-                        val playerId = obj.getJSONObject(i).getString("id")
-                        opponents[playerId] = newPlayer
+//                .on("getPlayers") { data ->
+//                    val obj: JSONArray = data[0] as JSONArray
+//                    Gdx.app.log("Other players: ", "${data[0]}")
+//                    for (i in 0 until obj.length()) {
+//                        val playerId = obj.getJSONObject(i).getString("id")
+//                        val newPlayer = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+//                                WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, playerId)
+//                        val vector = Vector2()
+//                        vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
+//                        vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
+//                        newPlayer.setPosition(vector.x, vector.y)
+//
+//                        opponents[playerId] = newPlayer
+//                    }
+//                }
+//                .on("playerMoved") { data ->
+//                    val obj: JSONObject = data[0] as JSONObject
+//                    val playerId = obj.getString("id")
+//                    val x = obj.getDouble("x")
+//                    val y = obj.getDouble("y")
+//
+//                    if (opponents[playerId] != null)
+//                        opponents[playerId]!!.setPosition(x.toFloat(), y.toFloat())
+//                }
+                .on("gameData") { data ->
+                    val obj = data[0] as JSONObject
+                    val agents = obj.getJSONArray("agentData")
+                    for (i in 0 until agents.length()) {
+                        val agent = agents[i] as JSONObject
+                        val id = agent.getString("id")
+                        val x = agent.getLong("x").toFloat()
+                        val y = agent.getLong("y").toFloat()
+                        if (id == player.id) {
+                            player.setPosition(x, y)
+                        } else {
+                            if (opponents[id] == null) {
+                                opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id)
+                            } else {
+                                opponents[id]?.setPosition(x, y)
+                            }
+                        }
                     }
-                }
-                .on("playerMoved") { data ->
-                    val obj: JSONObject = data[0] as JSONObject
-                    val playerId = obj.getString("id")
-                    val x = obj.getDouble("x")
-                    val y = obj.getDouble("y")
 
-                    if (opponents[playerId] != null)
-                        opponents[playerId]!!.setPosition(x.toFloat(), y.toFloat())
+                    val proj = obj.getJSONArray("projectileData")
+
+                    socketProjectiles.values.forEach { pistolProjectilePool.free(it as PistolProjectile) }
+                    socketProjectiles.clear()
+
+                    for (i in 0 until proj.length()) {
+                        val projectile = proj[i] as JSONObject
+                        val id = projectile.getString("id")
+                        val x = projectile.getLong("x").toFloat()
+                        val y = projectile.getLong("y").toFloat()
+                        val xSpeed = projectile.getDouble("xSpeed").toFloat()
+                        val ySpeed = projectile.getDouble("ySpeed").toFloat()
+
+                        if (socketProjectiles[id] == null) {
+                            socketProjectiles[id] = pistolProjectilePool.obtain().apply {
+                                setPosition(x, y)
+                                velocity.x = xSpeed
+                                velocity.y = ySpeed
+                            }
+                        } else {
+                            socketProjectiles[id]?.apply {
+                                setPosition(x, y)
+                                velocity.x = xSpeed
+                                velocity.y = ySpeed
+                            }
+                        }
+                    }
+
+                    projectilesUpdated = true
                 }
     }
 
@@ -250,7 +304,7 @@ class GameScreen(
         val originX = player.sprite.originX + player.sprite.x
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
-        if(angle < 0) angle += 360f
+        if (angle < 0) angle += 360f
         player.facingDirectionAngle = angle
     }
 
@@ -299,53 +353,61 @@ class GameScreen(
 
 
     fun calculatePistolProjectilesPosition(delta: Float) {
-        projectiles.iterate { projectile, iterator ->
+
+        for (projectile in clientProjectiles.values) {
             projectile.setPosition(
                     projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
                     projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
-
-            if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
-                    projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
-                // todo should check projectile type
-                pistolProjectilePool.free(projectile as PistolProjectile)
-                iterator.remove()
-                return
-            }
-
-            for (opponent in opponents.entries) {
-                if (Intersector.overlaps(projectile.bounds, opponent.value.bounds)) {
-                    // todo should check projectile type
-                    pistolProjectilePool.free(projectile as PistolProjectile)
-                    iterator.remove()
-                    return
-                }
-            }
         }
+
+        for (projectile in ghostProjectiles) {
+            projectile.setPosition(
+                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
+                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
+        }
+
+//        clientProjectiles.iterate { projectile, iterator ->
+//            projectile.setPosition(
+//                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
+//                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
+//
+//            if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
+//                    projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
+//                // todo should check projectile type
+//                pistolProjectilePool.free(projectile as PistolProjectile)
+//                iterator.remove()
+//                return
+//            }
+//
+//            for (opponent in opponents.entries) {
+//                if (Intersector.overlaps(projectile.bounds, opponent.value.bounds)) {
+//                    // todo should check projectile type
+//                    pistolProjectilePool.free(projectile as PistolProjectile)
+//                    iterator.remove()
+//                    return
+//                }
+//            }
+//        }
     }
 
     private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
         val projectile = pistolProjectilePool.obtain()
         projectile.setPosition(x, y)
         projectile.velocity.set(xSpeed, ySpeed)
-        projectiles.add(projectile)
+        ghostProjectiles.add(projectile)
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
 
-    private fun drawProjectiles(batch: Batch) = projectiles.forEach { it.sprite.draw(batch) }
+    private fun drawProjectiles(batch: Batch) {
+        clientProjectiles.values.forEach { it.sprite.draw(batch) }
+        for (i in 0 until ghostProjectiles.size) ghostProjectiles[i].sprite.draw(batch)
+    }
 
     private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
-    private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
-
-    fun generateRandomOpponent(): Opponent {
-        val minPosition = Vector2(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
-        val maxPosition = Vector2(
-                MAP_WIDTH - PLAYER_SPRITE_WIDTH - WALL_SPRITE_WIDTH,
-                MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
-
-        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
-                , 0f, 0f, playerTexture)
+    private fun drawWalls(batch: Batch) {
+        for (i in 0 until walls.size) walls[i].sprite.draw(batch)
     }
 
     private fun generateWalls() {

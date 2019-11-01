@@ -30,8 +30,8 @@ async function physicLoop() {
 
 function calculateProjectilePositions(delta) {
     for (projectile of projectiles) {
-        projectile.bounds.position.x = projectile.bounds.position.x + projectile.velocity * delta * projectile.speed;
-        projectile.bounds.position.y = projectile.bounds.position.y + projectile.velocity * delta * projectile.speed;
+        projectile.bounds.position.x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
+        projectile.bounds.position.y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
 
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
@@ -47,9 +47,9 @@ function calculateProjectilePositions(delta) {
 }
 
 function moveAgent(agent, x, y) {
-    agent.bounds.position.x = Matter.clamp(x, constants.WALL_SPRITE_WIDTH,
+    agent.bounds.position.x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH,
         constants.MAP_WIDTH - constants.PLAYER_SPRITE_WIDTH - constants.WALL_SPRITE_WIDTH);
-    agent.bounds.position.y = Matter.clamp(y, constants.WALL_SPRITE_HEIGHT,
+    agent.bounds.position.y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT,
         constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT);
 }
 
@@ -85,7 +85,7 @@ function checkControls(agent, delta) {
 
     if (agent.isWPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y + movementSpeed * delta);
 
-    if (agent.isSPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.posiiton.y - movementSpeed * delta);
+    if (agent.isSPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y - movementSpeed * delta);
 
     if (agent.isAPressed) moveAgent(agent, agent.bounds.position.x - movementSpeed * delta, agent.bounds.position.y);
 
@@ -133,6 +133,5 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-lastLoop = new Date().getTime();
-physicLoop();
+module.exports = {physicLoop, agents, projectiles, lastLoop};
 
