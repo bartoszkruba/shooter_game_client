@@ -132,7 +132,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        // console.log('Player disconnected with id:', socket.id);
+        console.log('Player disconnected, id:', socket.id);
         socket.broadcast.emit('playerDisconnected', {id: socket.id});
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
@@ -141,7 +141,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    console.log("Adding new player with id " + socket.id);
+    console.log("Adding new player, id " + socket.id);
     const agent = new Agent(500, 500, new Pistol(), 0, socket.id);
     agents.push(agent);
 
@@ -183,7 +183,7 @@ async function gameDataLoop(socket) {
         }
 
         socket.broadcast.emit("gameData", {agentData, projectileData});
-        await sleep(100)
+        await sleep(1000 / constants.UPDATES_PER_SECOND)
     }
 
 }
