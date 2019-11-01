@@ -30,16 +30,21 @@ async function physicLoop() {
 
 function calculateProjectilePositions(delta) {
     for (projectile of projectiles) {
-        projectile.bounds.position.x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
-        projectile.bounds.position.y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
+
+        Matter.Body.setPosition(projectile.bounds, {
+            x: projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed,
+            y: projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed
+        });
 
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
+            console.log('Removing projectile because of out of map');
             projectiles.splice(projectiles.indexOf(projectile), 1);
         }
 
         for (agent of agents) {
             if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided) {
+                console.log("Removing projectile because of collision");
                 projectiles.splice(projectiles.indexOf(projectile), 1);
             }
         }
@@ -47,10 +52,16 @@ function calculateProjectilePositions(delta) {
 }
 
 function moveAgent(agent, x, y) {
-    agent.bounds.position.x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH,
+    console.log("before clamp: x - " + x + ", y - " + y);
+
+    x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH,
         constants.MAP_WIDTH - constants.PLAYER_SPRITE_WIDTH - constants.WALL_SPRITE_WIDTH);
-    agent.bounds.position.y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT,
+    y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT,
         constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT);
+
+    console.log("after clamp: " + x + ", y - " + y);
+
+    Matter.Body.setPosition(agent.bounds, {x, y})
 }
 
 function spawnPistolProjectile(x, y, xSpeed, ySpeed) {
