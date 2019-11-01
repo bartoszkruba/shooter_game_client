@@ -32,6 +32,7 @@ class GameScreen(
         val camera: OrthographicCamera) : KtxScreen {
 
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
+    val healthBarTexture = Texture(Gdx.files.internal("images/healthBar3.png"))
 
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Player>()
@@ -179,7 +180,7 @@ class GameScreen(
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
             player = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
+                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, healthBarTexture)
         }
                 .on("socketID") { data ->
                     val obj: JSONObject = data[0] as JSONObject
@@ -192,7 +193,7 @@ class GameScreen(
                     val playerId = obj.getString("id")
                     Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
                     opponents[playerId] = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-                            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
+                            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, healthBarTexture)
                 }
                 .on("playerDisconnected") { data ->
                     val obj: JSONObject = data[0] as JSONObject
@@ -204,7 +205,7 @@ class GameScreen(
                     Gdx.app.log("Other players: ", "${data[0]}")
                     for (i in 0 until obj.length()) {
                         val newPlayer = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-                                WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture)
+                                WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, healthBarTexture)
                         val vector = Vector2()
                         vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
                         vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
@@ -330,7 +331,10 @@ class GameScreen(
         projectiles.add(projectile)
     }
 
-    private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
+    private fun drawPlayer(batch: Batch, agent: Agent) {
+        agent.sprite.draw(batch)
+        agent.healthBarSprite.draw(batch)
+    }
 
     private fun drawProjectiles(batch: Batch) = projectiles.forEach { it.sprite.draw(batch) }
 
@@ -345,7 +349,7 @@ class GameScreen(
                 MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
 
         return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
-                , 0f, 0f, playerTexture)
+                , 0f, 0f, playerTexture, healthBarTexture)
     }
 
     private fun generateWalls() {
