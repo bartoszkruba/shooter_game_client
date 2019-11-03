@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import ktx.assets.getAsset
 import ktx.assets.load
 
+
 enum class TextureAtlasAssets(val path: String) {
     Game("images/game.atlas")
 }

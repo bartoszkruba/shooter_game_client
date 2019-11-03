@@ -2,15 +2,19 @@ package com.mygdx.game.screen
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
+import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.SnapshotArray
 import com.mygdx.game.Game
+import com.mygdx.game.assets.TextureAtlasAssets
+import com.mygdx.game.assets.get
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import io.socket.client.IO
@@ -21,6 +25,7 @@ import ktx.graphics.use
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
+import ktx.ashley.get
 import java.util.concurrent.ConcurrentHashMap
 //import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.tan
@@ -30,7 +35,9 @@ class GameScreen(
         val game: Game,
         val batch: SpriteBatch,
         val font: BitmapFont,
+        private val assets: AssetManager,
         val camera: OrthographicCamera) : KtxScreen {
+
 
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
     val projectileTexture = Texture(Gdx.files.internal("images/standard_projectile.jpg"))
@@ -58,7 +65,7 @@ class GameScreen(
     var projectilesUpdated = false
 
     init {
-        generateWalls();
+        generateWalls()
     }
 
     private var pressedKeys = 0
@@ -430,7 +437,7 @@ class GameScreen(
     }
 
     override fun dispose() {
-        playerTexture.dispose()
+
         super.dispose()
     }
 

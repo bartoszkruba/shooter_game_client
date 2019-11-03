@@ -21,29 +21,27 @@ import ktx.app.KtxScreen
 import ktx.inject.Context
 
 class Game : KtxGame<KtxScreen>() {
+    val assets = AssetManager()
     private val context = Context()
-
     override fun create() {
         context.register {
             bindSingleton(this@Game)
             bindSingleton(SpriteBatch())
-            bindSingleton<Batch>(SpriteBatch())
             bindSingleton(BitmapFont())
             bindSingleton(AssetManager())
             bindSingleton(OrthographicCamera().apply { setToOrtho(false, WINDOW_WIDTH, WINDOW_HEIGHT) })
-            val loading = LoadingScreen(inject(), inject(), inject(), inject(), inject())
-            addScreen(loading)
-            val game = GameScreen(inject(), inject(), inject(), inject())
-            addScreen(game)
-            game.connectionSocket()
-            game.configSocketEvents()
-
+            addScreen(LoadingScreen(inject(), inject(), inject(), inject(), inject()))
+            //val game = GameScreen(inject(), inject(), inject(), inject(), inject())
+           // addScreen(game)
+            //game.connectionSocket()
+            //game.configSocketEvents()
         }
-
-        changeToLoadingScreen()
-
+        setScreen<LoadingScreen>()
         super.create()
     }
-    fun changeToLoadingScreen() = setScreen<LoadingScreen>()
-    fun changeToGameScreen() = setScreen<GameScreen>()
+
+    override fun dispose() {
+        context.dispose()
+        super.dispose()
+    }
 }
