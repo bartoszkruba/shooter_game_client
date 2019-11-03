@@ -27,6 +27,7 @@ class LoadingScreen(private val game: Game,
         TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/leprechaun.png", Texture::class.java)
         assets.load("images/standard_projectile.jpg", Texture::class.java)
+        assets.load("images/wall.png", Texture::class.java)
     }
 
     override fun render(delta: Float) {
@@ -45,7 +46,7 @@ class LoadingScreen(private val game: Game,
         }
 
         if (Gdx.input.isTouched && assets.isFinished) {
-            val gameScreen = GameScreen(game, batch, font, assets, camera)
+            val gameScreen = GameScreen(game, batch, assets, camera)
             game.addScreen(gameScreen)
             gameScreen.connectionSocket()
             gameScreen.configSocketEvents()

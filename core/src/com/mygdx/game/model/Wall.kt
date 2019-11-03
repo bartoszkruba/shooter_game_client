@@ -7,23 +7,11 @@ import com.badlogic.gdx.math.Rectangle
 import com.mygdx.game.settings.WALL_SPRITE_HEIGHT
 import com.mygdx.game.settings.WALL_SPRITE_WIDTH
 
-class Wall(x: Float, y: Float) {
-    val sprite: Sprite
-    val bounds: Rectangle
+class Wall(x: Float, y: Float, texture:Texture): Sprite(texture) {
 
     init {
-        // todo change to assets
-        val texture = Texture(Gdx.files.internal("images/wall.png"))
-
-        sprite = Sprite(texture)
-        sprite.setSize(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
-        sprite.setPosition(x, y)
-
-        bounds = Rectangle(x, y, WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
-    }
-
-    fun setPosition(x: Float, y: Float) {
-        bounds.setPosition(x, y)
-        sprite.setPosition(x, y)
+        setSize(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
+        setPosition(x, y)
+        setBounds(x, y, WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
     }
 }

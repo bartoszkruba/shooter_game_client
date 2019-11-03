@@ -6,15 +6,11 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
-import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.SnapshotArray
 import com.mygdx.game.Game
-import com.mygdx.game.assets.TextureAtlasAssets
-import com.mygdx.game.assets.get
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import io.socket.client.IO
@@ -25,21 +21,19 @@ import ktx.graphics.use
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
-import ktx.ashley.get
 import java.util.concurrent.ConcurrentHashMap
-//import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.tan
 
 
 class GameScreen(
         val game: Game,
-        val batch: SpriteBatch,
-        val font: BitmapFont,
+        private val batch: SpriteBatch,
         private val assets: AssetManager,
-        val camera: OrthographicCamera) : KtxScreen {
+        private val camera: OrthographicCamera) : KtxScreen {
 
-    val playerTexture:Texture = assets.get("images/leprechaun.png", Texture::class.java)
-    val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
+    private val playerTexture:Texture = assets.get("images/leprechaun.png", Texture::class.java)
+    private val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
+    private val wallTexture = assets.get("images/wall.png", Texture::class.java)
 
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Opponent>()
@@ -53,9 +47,7 @@ class GameScreen(
 
     lateinit var player: Player
     val mousePosition = Vector2()
-
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
-
     val walls = Array<Wall>()
     val socketProjectiles = ConcurrentHashMap<String, Projectile>()
     var clientProjectiles = HashMap<String, Projectile>()
@@ -413,17 +405,17 @@ class GameScreen(
     private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
     private fun drawWalls(batch: Batch) {
-        for (i in 0 until walls.size) walls[i].sprite.draw(batch)
+        for (i in 0 until walls.size) walls[i].draw(batch)
     }
 
     private fun generateWalls() {
         for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
-            walls.add(Wall(0f, i.toFloat()))
-            walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat()))
+            walls.add(Wall(0f, i.toFloat(), wallTexture))
+            walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), wallTexture))
         }
         for (i in WALL_SPRITE_WIDTH.toInt() until MAP_WIDTH - WALL_SPRITE_WIDTH.toInt() step WALL_SPRITE_WIDTH.toInt()) {
-            walls.add(Wall(i.toFloat(), 0f))
-            walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT))
+            walls.add(Wall(i.toFloat(), 0f, wallTexture))
+            walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT, wallTexture))
         }
     }
 
