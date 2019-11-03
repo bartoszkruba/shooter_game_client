@@ -12,6 +12,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.mygdx.game.assets.load
 import ktx.app.KtxScreen
 import ktx.graphics.use
+import com.badlogic.gdx.graphics.Texture
+
+
 
 class LoadingScreen(private val game: Game,
                     private val batch: SpriteBatch,
@@ -21,7 +24,9 @@ class LoadingScreen(private val game: Game,
 
 
     override fun show() {
-        TextureAtlasAssets.values().forEach { game.assets.load(it) }
+        TextureAtlasAssets.values().forEach { assets.load(it) }
+        assets.load("images/leprechaun.png", Texture::class.java)
+        assets.load("images/standard_projectile.jpg", Texture::class.java)
     }
 
     override fun render(delta: Float) {

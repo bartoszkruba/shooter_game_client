@@ -31,10 +31,6 @@ class Game : KtxGame<KtxScreen>() {
             bindSingleton(AssetManager())
             bindSingleton(OrthographicCamera().apply { setToOrtho(false, WINDOW_WIDTH, WINDOW_HEIGHT) })
             addScreen(LoadingScreen(inject(), inject(), inject(), inject(), inject()))
-            //val game = GameScreen(inject(), inject(), inject(), inject(), inject())
-           // addScreen(game)
-            //game.connectionSocket()
-            //game.configSocketEvents()
         }
         setScreen<LoadingScreen>()
         super.create()

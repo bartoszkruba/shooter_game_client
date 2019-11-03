@@ -38,9 +38,8 @@ class GameScreen(
         private val assets: AssetManager,
         val camera: OrthographicCamera) : KtxScreen {
 
-
-    val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
-    val projectileTexture = Texture(Gdx.files.internal("images/standard_projectile.jpg"))
+    val playerTexture:Texture = assets.get("images/leprechaun.png", Texture::class.java)
+    val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
 
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Opponent>()
