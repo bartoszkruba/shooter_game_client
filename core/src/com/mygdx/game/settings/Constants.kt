@@ -7,7 +7,7 @@ const val MAP_WIDTH = 6400
 const val MAP_HEIGHT = 3600
 
 const val PISTOL_RELOAD_TIME = 100L
-const val PISTOL_BULLET_SPEED = 1500f
+const val PISTOL_BULLET_SPEED = 1000f
 const val PLAYER_MOVEMENT_SPEED = 200
 
 const val PLAYER_SPRITE_WIDTH = 64f
