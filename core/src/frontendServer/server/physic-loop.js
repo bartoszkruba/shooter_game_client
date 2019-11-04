@@ -64,8 +64,8 @@ function spawnPistolProjectile(x, y, xSpeed, ySpeed) {
 function checkControls(agent, delta) {
     if (agent.isLMPressed && agent.canShoot()) {
         agent.shoot();
-        const xCentre = agent.bounds.position.x + constants.PLAYER_SPRITE_WIDTH / 2;
-        const yCentre = agent.bounds.position.y + constants.PLAYER_SPRITE_HEIGHT / 2;
+        const xCentre = agent.bounds.position.x;
+        const yCentre = agent.bounds.position.y;
 
         const edgePoint = projectToRectEdge(agent.facingDirectionAngle, agent);
 

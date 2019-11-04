@@ -164,8 +164,8 @@ async function gameDataLoop(socket) {
         for (agent of agents) {
 
             agentData.push({
-                x: agent.bounds.position.x,
-                y: agent.bounds.position.y,
+                x: agent.bounds.bounds.min.x,
+                y: agent.bounds.bounds.min.y,
                 id: agent.id
             })
         }
