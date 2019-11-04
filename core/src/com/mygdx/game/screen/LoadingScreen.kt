@@ -24,10 +24,11 @@ class LoadingScreen(private val game: Game,
 
 
     override fun show() {
-        TextureAtlasAssets.values().forEach { assets.load(it) }
+        //TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/leprechaun.png", Texture::class.java)
         assets.load("images/standard_projectile.jpg", Texture::class.java)
         assets.load("images/wall.png", Texture::class.java)
+        assets.load("images/floor.png", Texture::class.java)
         assets.load("images/standard_projectile.jpg", Texture::class.java)
     }
 

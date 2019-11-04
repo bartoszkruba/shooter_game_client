@@ -1,9 +1,7 @@
 package com.mygdx.game.model
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.math.Rectangle
 import com.mygdx.game.settings.WALL_SPRITE_HEIGHT
 import com.mygdx.game.settings.WALL_SPRITE_WIDTH
 

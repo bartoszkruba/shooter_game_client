@@ -427,11 +427,6 @@ class GameScreen(
             camera.position.y = player.bounds.y
     }
 
-    override fun dispose() {
-
-        super.dispose()
-    }
-
     fun projectToRectEdgeRad(angle: Double, rect: Rectangle): Vector2 {
 
         var theta = angle * MathUtils.degreesToRadians
