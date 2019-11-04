@@ -6,9 +6,10 @@ class Player(
         x: Float,
         y: Float,
         texture: Texture,
+        healthBarTexture: Texture,
         id: String,
         weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, texture, weapon, facingDirectionAngle, id) {
+        facingDirectionAngle: Float = 0f) : Agent(x, y, texture, healthBarTexture, weapon, facingDirectionAngle, id) {
 
     fun canShoot() = weapon.canShoot()
     fun shoot() = weapon.shoot()
