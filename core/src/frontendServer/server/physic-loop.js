@@ -30,8 +30,10 @@ async function physicLoop() {
 
 function calculateProjectilePositions(delta) {
     for (projectile of projectiles) {
-        projectile.bounds.position.x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
-        projectile.bounds.position.y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
+        const x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
+        const y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
+
+        Matter.Body.setPosition(projectile.bounds, {x, y});
 
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
@@ -47,10 +49,12 @@ function calculateProjectilePositions(delta) {
 }
 
 function moveAgent(agent, x, y) {
-    agent.bounds.position.x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH,
+    x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH,
         constants.MAP_WIDTH - constants.PLAYER_SPRITE_WIDTH - constants.WALL_SPRITE_WIDTH);
-    agent.bounds.position.y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT,
+    y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT,
         constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT);
+
+    Matter.Body.setPosition(agent.bounds, {x, y})
 }
 
 function spawnPistolProjectile(x, y, xSpeed, ySpeed) {
@@ -60,8 +64,8 @@ function spawnPistolProjectile(x, y, xSpeed, ySpeed) {
 function checkControls(agent, delta) {
     if (agent.isLMPressed && agent.canShoot()) {
         agent.shoot();
-        const xCentre = agent.bounds.position.x + constants.PLAYER_SPRITE_WIDTH / 2;
-        const yCentre = agent.bounds.position.y + constants.PLAYER_SPRITE_HEIGHT / 2;
+        const xCentre = agent.bounds.position.x;
+        const yCentre = agent.bounds.position.y;
 
         const edgePoint = projectToRectEdge(agent.facingDirectionAngle, agent);
 
