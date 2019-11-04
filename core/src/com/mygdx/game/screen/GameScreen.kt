@@ -33,14 +33,14 @@ class GameScreen(
         private val assets: AssetManager,
         private val camera: OrthographicCamera) : KtxScreen {
 
-    private val playerTexture:Texture = assets.get("images/leprechaun.png", Texture::class.java)
+    private val playerTexture: Texture = assets.get("images/leprechaun.png", Texture::class.java)
     private val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
     private val wallTexture = assets.get("images/wall.png", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
 
 
     private lateinit var socket: Socket
-    private val opponents = HashMap<String, Opponent>()
+    private val opponents = ConcurrentHashMap<String, Opponent>()
     private var timer: Float = 0.0f
     private var wWasPressed = false
     private var aWasPressed = false
@@ -92,19 +92,17 @@ class GameScreen(
         if (::player.isInitialized) {
             batch.use {
                 drawProjectiles(it)
-                //drawOpponents(it)
+                drawOpponents(it)
+                moveOpponents(delta)
                 drawPlayer(it, player)
                 drawWalls(it)
-                for (value in opponents.values) {
-                    drawPlayer(it, value)
-                }
             }
         }
         ghostProjectiles.end()
     }
 
     private fun updateServerRotation() {
-        if(forIf) {
+        if (forIf) {
             forIf = false
             val b = true
             val thread = Thread {
@@ -129,7 +127,7 @@ class GameScreen(
             data.put("Mouse", true)
             socket.emit("mouseStart", data)
         }
-        if (wWasReleased){
+        if (wWasReleased) {
             val data = JSONObject()
             data.put("Mouse", true)
             socket.emit("mouseStop", data)
@@ -166,8 +164,8 @@ class GameScreen(
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
-        if (Gdx.input.isKeyJustPressed(keyNumber)){
-        player.reduceHealthBarWidth()
+        if (Gdx.input.isKeyJustPressed(keyNumber)) {
+            player.reduceHealthBarWidth()
             val data = JSONObject()
             data.put(keyLetter, true)
             socket.emit("startKey", data)
@@ -194,42 +192,11 @@ class GameScreen(
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
-//                .on("newPlayer") { data ->
-//                    val obj: JSONObject = data[0] as JSONObject
-//                    val playerId = obj.getString("id")
-//                    Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
-//                    opponents[playerId] = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-//                            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, playerId)
-//                }
                 .on("playerDisconnected") { data ->
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
                     opponents.remove(playerId)
                 }
-//                .on("getPlayers") { data ->
-//                    val obj: JSONArray = data[0] as JSONArray
-//                    Gdx.app.log("Other players: ", "${data[0]}")
-//                    for (i in 0 until obj.length()) {
-//                        val playerId = obj.getJSONObject(i).getString("id")
-//                        val newPlayer = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-//                                WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, playerId)
-//                        val vector = Vector2()
-//                        vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
-//                        vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
-//                        newPlayer.setPosition(vector.x, vector.y)
-//
-//                        opponents[playerId] = newPlayer
-//                    }
-//                }
-//                .on("playerMoved") { data ->
-//                    val obj: JSONObject = data[0] as JSONObject
-//                    val playerId = obj.getString("id")
-//                    val x = obj.getDouble("x")
-//                    val y = obj.getDouble("y")
-//
-//                    if (opponents[playerId] != null)
-//                        opponents[playerId]!!.setPosition(x.toFloat(), y.toFloat())
-//                }
                 .on("gameData") { data ->
                     val obj = data[0] as JSONObject
                     val agents = obj.getJSONArray("agentData")
@@ -238,13 +205,19 @@ class GameScreen(
                         val id = agent.getString("id")
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
+                        val xVelocity = agent.getLong("xVelocity").toFloat()
+                        val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             player.setPosition(x, y)
                         } else {
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id]?.velocity?.x = xVelocity
+                                opponents[id]?.velocity?.y = yVelocity
                             } else {
                                 opponents[id]?.setPosition(x, y)
+                                opponents[id]?.velocity?.x = xVelocity
+                                opponents[id]?.velocity?.y = yVelocity
                             }
                         }
                     }
@@ -281,13 +254,6 @@ class GameScreen(
 
                     projectilesUpdated = true
                 }
-    }
-
-    private fun hasMoved(): Boolean {
-        return (Gdx.input.isKeyPressed(Input.Keys.W)
-                || Gdx.input.isKeyPressed(Input.Keys.S)
-                || Gdx.input.isKeyPressed(Input.Keys.A)
-                || Gdx.input.isKeyPressed(Input.Keys.D))
     }
 
     fun connectionSocket() {
@@ -349,6 +315,14 @@ class GameScreen(
 
         if (Gdx.input.isKeyPressed(Input.Keys.D))
             movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
+    }
+
+    private fun moveOpponents(delta: Float) {
+        for (opponent in opponents.values) {
+            opponent.setPosition(
+                    opponent.bounds.x + opponent.velocity.x * delta,
+                    opponent.bounds.y + opponent.velocity.y * delta)
+        }
     }
 
     private fun movePlayer(x: Float, y: Float) = player.setPosition(
@@ -418,18 +392,6 @@ class GameScreen(
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
     }
-    //private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
-
-    fun generateRandomOpponent(): Opponent {
-        val minPosition = Vector2(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
-        val maxPosition = Vector2(
-                MAP_WIDTH - PLAYER_SPRITE_WIDTH - WALL_SPRITE_WIDTH,
-                MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
-
-        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
-                , 0f, 0f, playerTexture, player.id, healthBarTexture)
-    }
-
 
     fun generateWalls() {
         for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {

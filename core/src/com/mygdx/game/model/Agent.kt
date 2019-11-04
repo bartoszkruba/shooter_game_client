@@ -3,6 +3,7 @@ package com.mygdx.game.model
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector2
 import com.mygdx.game.settings.*
 
 abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Texture, var weapon: Weapon,
@@ -12,6 +13,7 @@ abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Tex
     val bounds: Rectangle
     var counter = 85f
     var healthBarSpriteWidth = 182f
+    val velocity = Vector2()
 
     init {
         bounds = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
@@ -22,7 +24,7 @@ abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Tex
         healthBarSprite.setSize(healthBarSpriteWidth, HEALTH_BAR_SPRITE_HEIGHT)
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
         sprite.setPosition(x, y)
-        healthBarSprite.setPosition((sprite.x - ((200 - 32)/2)), y)
+        healthBarSprite.setPosition((sprite.x - ((200 - 32) / 2)), y)
 
         healthBarSprite.setOrigin(healthBarSprite.width / 2f, healthBarSprite.height / 2f)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
@@ -34,9 +36,9 @@ abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Tex
         bounds.setPosition(x, y)
     }
 
-    fun reduceHealthBarWidth(){
+    fun reduceHealthBarWidth() {
         counter -= 2
-        if(healthBarSpriteWidth >= 4)  healthBarSpriteWidth -= 5f else healthBarSpriteWidth = 0f
+        if (healthBarSpriteWidth >= 4) healthBarSpriteWidth -= 5f else healthBarSpriteWidth = 0f
         healthBarSprite.x = sprite.x - counter
         healthBarSprite.setSize(healthBarSpriteWidth, HEALTH_BAR_SPRITE_HEIGHT)
     }
