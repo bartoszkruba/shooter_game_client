@@ -49,10 +49,15 @@ function calculateProjectilePositions(delta) {
 }
 
 function moveAgent(agent, x, y) {
-    x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH,
-        constants.MAP_WIDTH - constants.PLAYER_SPRITE_WIDTH - constants.WALL_SPRITE_WIDTH);
-    y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT,
-        constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT);
+    x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH + constants.PLAYER_SPRITE_WIDTH / 2,
+        constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - constants.PLAYER_SPRITE_WIDTH / 2);
+
+    console.log("max width: " + constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - constants.PLAYER_SPRITE_WIDTH / 2);
+
+    y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT + constants.PLAYER_SPRITE_HEIGHT / 2,
+        constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT / 2);
+
+    console.log("max height: " + constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT / 2);
 
     Matter.Body.setPosition(agent.bounds, {x, y})
 }
