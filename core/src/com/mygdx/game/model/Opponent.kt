@@ -10,8 +10,9 @@ class Opponent(
         ySpeed: Float = 0f,
         texture: Texture,
         id: String,
+        healthBarTexture: Texture,
         weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, texture, weapon, facingDirectionAngle, id) {
+        facingDirectionAngle: Float = 0f) : Agent(x, y, texture, healthBarTexture, weapon, facingDirectionAngle, id) {
 
     val speed: Vector2
 

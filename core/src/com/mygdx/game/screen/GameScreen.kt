@@ -34,6 +34,7 @@ class GameScreen(
 
     val playerTexture = Texture(Gdx.files.internal("images/player_placeholder.png"))
     val projectileTexture = Texture(Gdx.files.internal("images/standard_projectile.jpg"))
+    val healthBarTexture = Texture(Gdx.files.internal("images/healthBar3.png"))
 
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Opponent>()
@@ -91,7 +92,7 @@ class GameScreen(
         if (::player.isInitialized) {
             batch.use {
                 drawProjectiles(it)
-                drawOpponents(it)
+                //drawOpponents(it)
                 drawPlayer(it, player)
                 drawWalls(it)
                 for (value in opponents.values) {
@@ -103,7 +104,7 @@ class GameScreen(
     }
 
     private fun updateServerRotation() {
-        if (forIf) {
+        if(forIf) {
             forIf = false
             val b = true
             val thread = Thread {
@@ -128,7 +129,7 @@ class GameScreen(
             data.put("Mouse", true)
             socket.emit("mouseStart", data)
         }
-        if (wWasReleased) {
+        if (wWasReleased){
             val data = JSONObject()
             data.put("Mouse", true)
             socket.emit("mouseStop", data)
@@ -165,7 +166,7 @@ class GameScreen(
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
-        if (Gdx.input.isKeyJustPressed(keyNumber)) {
+        if (Gdx.input.isKeyJustPressed(keyNumber)){
             val data = JSONObject()
             data.put(keyLetter, true)
             socket.emit("startKey", data)
@@ -183,12 +184,14 @@ class GameScreen(
     fun configSocketEvents() {
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
+            player = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
+                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, healthBarTexture)
         }
                 .on("socketID") { data ->
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, playerTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, playerTexture, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -397,7 +400,10 @@ class GameScreen(
         ghostProjectiles.add(projectile)
     }
 
-    private fun drawPlayer(batch: Batch, agent: Agent) = agent.sprite.draw(batch)
+    private fun drawPlayer(batch: Batch, agent: Agent) {
+        agent.sprite.draw(batch)
+        agent.healthBarSprite.draw(batch)
+    }
 
     private fun drawProjectiles(batch: Batch) {
         clientProjectiles.values.forEach { it.sprite.draw(batch) }
@@ -408,6 +414,16 @@ class GameScreen(
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].sprite.draw(batch)
+    //private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
+
+    fun generateRandomOpponent(): Opponent {
+        val minPosition = Vector2(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
+        val maxPosition = Vector2(
+                MAP_WIDTH - PLAYER_SPRITE_WIDTH - WALL_SPRITE_WIDTH,
+                MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
+
+        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
+                , 0f, 0f, playerTexture, healthBarTexture)
     }
 
     private fun generateWalls() {
