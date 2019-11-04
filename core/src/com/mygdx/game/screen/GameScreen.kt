@@ -95,9 +95,8 @@ class GameScreen(
                 //drawOpponents(it)
                 drawPlayer(it, player)
                 drawWalls(it)
-                for (value in opponents.values) {
-                    drawPlayer(it, value)
-                }
+                drawOpponents(it)
+
             }
         }
         ghostProjectiles.end()
@@ -190,7 +189,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, playerTexture, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, playerTexture, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -236,15 +235,18 @@ class GameScreen(
                     for (i in 0 until agents.length()) {
                         val agent = agents[i] as JSONObject
                         val id = agent.getString("id")
+                        val isDead = agent.getBoolean("isDead")
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
-                        if (id == player.id) {
-                            player.setPosition(x, y)
+                        if (id == player.id ) {
+                            if (!isDead) player.setPosition(x, y) else player.isDead = true
                         } else {
                             if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, isDead, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
+                                println(opponents[id]?.isDead)
                                 opponents[id]?.setPosition(x, y)
+                                opponents[id]?.isDead = isDead
                             }
                         }
                     }
@@ -404,8 +406,13 @@ class GameScreen(
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
-        agent.sprite.draw(batch)
-        agent.healthBarSprite.draw(batch)
+        if (!player.isDead && player.healthBarSpriteWidth >= 10) {
+            agent.sprite.draw(batch)
+            agent.healthBarSprite.draw(batch)
+        }else {
+            val data = JSONObject()
+            data.put("isDead", true)
+            socket.emit("isDead", data)}
     }
 
     private fun drawProjectiles(batch: Batch) {
@@ -413,7 +420,15 @@ class GameScreen(
         for (i in 0 until ghostProjectiles.size) ghostProjectiles[i].sprite.draw(batch)
     }
 
-    private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
+    private fun drawOpponents(batch: Batch) {
+        opponents.values.forEach {
+            if (!it.isDead) {
+                it.healthBarSprite.draw(batch);
+                it.sprite.draw(batch)
+               }
+        }
+    }
+
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
@@ -426,8 +441,8 @@ class GameScreen(
                 MAP_WIDTH - PLAYER_SPRITE_WIDTH - WALL_SPRITE_WIDTH,
                 MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
 
-        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
-                , 0f, 0f, playerTexture, player.id, healthBarTexture)
+        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y),
+                false, 0f, 0f, playerTexture, player.id, healthBarTexture)
     }
 
 

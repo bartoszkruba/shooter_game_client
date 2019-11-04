@@ -5,13 +5,13 @@ import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Rectangle
 import com.mygdx.game.settings.*
 
-abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Texture, var weapon: Weapon,
+abstract class Agent(x: Float, y: Float, var isDead: Boolean, texture: Texture, healthBarTexture: Texture, var weapon: Weapon,
                      var facingDirectionAngle: Float, var id: String) {
     var sprite: Sprite
     var healthBarSprite: Sprite
     val bounds: Rectangle
     var counter = 85f
-    var healthBarSpriteWidth = 182f
+    var healthBarSpriteWidth = 220f
 
     init {
         bounds = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
@@ -35,8 +35,8 @@ abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Tex
     }
 
     fun reduceHealthBarWidth(){
-        counter -= 2
-        if(healthBarSpriteWidth >= 4)  healthBarSpriteWidth -= 5f else healthBarSpriteWidth = 0f
+        counter -= 20
+        if(healthBarSpriteWidth >= 10)  healthBarSpriteWidth -= 50f else isDead = true
         healthBarSprite.x = sprite.x - counter
         healthBarSprite.setSize(healthBarSpriteWidth, HEALTH_BAR_SPRITE_HEIGHT)
     }

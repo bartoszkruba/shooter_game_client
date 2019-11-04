@@ -113,6 +113,16 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('isDead', (data) => {
+        let isDead = Object.values(data)[0];
+         //console.log("dead? " + Object.values(data)[0]);
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === socket.id) {
+                agents[i].isDead =  isDead;
+            }
+        }
+    });
+
     socket.on('mouseStop', (data) => {
         // console.log(Object.keys(data)[0] + " just released")
         for (let i = 0; i < agents.length; i++) {
@@ -142,7 +152,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, new Pistol(), 0, socket.id);
+    const agent = new Agent(500, 500, false, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
@@ -162,10 +172,10 @@ async function gameDataLoop(socket) {
         const agentData = [];
 
         for (agent of agents) {
-
             agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
+                isDead: agent.isDead,
                 id: agent.id
             })
         }

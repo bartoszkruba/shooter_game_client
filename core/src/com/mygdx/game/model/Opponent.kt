@@ -6,13 +6,14 @@ import com.badlogic.gdx.math.Vector2
 class Opponent(
         x: Float,
         y: Float,
+        dead: Boolean,
         xSpeed: Float = 0f,
         ySpeed: Float = 0f,
         texture: Texture,
         id: String,
         healthBarTexture: Texture,
         weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, texture, healthBarTexture, weapon, facingDirectionAngle, id) {
+        facingDirectionAngle: Float = 0f) : Agent(x, y, false, texture, healthBarTexture, weapon, facingDirectionAngle, id) {
 
     val speed: Vector2
 
