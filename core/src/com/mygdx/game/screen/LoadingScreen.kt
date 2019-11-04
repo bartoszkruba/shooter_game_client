@@ -3,6 +3,9 @@ package com.mygdx.game.screen
 import com.mygdx.game.Game
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.assets.loaders.FileHandleResolver
+import com.badlogic.gdx.assets.loaders.MusicLoader
+import com.badlogic.gdx.audio.Music
 import com.mygdx.game.assets.TextureAtlasAssets
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -13,7 +16,7 @@ import com.mygdx.game.assets.load
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.badlogic.gdx.graphics.Texture
-
+import ktx.assets.load
 
 
 class LoadingScreen(private val game: Game,
@@ -26,8 +29,8 @@ class LoadingScreen(private val game: Game,
     override fun show() {
         //TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/leprechaun.png", Texture::class.java)
-        assets.load("images/wall.png", Texture::class.java)
-        assets.load("images/standard_projectile.jpg", Texture::class.java)
+        assets.load("images/brickwall2.jpg", Texture::class.java)
+        assets.load("images/projectile.png", Texture::class.java)
         assets.load("images/healthBar3.png", Texture::class.java)
     }
 

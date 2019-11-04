@@ -3,6 +3,8 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Music
+import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -34,10 +36,9 @@ class GameScreen(
         private val camera: OrthographicCamera) : KtxScreen {
 
     private val playerTexture:Texture = assets.get("images/leprechaun.png", Texture::class.java)
-    private val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
-    private val wallTexture = assets.get("images/wall.png", Texture::class.java)
+    private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
+    private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
-
 
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Opponent>()
