@@ -5,7 +5,8 @@ import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Rectangle
 import com.mygdx.game.settings.*
 
-abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Texture, var weapon: Weapon, var facingDirectionAngle: Float) {
+abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Texture, var weapon: Weapon,
+                     var facingDirectionAngle: Float, var id: String) {
     var sprite: Sprite
     var healthBarSprite: Sprite
     val bounds: Rectangle

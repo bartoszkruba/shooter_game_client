@@ -165,6 +165,7 @@ class GameScreen(
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
         if (Gdx.input.isKeyJustPressed(keyNumber)){
+        player.reduceHealthBarWidth()
             val data = JSONObject()
             data.put(keyLetter, true)
             socket.emit("startKey", data)
@@ -182,8 +183,7 @@ class GameScreen(
     fun configSocketEvents() {
         socket.on(Socket.EVENT_CONNECT) {
             Gdx.app.log("SocketIO", "Connected")
-            player = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-                    WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, healthBarTexture)
+
         }
                 .on("socketID") { data ->
                     val obj: JSONObject = data[0] as JSONObject
@@ -241,7 +241,7 @@ class GameScreen(
                             player.setPosition(x, y)
                         } else {
                             if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id)
+                                opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
                                 opponents[id]?.setPosition(x, y)
                             }
@@ -416,6 +416,7 @@ class GameScreen(
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].sprite.draw(batch)
+    }
     //private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 
     fun generateRandomOpponent(): Opponent {
@@ -425,10 +426,11 @@ class GameScreen(
                 MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
 
         return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y)
-                , 0f, 0f, playerTexture, healthBarTexture)
+                , 0f, 0f, playerTexture, player.id, healthBarTexture)
     }
 
-    private fun generateWalls() {
+
+    fun generateWalls() {
         for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
             walls.add(Wall(0f, i.toFloat()))
             walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat()))
@@ -495,4 +497,5 @@ class GameScreen(
 
         return edgePoint
     }
+
 }
