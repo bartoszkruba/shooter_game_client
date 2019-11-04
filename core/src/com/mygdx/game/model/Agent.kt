@@ -9,7 +9,7 @@ abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Tex
     var sprite: Sprite
     var healthBarSprite: Sprite
     val bounds: Rectangle
-    var counter = 75f
+    var counter = 85f
     var healthBarSpriteWidth = 182f
 
     init {
@@ -22,7 +22,7 @@ abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Tex
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
 
         sprite.setPosition(x, y)
-        healthBarSprite.setPosition((sprite.x - ((183 - 32)/2)), y)
+        healthBarSprite.setPosition((sprite.x - ((200 - 32)/2)), y)
 
         healthBarSprite.setOrigin(healthBarSprite.width / 2f, healthBarSprite.height / 2f)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
@@ -34,7 +34,7 @@ abstract class Agent(x: Float, y: Float, texture: Texture, healthBarTexture: Tex
         bounds.setPosition(x, y)
     }
 
-    fun setHealthBarWidth(){
+    fun reduceHealthBarWidth(){
         counter -= 2
         if(healthBarSpriteWidth >= 4)  healthBarSpriteWidth -= 5f else healthBarSpriteWidth = 0f
         healthBarSprite.x = sprite.x - counter

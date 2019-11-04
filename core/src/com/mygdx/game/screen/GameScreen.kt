@@ -309,6 +309,7 @@ class GameScreen(
                     projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
                 // todo should check projectile type
                 pistolProjectilePool.free(projectile as PistolProjectile)
+                player.reduceHealthBarWidth()
                 iterator.remove()
                 return
             }
