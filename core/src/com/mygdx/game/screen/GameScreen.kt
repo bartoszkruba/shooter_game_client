@@ -39,7 +39,7 @@ class GameScreen(
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
-
+    private val music = assets.get("music/music.wav", Music::class.java)
     private lateinit var socket: Socket
     private val opponents = HashMap<String, Opponent>()
     private var timer: Float = 0.0f
@@ -62,6 +62,8 @@ class GameScreen(
 
     init {
         generateWalls()
+        music.isLooping=true
+        music.play()
     }
 
     private var pressedKeys = 0
