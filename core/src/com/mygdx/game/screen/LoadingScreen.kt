@@ -6,6 +6,7 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.assets.loaders.FileHandleResolver
 import com.badlogic.gdx.assets.loaders.MusicLoader
 import com.badlogic.gdx.audio.Music
+import com.badlogic.gdx.audio.Sound
 import com.mygdx.game.assets.TextureAtlasAssets
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -32,6 +33,7 @@ class LoadingScreen(private val game: Game,
         assets.load("images/brickwall2.jpg", Texture::class.java)
         assets.load("images/projectile.png", Texture::class.java)
         assets.load("images/healthBar3.png", Texture::class.java)
+        assets.load("sounds/pistol_shot.wav", Sound::class.java)
         assets.load("music/music.wav", Music::class.java)
     }
 

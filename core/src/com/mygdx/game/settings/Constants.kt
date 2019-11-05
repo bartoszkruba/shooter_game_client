@@ -3,11 +3,11 @@ package com.mygdx.game.settings
 const val WINDOW_WIDTH = 1920f
 const val WINDOW_HEIGHT = 1080f
 
-const val MAP_WIDTH = 6000
-const val MAP_HEIGHT = 4000
+const val MAP_WIDTH = 6400
+const val MAP_HEIGHT = 3600
 
-const val PISTOL_RELOAD_TIME = 50L
-const val PISTOL_BULLET_SPEED = 1500f
+const val PISTOL_RELOAD_TIME = 400L
+const val PISTOL_BULLET_SPEED = 1000f
 const val PLAYER_MOVEMENT_SPEED = 200
 
 const val PLAYER_SPRITE_WIDTH = 42f
