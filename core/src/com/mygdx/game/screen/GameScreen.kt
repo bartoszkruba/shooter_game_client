@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
+import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -75,6 +76,9 @@ class GameScreen(
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
+
+        Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if (::player.isInitialized) {
             updateServerRotation()
