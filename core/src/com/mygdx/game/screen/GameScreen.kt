@@ -254,7 +254,8 @@ class GameScreen(
                             } else {
                                 opponents[id]?.setPosition(x, y)
                                 opponents[id]?.isDead = isDead
-                                opponents[id]?.currentHealth = currentHealth
+
+                                opponents[id]?.setHealthBar(currentHealth, x, y)
                                 //println(opponents[id]?.currentHealth)
                             }
                         }

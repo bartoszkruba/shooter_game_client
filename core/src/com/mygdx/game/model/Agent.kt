@@ -20,6 +20,7 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
 
         healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
+
         sprite.setPosition(x, y)
         healthBarSprite.setPosition((sprite.x - ((currentHealth - 32)/2)), y)
 
@@ -27,8 +28,9 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
     }
 
-    fun setHealtBar(){
-
+    fun setHealthBar(currentHealth: Float, x: Float, y: Float){
+        healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
+        healthBarSprite.setPosition((sprite.x - ((currentHealth - 32)/2)), y)
     }
 
     fun setPosition(x: Float, y: Float) {

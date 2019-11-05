@@ -1,7 +1,7 @@
 package com.mygdx.game.settings
 
-const val WINDOW_WIDTH = 680f
-const val WINDOW_HEIGHT = 520f
+const val WINDOW_WIDTH = 580f
+const val WINDOW_HEIGHT = 420f
 
 const val MAP_WIDTH = 6000
 const val MAP_HEIGHT = 4000
