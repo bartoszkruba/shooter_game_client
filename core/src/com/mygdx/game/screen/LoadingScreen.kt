@@ -34,6 +34,7 @@ class LoadingScreen(private val game: Game,
         assets.load("images/projectile.png", Texture::class.java)
         assets.load("images/healthBar3.png", Texture::class.java)
         assets.load("sounds/pistol_shot.wav", Sound::class.java)
+        assets.load("sounds/reload_sound.mp3", Sound::class.java)
         assets.load("music/music.wav", Music::class.java)
     }
 

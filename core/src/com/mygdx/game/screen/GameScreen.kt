@@ -43,6 +43,9 @@ class GameScreen(
     private val music = assets.get("music/music.wav", Music::class.java)
 
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
+    private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
+
+    private var shouldPlayReload = false
 
     private lateinit var socket: Socket
     private val opponents = ConcurrentHashMap<String, Opponent>()
@@ -93,6 +96,10 @@ class GameScreen(
                 drawOpponents(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
+                if (shouldPlayReload) {
+                    reloadSoundEffect.play()
+                    shouldPlayReload = false
+                }
                 drawWalls(it)
             }
         }
@@ -223,7 +230,9 @@ class GameScreen(
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             player.setPosition(x, y)
-                            player.weapon.bulletsInChamber = agent.getInt("bulletsLeft")
+                            val bulletsLeft = agent.getInt("bulletsLeft")
+                            if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
+                            player.weapon.bulletsInChamber = bulletsLeft
                         } else {
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
