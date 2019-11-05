@@ -69,6 +69,13 @@ io.on('connection', (socket) => {
                     }
                 }
                 break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = true;
+                    }
+                }
+                break;
         }
         // console.log(Object.keys(data)[0] + " key is pressed down")
     });
@@ -106,6 +113,13 @@ io.on('connection', (socket) => {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = false;
                         setVelocity(agents[i]);
+                    }
+                }
+                break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = false;
                     }
                 }
                 break;

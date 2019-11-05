@@ -49,6 +49,7 @@ class GameScreen(
     private var aWasPressed = false
     private var dWasPressed = false
     private var sWasPressed = false
+    private var rWasPressed = false
     private var mouseWasPressed = false
     private var forIf = true
 
@@ -137,20 +138,23 @@ class GameScreen(
     }
 
     private fun updateServerMoves() {
-        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W);
-        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A);
-        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S);
-        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D);
+        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W)
+        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A)
+        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S)
+        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D)
+        val isRPressed = Gdx.input.isKeyPressed(Input.Keys.R)
 
-        val wWasReleased = wWasPressed && !isWPressed;
-        val aWasReleased = aWasPressed && !isAPressed;
-        val sWasReleased = sWasPressed && !isSPressed;
-        val dWasReleased = dWasPressed && !isDPressed;
+        val wWasReleased = wWasPressed && !isWPressed
+        val aWasReleased = aWasPressed && !isAPressed
+        val sWasReleased = sWasPressed && !isSPressed
+        val dWasReleased = dWasPressed && !isDPressed
+        val rWasReleased = rWasPressed && !isRPressed
 
-        wWasPressed = isWPressed;
-        aWasPressed = isAPressed;
-        sWasPressed = isSPressed;
-        dWasPressed = isDPressed;
+        wWasPressed = isWPressed
+        aWasPressed = isAPressed
+        sWasPressed = isSPressed
+        dWasPressed = isDPressed
+        rWasPressed = isRPressed
 
         checkKeyJustPressed(Input.Keys.W, "W")
         checkKeyJustReleased(wWasReleased, "W")
@@ -163,6 +167,9 @@ class GameScreen(
 
         checkKeyJustPressed(Input.Keys.D, "D")
         checkKeyJustReleased(dWasReleased, "D")
+
+        checkKeyJustPressed(Input.Keys.R, "R")
+        checkKeyJustReleased(rWasReleased, "R")
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {

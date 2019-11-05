@@ -40,7 +40,7 @@ class LoadingScreen(private val game: Game,
         batch.projectionMatrix = camera.combined
 
         batch.use {
-            font.draw(it, "Welcome to... will someone name this game already!?! ", 100f, 150f)
+            font.draw(it, "Welcome to Leprechaun Nuclear Invasion 420 (GOTY edition)", 100f, 150f)
             if (assets.isFinished) {
                 font.draw(it, "Tap anywhere to begin!", 100f, 100f)
             } else {

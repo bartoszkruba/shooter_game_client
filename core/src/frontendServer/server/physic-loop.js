@@ -65,6 +65,12 @@ function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
 }
 
 function checkControls(agent, delta, broadcastNewProjectile) {
+
+    if (agent.isRPressed) {
+        agent.weapon.reload();
+        return
+    }
+
     if (agent.isLMPressed && agent.canShoot()) {
         agent.shoot();
         const xCentre = agent.bounds.position.x;
