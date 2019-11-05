@@ -37,9 +37,4 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
         healthBarSprite.setPosition((x - ((currentHealth - 45)/2)), y)
         bounds.setPosition(x, y)
     }
-
-    fun takeDamage(currentHealth: Float){
-        if(currentHealth >= 10f)  this.currentHealth -= 10f else isDead = true
-        healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
-    }
 }

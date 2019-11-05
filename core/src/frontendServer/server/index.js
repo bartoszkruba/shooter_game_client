@@ -104,6 +104,17 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('takeDamage', (data) => {
+        let currentHealth = Object.values(data)[0];
+        let id = Object.values(data)[1];
+        console.log(data)
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === id) {
+                agents[i].takeDamage(currentHealth)
+            }
+        }
+    });
+
     socket.on('currentPlayerHealth', (data) => {
         let currentHealth = Object.values(data)[0];
         let id = Object.values(data)[1];

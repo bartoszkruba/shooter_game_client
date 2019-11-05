@@ -269,10 +269,12 @@ class GameScreen(
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
+                                //println(opponents[id]?.currentHealth)
                                 opponents[id]?.setPosition(x, y)
                                 opponents[id]?.setHealthBar(currentHealth, x, y)
                                 opponents[id]?.isDead = isDead
                                 opponents[id]?.currentHealth = currentHealth
+                                opponents[id]?.healthBarSprite!!.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
                             }
                         }
                     }
@@ -404,7 +406,11 @@ class GameScreen(
                         // todo should check projectile type
                         pistolProjectilePool.free(entry.value as PistolProjectile)
                         //println(opponent.value.currentHealth)
-                        opponent.value.takeDamage(opponent.value.currentHealth)
+                        //opponent.value.takeDamage(opponent.value.currentHealth)
+                        val data = JSONObject()
+                        data.put("currentHealth", opponent.value.currentHealth)
+                        data.put("id", opponent.value.id)
+                        socket.emit("takeDamage", data)
                         projectiles.remove(entry.key)
                         removed = true
                     }

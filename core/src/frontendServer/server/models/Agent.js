@@ -27,6 +27,12 @@ class Agent extends BaseObject {
     shoot() {
         this.weapon.shoot();
     }
+
+    takeDamage(currentHealth){
+        if(currentHealth >= 50) {
+            this.currentHealth =  this.currentHealth - 50;
+        } else {this.isDead = true}
+    }
 }
 
 module.exports = Agent;
