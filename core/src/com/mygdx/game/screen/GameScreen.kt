@@ -56,7 +56,6 @@ class GameScreen(
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
     val walls = Array<Wall>()
-    val ghostProjectiles = SnapshotArray<Projectile>()
 
     val projectiles = ConcurrentHashMap<String, Projectile>()
 
@@ -82,7 +81,6 @@ class GameScreen(
         camera.update()
         batch.projectionMatrix = camera.combined
 
-        ghostProjectiles.begin()
         if (::player.isInitialized) {
             batch.use {
                 drawProjectiles(it)
@@ -90,10 +88,19 @@ class GameScreen(
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 drawWalls(it)
+            }
+        }
+
+        val uiMatrix = camera.combined.cpy();
+        uiMatrix.setToOrtho2D(0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        batch.projectionMatrix = uiMatrix
+
+        if (::player.isInitialized) {
+            batch.use {
                 drawMagazineInfo(it)
             }
         }
-        ghostProjectiles.end()
     }
 
     private fun updateServerRotation() {
@@ -397,7 +404,9 @@ class GameScreen(
     }
 
     private fun drawMagazineInfo(batch: Batch) {
-        font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER", 200f, 200f)
+        font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
+                WINDOW_WIDTH - 150f,
+                WINDOW_HEIGHT - 55f)
     }
 
     fun generateWalls() {
