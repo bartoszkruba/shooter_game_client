@@ -8,7 +8,6 @@ class Projectile extends BaseObject {
         this.velocity = {};
         this.velocity.x = xSpeed;
         this.velocity.y = ySpeed;
-        this.type = type;
         this.speed = speed;
     }
 }
