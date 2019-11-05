@@ -294,7 +294,20 @@ class GameScreen(
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
         if (angle < 0) angle += 360f
-        player.facingDirectionAngle = angle
+        if (angle != player.facingDirectionAngle) {
+            player.facingDirectionAngle = angle
+           when {
+               // TODO: Add actual animation-setters
+                angle >= 337.5 || angle < 22.5 -> println("LOOKING: RIGHT")
+                angle >= 22.5 && angle < 67.5 -> println("LOOKING UP-RIGHT")
+                angle >= 67.5 && angle < 112.5 -> println("LOOKING UP")
+                angle >= 112.5 && angle < 157.5 -> println("LOOKING UP-LEFT")
+                angle >= 157.5 && angle < 202.5 -> println("LOOKING LEFT")
+                angle >= 202.5 && angle < 247.5 -> println("LOOKING DOWN-LEFT")
+                angle >= 247.5 && angle < 292.5 -> println("LOOKING DOWN")
+                angle >= 292.5 && angle < 337.5 -> println("LOOKING DOWN-RIGHT")
+            }
+        }
     }
 
     private fun checkControls(delta: Float) {
