@@ -2,8 +2,10 @@ package com.mygdx.game.model
 
 import com.badlogic.gdx.utils.TimeUtils
 
-abstract class Weapon(private val reloadTime: Long) {
+abstract class Weapon(private val reloadTime: Long, maxBulletsInChamber: Int) {
     private var lastShoot = 0L
+
+    var bulletsInChamber = maxBulletsInChamber
 
     fun canShoot() = TimeUtils.millis() - lastShoot > reloadTime
 

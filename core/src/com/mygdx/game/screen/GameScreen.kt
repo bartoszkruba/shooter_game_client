@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
+import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -33,15 +34,19 @@ class GameScreen(
         val game: Game,
         private val batch: SpriteBatch,
         private val assets: AssetManager,
-        private val camera: OrthographicCamera) : KtxScreen {
+        private val camera: OrthographicCamera,
+        private val font: BitmapFont) : KtxScreen {
 
-    private val playerTexture:Texture = assets.get("images/player.png", Texture::class.java)
+    private val playerTexture: Texture = assets.get("images/player.png", Texture::class.java)
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val music = assets.get("music/music.wav", Music::class.java)
 
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
+    private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
+
+    private var shouldPlayReload = false
 
     private lateinit var socket: Socket
     private val opponents = ConcurrentHashMap<String, Opponent>()
@@ -50,6 +55,7 @@ class GameScreen(
     private var aWasPressed = false
     private var dWasPressed = false
     private var sWasPressed = false
+    private var rWasPressed = false
     private var mouseWasPressed = false
     private var forIf = true
 
@@ -57,19 +63,22 @@ class GameScreen(
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
     val walls = Array<Wall>()
-    val ghostProjectiles = SnapshotArray<Projectile>()
 
     val projectiles = ConcurrentHashMap<String, Projectile>()
 
     init {
         generateWalls()
-        music.isLooping=true
+        music.isLooping = true
+        music.volume = 0f
         music.play()
     }
 
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
+
+        Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if (::player.isInitialized) {
             updateServerRotation()
@@ -85,17 +94,30 @@ class GameScreen(
         camera.update()
         batch.projectionMatrix = camera.combined
 
-        ghostProjectiles.begin()
         if (::player.isInitialized) {
             batch.use {
                 drawProjectiles(it)
                 drawOpponents(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
+                if (shouldPlayReload) {
+                    reloadSoundEffect.play()
+                    shouldPlayReload = false
+                }
                 drawWalls(it)
             }
         }
-        ghostProjectiles.end()
+
+        val uiMatrix = camera.combined.cpy();
+        uiMatrix.setToOrtho2D(0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        batch.projectionMatrix = uiMatrix
+
+        if (::player.isInitialized) {
+            batch.use {
+                drawMagazineInfo(it)
+            }
+        }
     }
 
     private fun updateServerRotation() {
@@ -132,20 +154,23 @@ class GameScreen(
     }
 
     private fun updateServerMoves() {
-        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W);
-        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A);
-        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S);
-        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D);
+        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W)
+        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A)
+        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S)
+        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D)
+        val isRPressed = Gdx.input.isKeyPressed(Input.Keys.R)
 
-        val wWasReleased = wWasPressed && !isWPressed;
-        val aWasReleased = aWasPressed && !isAPressed;
-        val sWasReleased = sWasPressed && !isSPressed;
-        val dWasReleased = dWasPressed && !isDPressed;
+        val wWasReleased = wWasPressed && !isWPressed
+        val aWasReleased = aWasPressed && !isAPressed
+        val sWasReleased = sWasPressed && !isSPressed
+        val dWasReleased = dWasPressed && !isDPressed
+        val rWasReleased = rWasPressed && !isRPressed
 
-        wWasPressed = isWPressed;
-        aWasPressed = isAPressed;
-        sWasPressed = isSPressed;
-        dWasPressed = isDPressed;
+        wWasPressed = isWPressed
+        aWasPressed = isAPressed
+        sWasPressed = isSPressed
+        dWasPressed = isDPressed
+        rWasPressed = isRPressed
 
         checkKeyJustPressed(Input.Keys.W, "W")
         checkKeyJustReleased(wWasReleased, "W")
@@ -158,6 +183,9 @@ class GameScreen(
 
         checkKeyJustPressed(Input.Keys.D, "D")
         checkKeyJustReleased(dWasReleased, "D")
+
+        checkKeyJustPressed(Input.Keys.R, "R")
+        checkKeyJustReleased(rWasReleased, "R")
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
@@ -206,6 +234,9 @@ class GameScreen(
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             player.setPosition(x, y)
+                            val bulletsLeft = agent.getInt("bulletsLeft")
+                            if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
+                            player.weapon.bulletsInChamber = bulletsLeft
                         } else {
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
@@ -298,7 +329,6 @@ class GameScreen(
     }
 
     private fun checkControls(delta: Float) {
-
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
         pressedKeys = 0
@@ -395,6 +425,18 @@ class GameScreen(
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
+    }
+
+    private fun drawMagazineInfo(batch: Batch) {
+        if (player.weapon.bulletsInChamber != -1) {
+            font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
+                    WINDOW_WIDTH - 150f,
+                    WINDOW_HEIGHT - 55f)
+        } else {
+            font.draw(batch, "Reloading...",
+                    WINDOW_WIDTH - 150f,
+                    WINDOW_HEIGHT - 55f)
+        }
     }
 
     fun generateWalls() {

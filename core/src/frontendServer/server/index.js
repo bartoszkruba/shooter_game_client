@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -49,7 +49,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -57,7 +57,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -65,7 +65,14 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
+                    }
+                }
+                break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = true;
                     }
                 }
                 break;
@@ -81,7 +88,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -89,7 +96,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -97,7 +104,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -105,7 +112,14 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
+                    }
+                }
+                break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = false;
                     }
                 }
                 break;
@@ -183,7 +197,8 @@ async function gameDataLoop(socket) {
                 y: agent.bounds.bounds.min.y,
                 xVelocity: agent.velocity.x,
                 yVelocity: agent.velocity.y,
-                id: agent.id
+                id: agent.id,
+                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1
             })
         }
 

@@ -34,6 +34,7 @@ class LoadingScreen(private val game: Game,
         assets.load("images/projectile.png", Texture::class.java)
         assets.load("images/healthBar3.png", Texture::class.java)
         assets.load("sounds/pistol_shot.wav", Sound::class.java)
+        assets.load("sounds/reload_sound.mp3", Sound::class.java)
         assets.load("music/music.wav", Music::class.java)
     }
 
@@ -44,7 +45,7 @@ class LoadingScreen(private val game: Game,
         batch.projectionMatrix = camera.combined
 
         batch.use {
-            font.draw(it, "Welcome to... will someone name this game already!?! ", 100f, 150f)
+            font.draw(it, "Welcome to Leprechaun Nuclear Invasion 420 (GOTY edition)", 100f, 150f)
             if (assets.isFinished) {
                 font.draw(it, "Tap anywhere to begin!", 100f, 100f)
             } else {
@@ -53,7 +54,7 @@ class LoadingScreen(private val game: Game,
         }
 
         if (Gdx.input.isTouched && assets.isFinished) {
-            val gameScreen = GameScreen(game, batch, assets, camera)
+            val gameScreen = GameScreen(game, batch, assets, camera, font)
             game.addScreen(gameScreen)
             gameScreen.connectionSocket()
             gameScreen.configSocketEvents()
