@@ -1,3 +1,4 @@
 module.exports = {
-    PISTOL: "PISTOL"
+    PISTOL: "p",
+    MACHINE_GUN: "mg"
 };

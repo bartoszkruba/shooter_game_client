@@ -177,7 +177,8 @@ io.on('connection', (socket) => {
                 y: projectile.bounds.position.y,
                 id: projectile.id,
                 xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y
+                ySpeed: projectile.velocity.y,
+                type: projectile.type
             })
         });
     }
