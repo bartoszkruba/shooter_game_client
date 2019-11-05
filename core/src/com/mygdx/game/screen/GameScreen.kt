@@ -3,6 +3,7 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
@@ -34,10 +35,11 @@ class GameScreen(
         private val assets: AssetManager,
         private val camera: OrthographicCamera) : KtxScreen {
 
-    private val playerTexture: Texture = assets.get("images/leprechaun.png", Texture::class.java)
-    private val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
-    private val wallTexture = assets.get("images/wall.png", Texture::class.java)
+    private val playerTexture:Texture = assets.get("images/player.png", Texture::class.java)
+    private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
+    private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
+    private val music = assets.get("music/music.wav", Music::class.java)
 
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
 
@@ -61,6 +63,8 @@ class GameScreen(
 
     init {
         generateWalls()
+        music.isLooping=true
+        music.play()
     }
 
     private var pressedKeys = 0
