@@ -106,9 +106,12 @@ io.on('connection', (socket) => {
 
     socket.on('currentPlayerHealth', (data) => {
         let currentHealth = Object.values(data)[0];
+        let id = Object.values(data)[1];
+        //console.log(data)
         for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === socket.id) {
+            if (agents[i].id === id) {
                 agents[i].currentHealth =  currentHealth;
+                //console.log(agents[i].currentHealth)
                 //console.log("Player current health: " + agents[i].currentHealth);
             }
         }
@@ -124,10 +127,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('isDead', (data) => {
-        let isDead = Object.values(data)[0];
-         //console.log("dead? " + Object.values(data)[0]);
+        let isDead = Object.values(data)[1];
+        let id = Object.values(data)[0];
+         //console.log("playerId: " + id);
         for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === socket.id) {
+            if (agents[i].id === id) {
                 agents[i].isDead =  isDead;
             }
         }

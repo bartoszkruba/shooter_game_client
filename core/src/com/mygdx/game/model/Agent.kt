@@ -10,7 +10,6 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
     var sprite: Sprite
     var healthBarSprite: Sprite
     val bounds: Rectangle
-    var counter = 85f
 
     init {
         bounds = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
@@ -22,27 +21,25 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
 
         sprite.setPosition(x, y)
-        healthBarSprite.setPosition((sprite.x - ((currentHealth - 32)/2)), y)
+        healthBarSprite.setPosition(x - 85f, y)
 
-        healthBarSprite.setOrigin(healthBarSprite.width / 2f, healthBarSprite.height / 2f)
+        healthBarSprite.setOrigin(0f, healthBarSprite.height / 2f)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
     }
 
     fun setHealthBar(currentHealth: Float, x: Float, y: Float){
         healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
-        healthBarSprite.setPosition((sprite.x - ((currentHealth - 32)/2)), y)
+        healthBarSprite.setPosition((x - ((currentHealth - 45)/2)), y)
     }
 
     fun setPosition(x: Float, y: Float) {
         sprite.setPosition(x, y)
-        healthBarSprite.setPosition((x - counter), y)
+        healthBarSprite.setPosition((x - ((currentHealth - 45)/2)), y)
         bounds.setPosition(x, y)
     }
 
-    fun reduceHealthBarWidth(){
-        counter -= 20
-        if(currentHealth >= 10)  currentHealth -= 50f else isDead = true
-        healthBarSprite.x = sprite.x - counter
+    fun takeDamage(currentHealth: Float){
+        if(currentHealth >= 10f)  this.currentHealth -= 10f else isDead = true
         healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
     }
 }

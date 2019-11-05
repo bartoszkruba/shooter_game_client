@@ -84,6 +84,7 @@ class GameScreen(
             checkControls(delta)
             setCameraPosition()
             updateServerPlayerHealth()
+            updateServerOpponentsHealth()
         }
 
         camera.update()
@@ -103,9 +104,22 @@ class GameScreen(
         ghostProjectiles.end()
     }
 
+
+    private fun updateServerOpponentsHealth() {
+        if (opponents.values.isNotEmpty()) {
+            val data = JSONObject()
+            for (opponent in opponents.values){
+                data.put("health", opponent.currentHealth)
+                data.put("id", opponent.id)
+                socket.emit("currentPlayerHealth", data)
+            }
+        }
+    }
+
     private fun updateServerPlayerHealth() {
         val data = JSONObject()
         data.put("health", player.currentHealth)
+        data.put("id", player.id)
         socket.emit("currentPlayerHealth", data)
     }
 
@@ -173,7 +187,6 @@ class GameScreen(
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
         if (Gdx.input.isKeyJustPressed(keyNumber)){
-        player.reduceHealthBarWidth()
             val data = JSONObject()
             data.put(keyLetter, true)
             socket.emit("startKey", data)
@@ -247,16 +260,19 @@ class GameScreen(
                         val y = agent.getLong("y").toFloat()
                         val currentHealth = agent.getLong("currentHealth").toFloat()
                         if (id == player.id ) {
-                            if (!isDead) player.setPosition(x, y) else player.isDead = true
+                            if (!isDead) {
+                                player.setPosition(x, y)
+                                player.currentHealth = currentHealth
+                                player.setHealthBar(currentHealth, x, y)
+                            } else player.isDead = true
                         } else {
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
                                 opponents[id]?.setPosition(x, y)
-                                opponents[id]?.isDead = isDead
-
                                 opponents[id]?.setHealthBar(currentHealth, x, y)
-                                //println(opponents[id]?.currentHealth)
+                                opponents[id]?.isDead = isDead
+                                opponents[id]?.currentHealth = currentHealth
                             }
                         }
                     }
@@ -387,6 +403,8 @@ class GameScreen(
                     if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds)) {
                         // todo should check projectile type
                         pistolProjectilePool.free(entry.value as PistolProjectile)
+                        //println(opponent.value.currentHealth)
+                        opponent.value.takeDamage(opponent.value.currentHealth)
                         projectiles.remove(entry.key)
                         removed = true
                     }
@@ -422,6 +440,7 @@ class GameScreen(
         }else {
             val data = JSONObject()
             data.put("isDead", true)
+            data.put("id", player.id)
             socket.emit("isDead", data)}
     }
 
@@ -432,11 +451,16 @@ class GameScreen(
 
     private fun drawOpponents(batch: Batch) {
         opponents.values.forEach {
+            //println("id: "+it.id + ", is " + it.isDead)
             if (!it.isDead) {
                 //println("health: ${it.currentHealth}")
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
-            }
+            }else {
+                val data = JSONObject()
+                data.put("isDead", true)
+                data.put("id", it.id)
+                socket.emit("isDead", data)}
         }
     }
 
