@@ -156,13 +156,20 @@ io.on('connection', (socket) => {
     if (!loopAlreadyRunning) {
         gameDataLoop(socket);
         loopAlreadyRunning = true;
+        engine.lastLoop = new Date().getTime();
+        engine.physicLoop(projectile => {
+            socket.broadcast.emit("newProjectile", {
+                x: projectile.bounds.position.x,
+                y: projectile.bounds.position.y,
+                id: projectile.id,
+                xSpeed: projectile.velocity.x,
+                ySpeed: projectile.velocity.y
+            })
+        });
     }
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
-
-engine.lastLoop = new Date().getTime();
-engine.physicLoop();
 
 async function gameDataLoop(socket) {
 
