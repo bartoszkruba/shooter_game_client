@@ -312,6 +312,8 @@ class GameScreen(
 
     private fun checkControls(delta: Float) {
 
+        if (Gdx.input.isKeyPressed(Input.Keys.R)) return
+
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
         pressedKeys = 0
