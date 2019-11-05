@@ -231,7 +231,7 @@ async function gameDataLoop(socket) {
                 y: agent.bounds.bounds.min.y,
                 xVelocity: agent.velocity.x,
                 yVelocity: agent.velocity.y,
-                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1
+                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1,
                 isDead: agent.isDead,
                 currentHealth: agent.currentHealth,
                 id: agent.id

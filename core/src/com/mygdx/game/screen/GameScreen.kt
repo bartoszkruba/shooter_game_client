@@ -249,10 +249,12 @@ class GameScreen(
                         val agent = agents[i] as JSONObject
                         val id = agent.getString("id")
                         val isDead = agent.getBoolean("isDead")
+                        val currentHealth = agent.getLong("currentHealth").toFloat()
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
                         val xVelocity = agent.getLong("xVelocity").toFloat()
                         val yVelocity = agent.getLong("yVelocity").toFloat()
+                        println(currentHealth)
                         if (id == player.id) {
                             if (!isDead) {
                             player.setPosition(x, y)
