@@ -57,8 +57,6 @@ class GameScreen(
 
     val projectiles = ConcurrentHashMap<String, Projectile>()
 
-    var projectilesUpdated = false
-
     init {
         generateWalls()
     }
@@ -66,13 +64,6 @@ class GameScreen(
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
-        if (projectilesUpdated) {
-            for (projectile in ghostProjectiles) {
-                pistolProjectilePool.free(projectile as PistolProjectile)
-            }
-            ghostProjectiles.clear()
-            projectilesUpdated = false
-        }
 
         if (::player.isInitialized) {
             updateServerRotation()
@@ -251,8 +242,28 @@ class GameScreen(
                             }
                         }
                     }
+                }
+                .on("newProjectile") { data ->
+                    val projectile = data[0] as JSONObject
+                    val id = projectile.getString("id")
+                    val x = projectile.getLong("x").toFloat()
+                    val y = projectile.getLong("y").toFloat()
+                    val xSpeed = projectile.getDouble("xSpeed").toFloat()
+                    val ySpeed = projectile.getDouble("ySpeed").toFloat()
 
-                    projectilesUpdated = true
+                    if (projectiles[id] == null) {
+                        projectiles[id] = pistolProjectilePool.obtain().apply {
+                            setPosition(x, y)
+                            velocity.x = xSpeed
+                            velocity.y = ySpeed
+                        }
+                    } else {
+                        projectiles[id]?.apply {
+                            setPosition(x, y)
+                            velocity.x = xSpeed
+                            velocity.y = ySpeed
+                        }
+                    }
                 }
     }
 
@@ -279,19 +290,6 @@ class GameScreen(
     }
 
     private fun checkControls(delta: Float) {
-        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.canShoot()) {
-            player.shoot()
-            val xCentre = player.bounds.x + player.bounds.width / 2f
-            val yCentre = player.bounds.y + player.bounds.height / 2f
-            val edgePoint = projectToRectEdgeRad(player.facingDirectionAngle.toDouble(), player.bounds)
-
-            edgePoint.x += xCentre - player.bounds.width / 2
-            edgePoint.y += yCentre - player.bounds.height / 2
-            spawnPistolProjectile(
-                    edgePoint.x, edgePoint.y,
-                    MathUtils.cosDeg(player.facingDirectionAngle),
-                    MathUtils.sinDeg(player.facingDirectionAngle))
-        }
 
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
@@ -362,20 +360,14 @@ class GameScreen(
                 }
             }
         }
-
-        for (projectile in ghostProjectiles) {
-            projectile.setPosition(
-                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
-                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
-        }
     }
 
-    private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
-        val projectile = pistolProjectilePool.obtain()
-        projectile.setPosition(x, y)
-        projectile.velocity.set(xSpeed, ySpeed)
-        ghostProjectiles.add(projectile)
-    }
+//    private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
+//        val projectile = pistolProjectilePool.obtain()
+//        projectile.setPosition(x, y)
+//        projectile.velocity.set(xSpeed, ySpeed)
+//        ghostProjectiles.add(projectile)
+//    }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
         agent.sprite.draw(batch)
@@ -384,7 +376,6 @@ class GameScreen(
 
     private fun drawProjectiles(batch: Batch) {
         projectiles.values.forEach { it.sprite.draw(batch) }
-        for (i in 0 until ghostProjectiles.size) ghostProjectiles[i].sprite.draw(batch)
     }
 
     private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
@@ -412,47 +403,47 @@ class GameScreen(
             camera.position.y = player.bounds.y
     }
 
-    fun projectToRectEdgeRad(angle: Double, rect: Rectangle): Vector2 {
-
-        var theta = angle * MathUtils.degreesToRadians
-
-        while (theta < -MathUtils.PI) theta += MathUtils.PI2
-        while (theta > MathUtils.PI) theta -= MathUtils.PI2
-
-        val rectAtan = MathUtils.atan2(rect.height, rect.width)
-        val tanTheta = tan(theta)
-        val region: Int
-
-        region = if ((theta > -rectAtan) && (theta <= rectAtan)) 1
-        else if ((theta > rectAtan) && (theta <= (Math.PI - rectAtan))) 2
-        else if ((theta > (Math.PI - rectAtan)) || (theta <= -(Math.PI - rectAtan))) 3
-        else 4
-
-        val edgePoint = Vector2().apply {
-            x = rect.width / 2f
-            y = rect.height / 2f
-        }
-        var xFactor = 1
-        var yFactor = 1
-
-        when (region) {
-            3, 4 -> {
-                xFactor = -1
-                yFactor = -1
-            }
-        }
-
-        when (region) {
-            1, 3 -> {
-                edgePoint.x += xFactor * (rect.width / 2f)
-                edgePoint.y += yFactor * (rect.width / 2f) * tanTheta.toFloat()
-            }
-            else -> {
-                edgePoint.x += xFactor * (rect.height / (2f * tanTheta.toFloat()))
-                edgePoint.y += yFactor * (rect.height / 2f)
-            }
-        }
-
-        return edgePoint
-    }
+//    fun projectToRectEdgeRad(angle: Double, rect: Rectangle): Vector2 {
+//
+//        var theta = angle * MathUtils.degreesToRadians
+//
+//        while (theta < -MathUtils.PI) theta += MathUtils.PI2
+//        while (theta > MathUtils.PI) theta -= MathUtils.PI2
+//
+//        val rectAtan = MathUtils.atan2(rect.height, rect.width)
+//        val tanTheta = tan(theta)
+//        val region: Int
+//
+//        region = if ((theta > -rectAtan) && (theta <= rectAtan)) 1
+//        else if ((theta > rectAtan) && (theta <= (Math.PI - rectAtan))) 2
+//        else if ((theta > (Math.PI - rectAtan)) || (theta <= -(Math.PI - rectAtan))) 3
+//        else 4
+//
+//        val edgePoint = Vector2().apply {
+//            x = rect.width / 2f
+//            y = rect.height / 2f
+//        }
+//        var xFactor = 1
+//        var yFactor = 1
+//
+//        when (region) {
+//            3, 4 -> {
+//                xFactor = -1
+//                yFactor = -1
+//            }
+//        }
+//
+//        when (region) {
+//            1, 3 -> {
+//                edgePoint.x += xFactor * (rect.width / 2f)
+//                edgePoint.y += yFactor * (rect.width / 2f) * tanTheta.toFloat()
+//            }
+//            else -> {
+//                edgePoint.x += xFactor * (rect.height / (2f * tanTheta.toFloat()))
+//                edgePoint.y += yFactor * (rect.height / 2f)
+//            }
+//        }
+//
+//        return edgePoint
+//    }
 }
