@@ -83,6 +83,7 @@ class GameScreen(
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
+            updateServerPlayerHealth()
         }
 
         camera.update()
@@ -100,6 +101,12 @@ class GameScreen(
             }
         }
         ghostProjectiles.end()
+    }
+
+    private fun updateServerPlayerHealth() {
+        val data = JSONObject()
+        data.put("health", player.currentHealth)
+        socket.emit("currentPlayerHealth", data)
     }
 
     private fun updateServerRotation() {
@@ -189,7 +196,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, playerTexture, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTexture, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -238,15 +245,17 @@ class GameScreen(
                         val isDead = agent.getBoolean("isDead")
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
+                        val currentHealth = agent.getLong("currentHealth").toFloat()
                         if (id == player.id ) {
                             if (!isDead) player.setPosition(x, y) else player.isDead = true
                         } else {
                             if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, isDead, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
-                                println(opponents[id]?.isDead)
                                 opponents[id]?.setPosition(x, y)
                                 opponents[id]?.isDead = isDead
+                                opponents[id]?.currentHealth = currentHealth
+                                //println(opponents[id]?.currentHealth)
                             }
                         }
                     }
@@ -406,7 +415,7 @@ class GameScreen(
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
-        if (!player.isDead && player.healthBarSpriteWidth >= 10) {
+        if (!player.isDead && player.currentHealth >= 10) {
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
         }else {
@@ -423,9 +432,10 @@ class GameScreen(
     private fun drawOpponents(batch: Batch) {
         opponents.values.forEach {
             if (!it.isDead) {
+                //println("health: ${it.currentHealth}")
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
-               }
+            }
         }
     }
 
@@ -442,7 +452,7 @@ class GameScreen(
                 MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
 
         return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y),
-                false, 0f, 0f, playerTexture, player.id, healthBarTexture)
+                false, PLAYER_MAX_HEALTH, 0f, 0f, playerTexture, player.id, healthBarTexture)
     }
 
 

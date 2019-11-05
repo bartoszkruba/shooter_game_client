@@ -5,12 +5,13 @@ const BaseObject = require('./BaseObject');
 
 class Agent extends BaseObject {
 
-    constructor(x = 0, y = 0, isDead = false, weapon = new Pistol(), facingDirectionAngle = 0, id) {
+    constructor(x = 0, y = 0, isDead = false, currentHealth = PLAYER_MAX_HEALTH, weapon = new Pistol(), facingDirectionAngle = 0, id) {
         super(id);
         this.bounds = Matter.Bodies.rectangle(x, y, constants.PLAYER_SPRITE_WIDTH, constants.PLAYER_SPRITE_HEIGHT);
         this.weapon = weapon;
         this.facingDirectionAngle = facingDirectionAngle;
         this.isDead = isDead;
+        this.currentHealth = currentHealth;
 
         this.isWPressed = false;
         this.isAPressed = false;
