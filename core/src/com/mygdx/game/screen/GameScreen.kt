@@ -32,7 +32,8 @@ class GameScreen(
         val game: Game,
         private val batch: SpriteBatch,
         private val assets: AssetManager,
-        private val camera: OrthographicCamera) : KtxScreen {
+        private val camera: OrthographicCamera,
+        private val font: BitmapFont) : KtxScreen {
 
     private val playerTexture: Texture = assets.get("images/leprechaun.png", Texture::class.java)
     private val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
@@ -89,6 +90,7 @@ class GameScreen(
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 drawWalls(it)
+                drawMagazineInfo(it)
             }
         }
         ghostProjectiles.end()
@@ -202,6 +204,7 @@ class GameScreen(
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             player.setPosition(x, y)
+                            player.weapon.bulletsInChamber = agent.getInt("bulletsLeft")
                         } else {
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
@@ -391,6 +394,10 @@ class GameScreen(
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
+    }
+
+    private fun drawMagazineInfo(batch: Batch) {
+        font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER", 200f, 200f)
     }
 
     fun generateWalls() {

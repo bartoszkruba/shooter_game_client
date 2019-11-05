@@ -183,7 +183,8 @@ async function gameDataLoop(socket) {
                 y: agent.bounds.bounds.min.y,
                 xVelocity: agent.velocity.x,
                 yVelocity: agent.velocity.y,
-                id: agent.id
+                id: agent.id,
+                bulletsLeft: agent.weapon.bulletsInChamber
             })
         }
 
