@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = true;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -49,7 +49,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = true;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -57,7 +57,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = true;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -65,7 +65,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = true;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = false;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -96,7 +96,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = false;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -104,7 +104,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = false;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -112,7 +112,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = false;
-                        if(!agent.isRPressed) setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -198,7 +198,7 @@ async function gameDataLoop(socket) {
                 xVelocity: agent.velocity.x,
                 yVelocity: agent.velocity.y,
                 id: agent.id,
-                bulletsLeft: agent.weapon.bulletsInChamber
+                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1
             })
         }
 

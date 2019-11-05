@@ -36,7 +36,7 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-    private val playerTexture:Texture = assets.get("images/player.png", Texture::class.java)
+    private val playerTexture: Texture = assets.get("images/player.png", Texture::class.java)
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
@@ -64,7 +64,8 @@ class GameScreen(
 
     init {
         generateWalls()
-        music.isLooping=true
+        music.isLooping = true
+        music.volume = 0f
         music.play()
     }
 
@@ -417,9 +418,15 @@ class GameScreen(
     }
 
     private fun drawMagazineInfo(batch: Batch) {
-        font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
-                WINDOW_WIDTH - 150f,
-                WINDOW_HEIGHT - 55f)
+        if (player.weapon.bulletsInChamber != -1) {
+            font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
+                    WINDOW_WIDTH - 150f,
+                    WINDOW_HEIGHT - 55f)
+        } else {
+            font.draw(batch, "Reloading...",
+                    WINDOW_WIDTH - 150f,
+                    WINDOW_HEIGHT - 55f)
+        }
     }
 
     fun generateWalls() {

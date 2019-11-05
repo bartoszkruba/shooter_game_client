@@ -18,7 +18,9 @@ class Agent extends BaseObject {
         this.isRPressed = false;
         this.isLMPressed = false;
 
-        this.velocity = {x: 0, y: 0}
+        this.velocity = {x: 0, y: 0};
+
+        this.reloadMark = -1;
     }
 
     canShoot() {
