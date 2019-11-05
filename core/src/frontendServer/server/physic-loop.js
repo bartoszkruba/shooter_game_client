@@ -66,16 +66,15 @@ function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
 
 function checkControls(agent, delta, broadcastNewProjectile) {
 
-    if (agent.isRPressed) {
+    if (agent.isRPressed && agent.reloadMark === -1) {
         if (agent.weapon.bulletsInChamber !== agent.weapon.maxBulletsInChamber) {
-            if (agent.reloadMark === -1) agent.reloadMark = new Date().getTime();
-            else if (new Date().getTime() - agent.reloadMark > agent.weapon.magazineRefillTime) {
-                agent.weapon.reload();
-                agent.reloadMark = -1
-            }
+            agent.reloadMark = new Date().getTime();
+            agent.weapon.bulletsInChamber = 0
         }
-        return
-    } else {
+    }
+
+    if (agent.reloadMark !== -1 && new Date().getTime() - agent.reloadMark > agent.weapon.magazineRefillTime) {
+        agent.weapon.reload();
         agent.reloadMark = -1;
     }
 
