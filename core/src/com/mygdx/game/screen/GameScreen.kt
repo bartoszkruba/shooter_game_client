@@ -3,6 +3,7 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -38,6 +39,7 @@ class GameScreen(
     private val wallTexture = assets.get("images/wall.png", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
 
+    private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
 
     private lateinit var socket: Socket
     private val opponents = ConcurrentHashMap<String, Opponent>()
@@ -256,12 +258,14 @@ class GameScreen(
                             setPosition(x, y)
                             velocity.x = xSpeed
                             velocity.y = ySpeed
+                            justFired = true
                         }
                     } else {
                         projectiles[id]?.apply {
                             setPosition(x, y)
                             velocity.x = xSpeed
                             velocity.y = ySpeed
+                            justFired = true
                         }
                     }
                 }
@@ -374,9 +378,14 @@ class GameScreen(
         agent.healthBarSprite.draw(batch)
     }
 
-    private fun drawProjectiles(batch: Batch) {
-        projectiles.values.forEach { it.sprite.draw(batch) }
+    private fun drawProjectiles(batch: Batch) = projectiles.values.forEach {
+        it.sprite.draw(batch)
+        if (it.justFired) {
+            it.justFired = false
+            pistolShotSoundEffect.play()
+        }
     }
+
 
     private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
