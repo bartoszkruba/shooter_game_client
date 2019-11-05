@@ -41,6 +41,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = true;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -48,6 +49,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = true;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -55,6 +57,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = true;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -62,6 +65,14 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = true;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
+                    }
+                }
+                break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = true;
                     }
                 }
                 break;
@@ -77,6 +88,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = false;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -84,6 +96,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = false;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -91,6 +104,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = false;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -98,6 +112,14 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = false;
+                        if (!agent.isRPressed) setVelocity(agents[i]);
+                    }
+                }
+                break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = false;
                     }
                 }
                 break;
@@ -183,13 +205,20 @@ io.on('connection', (socket) => {
     if (!loopAlreadyRunning) {
         gameDataLoop(socket);
         loopAlreadyRunning = true;
+        engine.lastLoop = new Date().getTime();
+        engine.physicLoop(projectile => {
+            socket.broadcast.emit("newProjectile", {
+                x: projectile.bounds.position.x,
+                y: projectile.bounds.position.y,
+                id: projectile.id,
+                xSpeed: projectile.velocity.x,
+                ySpeed: projectile.velocity.y
+            })
+        });
     }
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
-
-engine.lastLoop = new Date().getTime();
-engine.physicLoop();
 
 async function gameDataLoop(socket) {
 
@@ -200,6 +229,9 @@ async function gameDataLoop(socket) {
             agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
+                xVelocity: agent.velocity.x,
+                yVelocity: agent.velocity.y,
+                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1
                 isDead: agent.isDead,
                 currentHealth: agent.currentHealth,
                 id: agent.id
@@ -223,5 +255,25 @@ async function gameDataLoop(socket) {
         await sleep(1000 / constants.UPDATES_PER_SECOND)
     }
 
+}
+
+function setVelocity(agent) {
+    agent.velocity.x = 0;
+    agent.velocity.y = 0;
+
+    let movementSpeed = constants.PLAYER_MOVEMENT_SPEED;
+    let pressedKeys = 0;
+
+    if (agent.isWPressed) pressedKeys++;
+    if (agent.isAPressed) pressedKeys++;
+    if (agent.isSPressed) pressedKeys++;
+    if (agent.isDPressed) pressedKeys++;
+
+    if (pressedKeys > 1) movementSpeed *= 0.7;
+
+    if (agent.isWPressed) agent.velocity.y += movementSpeed;
+    if (agent.isSPressed) agent.velocity.y -= movementSpeed;
+    if (agent.isAPressed) agent.velocity.x -= movementSpeed;
+    if (agent.isDPressed) agent.velocity.x += movementSpeed;
 }
 

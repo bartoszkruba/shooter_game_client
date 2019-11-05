@@ -3,6 +3,9 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Music
+import com.badlogic.gdx.audio.Sound
+import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -31,21 +34,28 @@ class GameScreen(
         val game: Game,
         private val batch: SpriteBatch,
         private val assets: AssetManager,
-        private val camera: OrthographicCamera) : KtxScreen {
+        private val camera: OrthographicCamera,
+        private val font: BitmapFont) : KtxScreen {
 
-    private val playerTexture:Texture = assets.get("images/leprechaun.png", Texture::class.java)
-    private val projectileTexture = assets.get("images/standard_projectile.jpg", Texture::class.java)
-    private val wallTexture = assets.get("images/wall.png", Texture::class.java)
+    private val playerTexture: Texture = assets.get("images/player.png", Texture::class.java)
+    private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
+    private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
+    private val music = assets.get("music/music.wav", Music::class.java)
 
+    private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
+    private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
+
+    private var shouldPlayReload = false
 
     private lateinit var socket: Socket
-    private val opponents = HashMap<String, Opponent>()
+    private val opponents = ConcurrentHashMap<String, Opponent>()
     private var timer: Float = 0.0f
     private var wWasPressed = false
     private var aWasPressed = false
     private var dWasPressed = false
     private var sWasPressed = false
+    private var rWasPressed = false
     private var mouseWasPressed = false
     private var forIf = true
 
@@ -53,26 +63,22 @@ class GameScreen(
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
     val walls = Array<Wall>()
-    val ghostProjectiles = SnapshotArray<Projectile>()
 
     val projectiles = ConcurrentHashMap<String, Projectile>()
 
-    var projectilesUpdated = false
-
     init {
         generateWalls()
+        music.isLooping = true
+        music.volume = 0f
+        music.play()
     }
 
     private var pressedKeys = 0
 
     override fun render(delta: Float) {
-        if (projectilesUpdated) {
-            for (projectile in ghostProjectiles) {
-                pistolProjectilePool.free(projectile as PistolProjectile)
-            }
-            ghostProjectiles.clear()
-            projectilesUpdated = false
-        }
+
+        Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if (::player.isInitialized) {
             updateServerRotation()
@@ -90,18 +96,30 @@ class GameScreen(
         camera.update()
         batch.projectionMatrix = camera.combined
 
-        ghostProjectiles.begin()
         if (::player.isInitialized) {
             batch.use {
                 drawProjectiles(it)
-                //drawOpponents(it)
-                drawPlayer(it, player)
-                drawWalls(it)
                 drawOpponents(it)
-
+                moveOpponents(delta)
+                drawPlayer(it, player)
+                if (shouldPlayReload) {
+                    reloadSoundEffect.play()
+                    shouldPlayReload = false
+                }
+                drawWalls(it)
             }
         }
-        ghostProjectiles.end()
+
+        val uiMatrix = camera.combined.cpy();
+        uiMatrix.setToOrtho2D(0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        batch.projectionMatrix = uiMatrix
+
+        if (::player.isInitialized) {
+            batch.use {
+                drawMagazineInfo(it)
+            }
+        }
     }
 
 
@@ -124,7 +142,7 @@ class GameScreen(
     }
 
     private fun updateServerRotation() {
-        if(forIf) {
+        if (forIf) {
             forIf = false
             val b = true
             val thread = Thread {
@@ -149,7 +167,7 @@ class GameScreen(
             data.put("Mouse", true)
             socket.emit("mouseStart", data)
         }
-        if (wWasReleased){
+        if (wWasReleased) {
             val data = JSONObject()
             data.put("Mouse", true)
             socket.emit("mouseStop", data)
@@ -157,20 +175,23 @@ class GameScreen(
     }
 
     private fun updateServerMoves() {
-        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W);
-        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A);
-        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S);
-        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D);
+        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W)
+        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A)
+        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S)
+        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D)
+        val isRPressed = Gdx.input.isKeyPressed(Input.Keys.R)
 
-        val wWasReleased = wWasPressed && !isWPressed;
-        val aWasReleased = aWasPressed && !isAPressed;
-        val sWasReleased = sWasPressed && !isSPressed;
-        val dWasReleased = dWasPressed && !isDPressed;
+        val wWasReleased = wWasPressed && !isWPressed
+        val aWasReleased = aWasPressed && !isAPressed
+        val sWasReleased = sWasPressed && !isSPressed
+        val dWasReleased = dWasPressed && !isDPressed
+        val rWasReleased = rWasPressed && !isRPressed
 
-        wWasPressed = isWPressed;
-        aWasPressed = isAPressed;
-        sWasPressed = isSPressed;
-        dWasPressed = isDPressed;
+        wWasPressed = isWPressed
+        aWasPressed = isAPressed
+        sWasPressed = isSPressed
+        dWasPressed = isDPressed
+        rWasPressed = isRPressed
 
         checkKeyJustPressed(Input.Keys.W, "W")
         checkKeyJustReleased(wWasReleased, "W")
@@ -183,6 +204,9 @@ class GameScreen(
 
         checkKeyJustPressed(Input.Keys.D, "D")
         checkKeyJustReleased(dWasReleased, "D")
+
+        checkKeyJustPressed(Input.Keys.R, "R")
+        checkKeyJustReleased(rWasReleased, "R")
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
@@ -213,42 +237,11 @@ class GameScreen(
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
-//                .on("newPlayer") { data ->
-//                    val obj: JSONObject = data[0] as JSONObject
-//                    val playerId = obj.getString("id")
-//                    Gdx.app.log("SocketIO", "New player has just connected with ID: $playerId")
-//                    opponents[playerId] = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-//                            WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, playerId)
-//                }
                 .on("playerDisconnected") { data ->
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
                     opponents.remove(playerId)
                 }
-//                .on("getPlayers") { data ->
-//                    val obj: JSONArray = data[0] as JSONArray
-//                    Gdx.app.log("Other players: ", "${data[0]}")
-//                    for (i in 0 until obj.length()) {
-//                        val playerId = obj.getJSONObject(i).getString("id")
-//                        val newPlayer = Player(WINDOW_WIDTH / 2 - PLAYER_SPRITE_WIDTH / 2,
-//                                WINDOW_HEIGHT / 2 - PLAYER_SPRITE_HEIGHT / 2, playerTexture, playerId)
-//                        val vector = Vector2()
-//                        vector.x = (obj.getJSONObject(i).getDouble("x").toFloat())
-//                        vector.y = (obj.getJSONObject(i).getDouble("y").toFloat())
-//                        newPlayer.setPosition(vector.x, vector.y)
-//
-//                        opponents[playerId] = newPlayer
-//                    }
-//                }
-//                .on("playerMoved") { data ->
-//                    val obj: JSONObject = data[0] as JSONObject
-//                    val playerId = obj.getString("id")
-//                    val x = obj.getDouble("x")
-//                    val y = obj.getDouble("y")
-//
-//                    if (opponents[playerId] != null)
-//                        opponents[playerId]!!.setPosition(x.toFloat(), y.toFloat())
-//                }
                 .on("gameData") { data ->
                     val obj = data[0] as JSONObject
                     val agents = obj.getJSONArray("agentData")
@@ -258,19 +251,28 @@ class GameScreen(
                         val isDead = agent.getBoolean("isDead")
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
-                        val currentHealth = agent.getLong("currentHealth").toFloat()
-                        if (id == player.id ) {
+                        val xVelocity = agent.getLong("xVelocity").toFloat()
+                        val yVelocity = agent.getLong("yVelocity").toFloat()
+                        if (id == player.id) {
                             if (!isDead) {
+                            player.setPosition(x, y)
+                            val bulletsLeft = agent.getInt("bulletsLeft")
+                            if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
+                            player.weapon.bulletsInChamber = bulletsLeft
+                            val currentHealth = agent.getLong("currentHealth").toFloat()
                                 player.setPosition(x, y)
                                 player.currentHealth = currentHealth
                                 player.setHealthBar(currentHealth, x, y)
                             } else player.isDead = true
-                        } else {
+                        }else {
                             if (opponents[id] == null) {
+                                opponents[id]?.velocity?.x = xVelocity
+                                opponents[id]?.velocity?.y = yVelocity
                                 opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
-                                //println(opponents[id]?.currentHealth)
                                 opponents[id]?.setPosition(x, y)
+                                opponents[id]?.velocity?.x = xVelocity
+                                opponents[id]?.velocity?.y = yVelocity
                                 opponents[id]?.setHealthBar(currentHealth, x, y)
                                 opponents[id]?.isDead = isDead
                                 opponents[id]?.currentHealth = currentHealth
@@ -308,16 +310,31 @@ class GameScreen(
                             }
                         }
                     }
-
-                    projectilesUpdated = true
                 }
-    }
+                .on("newProjectile") { data ->
+                    val projectile = data[0] as JSONObject
+                    val id = projectile.getString("id")
+                    val x = projectile.getLong("x").toFloat()
+                    val y = projectile.getLong("y").toFloat()
+                    val xSpeed = projectile.getDouble("xSpeed").toFloat()
+                    val ySpeed = projectile.getDouble("ySpeed").toFloat()
 
-    private fun hasMoved(): Boolean {
-        return (Gdx.input.isKeyPressed(Input.Keys.W)
-                || Gdx.input.isKeyPressed(Input.Keys.S)
-                || Gdx.input.isKeyPressed(Input.Keys.A)
-                || Gdx.input.isKeyPressed(Input.Keys.D))
+                    if (projectiles[id] == null) {
+                        projectiles[id] = pistolProjectilePool.obtain().apply {
+                            setPosition(x, y)
+                            velocity.x = xSpeed
+                            velocity.y = ySpeed
+                            justFired = true
+                        }
+                    } else {
+                        projectiles[id]?.apply {
+                            setPosition(x, y)
+                            velocity.x = xSpeed
+                            velocity.y = ySpeed
+                            justFired = true
+                        }
+                    }
+                }
     }
 
     fun connectionSocket() {
@@ -343,20 +360,6 @@ class GameScreen(
     }
 
     private fun checkControls(delta: Float) {
-        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.canShoot()) {
-            player.shoot()
-            val xCentre = player.bounds.x + player.bounds.width / 2f
-            val yCentre = player.bounds.y + player.bounds.height / 2f
-            val edgePoint = projectToRectEdgeRad(player.facingDirectionAngle.toDouble(), player.bounds)
-
-            edgePoint.x += xCentre - player.bounds.width / 2
-            edgePoint.y += yCentre - player.bounds.height / 2
-            spawnPistolProjectile(
-                    edgePoint.x, edgePoint.y,
-                    MathUtils.cosDeg(player.facingDirectionAngle),
-                    MathUtils.sinDeg(player.facingDirectionAngle))
-        }
-
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
         pressedKeys = 0
@@ -379,6 +382,14 @@ class GameScreen(
 
         if (Gdx.input.isKeyPressed(Input.Keys.D))
             movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
+    }
+
+    private fun moveOpponents(delta: Float) {
+        for (opponent in opponents.values) {
+            opponent.setPosition(
+                    opponent.bounds.x + opponent.velocity.x * delta,
+                    opponent.bounds.y + opponent.velocity.y * delta)
+        }
     }
 
     private fun movePlayer(x: Float, y: Float) = player.setPosition(
@@ -424,20 +435,14 @@ class GameScreen(
                 }
             }
         }
-
-        for (projectile in ghostProjectiles) {
-            projectile.setPosition(
-                    projectile.bounds.x + projectile.velocity.x * delta * projectile.speed,
-                    projectile.bounds.y + projectile.velocity.y * delta * projectile.speed)
-        }
     }
 
-    private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
-        val projectile = pistolProjectilePool.obtain()
-        projectile.setPosition(x, y)
-        projectile.velocity.set(xSpeed, ySpeed)
-        ghostProjectiles.add(projectile)
-    }
+//    private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
+//        val projectile = pistolProjectilePool.obtain()
+//        projectile.setPosition(x, y)
+//        projectile.velocity.set(xSpeed, ySpeed)
+//        ghostProjectiles.add(projectile)
+//    }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
         if (!player.isDead && player.currentHealth >= 10) {
@@ -450,9 +455,12 @@ class GameScreen(
             socket.emit("isDead", data)}
     }
 
-    private fun drawProjectiles(batch: Batch) {
-        projectiles.values.forEach { it.sprite.draw(batch) }
-        for (i in 0 until ghostProjectiles.size) ghostProjectiles[i].sprite.draw(batch)
+    private fun drawProjectiles(batch: Batch) = projectiles.values.forEach {
+        it.sprite.draw(batch)
+        if (it.justFired) {
+            it.justFired = false
+            pistolShotSoundEffect.play()
+        }
     }
 
     private fun drawOpponents(batch: Batch) {
@@ -474,18 +482,18 @@ class GameScreen(
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
     }
-    //private fun drawWalls(batch: Batch) = walls.forEach { it.sprite.draw(batch) }
 
-    fun generateRandomOpponent(): Opponent {
-        val minPosition = Vector2(WALL_SPRITE_WIDTH, WALL_SPRITE_HEIGHT)
-        val maxPosition = Vector2(
-                MAP_WIDTH - PLAYER_SPRITE_WIDTH - WALL_SPRITE_WIDTH,
-                MAP_HEIGHT - PLAYER_SPRITE_HEIGHT - WALL_SPRITE_HEIGHT)
-
-        return Opponent(MathUtils.random(minPosition.x, maxPosition.x), MathUtils.random(minPosition.y, maxPosition.y),
-                false, PLAYER_MAX_HEALTH, 0f, 0f, playerTexture, player.id, healthBarTexture)
+    private fun drawMagazineInfo(batch: Batch) {
+        if (player.weapon.bulletsInChamber != -1) {
+            font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
+                    WINDOW_WIDTH - 150f,
+                    WINDOW_HEIGHT - 55f)
+        } else {
+            font.draw(batch, "Reloading...",
+                    WINDOW_WIDTH - 150f,
+                    WINDOW_HEIGHT - 55f)
+        }
     }
-
 
     fun generateWalls() {
         for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
@@ -506,47 +514,47 @@ class GameScreen(
             camera.position.y = player.bounds.y
     }
 
-    fun projectToRectEdgeRad(angle: Double, rect: Rectangle): Vector2 {
-
-        var theta = angle * MathUtils.degreesToRadians
-
-        while (theta < -MathUtils.PI) theta += MathUtils.PI2
-        while (theta > MathUtils.PI) theta -= MathUtils.PI2
-
-        val rectAtan = MathUtils.atan2(rect.height, rect.width)
-        val tanTheta = tan(theta)
-        val region: Int
-
-        region = if ((theta > -rectAtan) && (theta <= rectAtan)) 1
-        else if ((theta > rectAtan) && (theta <= (Math.PI - rectAtan))) 2
-        else if ((theta > (Math.PI - rectAtan)) || (theta <= -(Math.PI - rectAtan))) 3
-        else 4
-
-        val edgePoint = Vector2().apply {
-            x = rect.width / 2f
-            y = rect.height / 2f
-        }
-        var xFactor = 1
-        var yFactor = 1
-
-        when (region) {
-            3, 4 -> {
-                xFactor = -1
-                yFactor = -1
-            }
-        }
-
-        when (region) {
-            1, 3 -> {
-                edgePoint.x += xFactor * (rect.width / 2f)
-                edgePoint.y += yFactor * (rect.width / 2f) * tanTheta.toFloat()
-            }
-            else -> {
-                edgePoint.x += xFactor * (rect.height / (2f * tanTheta.toFloat()))
-                edgePoint.y += yFactor * (rect.height / 2f)
-            }
-        }
-
-        return edgePoint
-    }
+//    fun projectToRectEdgeRad(angle: Double, rect: Rectangle): Vector2 {
+//
+//        var theta = angle * MathUtils.degreesToRadians
+//
+//        while (theta < -MathUtils.PI) theta += MathUtils.PI2
+//        while (theta > MathUtils.PI) theta -= MathUtils.PI2
+//
+//        val rectAtan = MathUtils.atan2(rect.height, rect.width)
+//        val tanTheta = tan(theta)
+//        val region: Int
+//
+//        region = if ((theta > -rectAtan) && (theta <= rectAtan)) 1
+//        else if ((theta > rectAtan) && (theta <= (Math.PI - rectAtan))) 2
+//        else if ((theta > (Math.PI - rectAtan)) || (theta <= -(Math.PI - rectAtan))) 3
+//        else 4
+//
+//        val edgePoint = Vector2().apply {
+//            x = rect.width / 2f
+//            y = rect.height / 2f
+//        }
+//        var xFactor = 1
+//        var yFactor = 1
+//
+//        when (region) {
+//            3, 4 -> {
+//                xFactor = -1
+//                yFactor = -1
+//            }
+//        }
+//
+//        when (region) {
+//            1, 3 -> {
+//                edgePoint.x += xFactor * (rect.width / 2f)
+//                edgePoint.y += yFactor * (rect.width / 2f) * tanTheta.toFloat()
+//            }
+//            else -> {
+//                edgePoint.x += xFactor * (rect.height / (2f * tanTheta.toFloat()))
+//                edgePoint.y += yFactor * (rect.height / 2f)
+//            }
+//        }
+//
+//        return edgePoint
+//    }
 }

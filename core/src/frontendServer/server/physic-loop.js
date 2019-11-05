@@ -13,14 +13,14 @@ const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
 let lastLoop;
 
-async function physicLoop() {
+async function physicLoop(broadcastNewProjectile) {
     while (true) {
         const currentTime = new Date().getTime();
         delta = (currentTime - lastLoop) / 1000;
         lastLoop = currentTime;
 
         for (agent of agents) {
-            checkControls(agent, delta)
+            checkControls(agent, delta, broadcastNewProjectile)
         }
         calculateProjectilePositions(delta);
 
@@ -49,19 +49,35 @@ function calculateProjectilePositions(delta) {
 }
 
 function moveAgent(agent, x, y) {
-    x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH,
-        constants.MAP_WIDTH - constants.PLAYER_SPRITE_WIDTH - constants.WALL_SPRITE_WIDTH);
-    y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT,
-        constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT);
+    x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH + constants.PLAYER_SPRITE_WIDTH / 2,
+        constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - constants.PLAYER_SPRITE_WIDTH / 2);
+
+    y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT + constants.PLAYER_SPRITE_HEIGHT / 2,
+        constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT / 2);
 
     Matter.Body.setPosition(agent.bounds, {x, y})
 }
 
-function spawnPistolProjectile(x, y, xSpeed, ySpeed) {
-    projectiles.push(new PistolProjectile(x, y, xSpeed, ySpeed, shortid.generate()));
+function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
+    const projectile = new PistolProjectile(x, y, xSpeed, ySpeed, shortid.generate());
+    projectiles.push(projectile);
+    broadcastNewProjectile(projectile)
 }
 
-function checkControls(agent, delta) {
+function checkControls(agent, delta, broadcastNewProjectile) {
+
+    if (agent.isRPressed && agent.reloadMark === -1) {
+        if (agent.weapon.bulletsInChamber !== agent.weapon.maxBulletsInChamber) {
+            agent.reloadMark = new Date().getTime();
+            agent.weapon.bulletsInChamber = 0
+        }
+    }
+
+    if (agent.reloadMark !== -1 && new Date().getTime() - agent.reloadMark > agent.weapon.magazineRefillTime) {
+        agent.weapon.reload();
+        agent.reloadMark = -1;
+    }
+
     if (agent.isLMPressed && agent.canShoot() && !agent.isDead) {
         agent.shoot();
         const xCentre = agent.bounds.position.x;
@@ -74,7 +90,7 @@ function checkControls(agent, delta) {
 
         spawnPistolProjectile(edgePoint.x, edgePoint.y,
             Math.cos(Math.PI / 180 * agent.facingDirectionAngle),
-            Math.sin(Math.PI / 180 * agent.facingDirectionAngle))
+            Math.sin(Math.PI / 180 * agent.facingDirectionAngle), broadcastNewProjectile)
     }
 
     let movementSpeed = constants.PLAYER_MOVEMENT_SPEED;

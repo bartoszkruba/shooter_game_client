@@ -15,12 +15,13 @@ abstract class Projectile(
         val type: ProjectileType,
         val speed: Float) {
 
-    val bounds: Circle
+    val bounds: Circle = Circle()
     val sprite: Sprite
     val velocity: Vector2
 
+    var justFired = false
+
     init {
-        bounds = Circle()
         bounds.radius = radius
         bounds.x = x
         bounds.y = y

@@ -3,6 +3,7 @@ package com.mygdx.game.model
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector2
 import com.mygdx.game.settings.*
 
 abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth: Float, texture: Texture, healthBarTexture: Texture, var weapon: Weapon,
@@ -10,6 +11,9 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
     var sprite: Sprite
     var healthBarSprite: Sprite
     val bounds: Rectangle
+    var counter = 85f
+    var healthBarSpriteWidth = 182f
+    val velocity = Vector2()
 
     init {
         bounds = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
