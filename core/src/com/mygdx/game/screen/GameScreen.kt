@@ -35,7 +35,7 @@ class GameScreen(
         private val assets: AssetManager,
         private val camera: OrthographicCamera) : KtxScreen {
 
-    private val playerTexture:Texture = assets.get("images/leprechaun.png", Texture::class.java)
+    private val playerTexture:Texture = assets.get("images/player.png", Texture::class.java)
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
