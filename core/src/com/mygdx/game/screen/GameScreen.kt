@@ -26,7 +26,6 @@ import ktx.graphics.use
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
-import com.sun.awt.SecurityWarning.setPosition
 import java.util.concurrent.ConcurrentHashMap
 
 import kotlin.math.tan
@@ -44,6 +43,7 @@ class GameScreen(
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
+    private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val music = assets.get("music/music.wav", Music::class.java)
 
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
@@ -71,6 +71,7 @@ class GameScreen(
     val projectiles = ConcurrentHashMap<String, Projectile>()
 
     val pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
+    val machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
 
     val pickups = ConcurrentHashMap<String, Pickup>()
 
@@ -82,6 +83,10 @@ class GameScreen(
 
         pickups["dd"] = pistolPickupPool.obtain().apply {
             setPosition(200f, 200f)
+        }
+
+        pickups["cc"] = machineGunPickupPool.obtain().apply {
+            setPosition(500f, 500f)
         }
     }
 
