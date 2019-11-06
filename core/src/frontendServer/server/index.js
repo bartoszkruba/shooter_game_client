@@ -188,7 +188,7 @@ io.on('connection', (socket) => {
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
-
+    
 async function gameDataLoop(socket) {
 
     while (true) {
