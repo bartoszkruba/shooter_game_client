@@ -117,8 +117,16 @@ class GameScreen(
 
         if (::player.isInitialized) {
             batch.use {
+                drawGameOver(it)
                 drawMagazineInfo(it)
             }
+        }
+    }
+
+    private fun drawGameOver(it: SpriteBatch) {
+        if (player.isDead){
+            font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f)
+            font.getData().setScale(3f, 3f);
         }
     }
 
@@ -256,10 +264,10 @@ class GameScreen(
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             if (!isDead) {
-                            player.setPosition(x, y)
-                            val bulletsLeft = agent.getInt("bulletsLeft")
-                            if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
-                            player.weapon.bulletsInChamber = bulletsLeft
+                                player.setPosition(x, y)
+                                val bulletsLeft = agent.getInt("bulletsLeft")
+                                if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
+                                player.weapon.bulletsInChamber = bulletsLeft
                                 player.setPosition(x, y)
                                 player.currentHealth = currentHealth
                                 player.setHealthBar(currentHealth, x, y)
@@ -364,25 +372,27 @@ class GameScreen(
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
         pressedKeys = 0
+        if(!player.isDead) {
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedKeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedKeys++
 
-        if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
+            if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W))
-            movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta)
+            if (Gdx.input.isKeyPressed(Input.Keys.W))
+                movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta)
 
-        if (Gdx.input.isKeyPressed(Input.Keys.S))
-            movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta)
+            if (Gdx.input.isKeyPressed(Input.Keys.S))
+                movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta)
 
-        if (Gdx.input.isKeyPressed(Input.Keys.A))
-            movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y)
+            if (Gdx.input.isKeyPressed(Input.Keys.A))
+                movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y)
 
-        if (Gdx.input.isKeyPressed(Input.Keys.D))
-            movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
+            if (Gdx.input.isKeyPressed(Input.Keys.D))
+                movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
+        }
     }
 
     private fun moveOpponents(delta: Float) {
@@ -450,11 +460,7 @@ class GameScreen(
         if (!player.isDead && player.currentHealth >= 10) {
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
-        }else {
-            val data = JSONObject()
-            data.put("isDead", true)
-            data.put("id", player.id)
-            socket.emit("isDead", data)}
+        }
     }
 
     private fun drawProjectiles(batch: Batch) = projectiles.values.forEach {
@@ -467,9 +473,7 @@ class GameScreen(
 
     private fun drawOpponents(batch: Batch) {
         opponents.values.forEach {
-            //println("id: "+it.id + ", is " + it.isDead)
             if (!it.isDead) {
-                //println("health: ${it.currentHealth}")
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
             }else {
@@ -486,11 +490,12 @@ class GameScreen(
     }
 
     private fun drawMagazineInfo(batch: Batch) {
-        if (player.weapon.bulletsInChamber != -1) {
+        if (player.weapon.bulletsInChamber != -1 && !player.isDead) {
             font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
         } else {
+            if(!player.isDead)
             font.draw(batch, "Reloading...",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
