@@ -78,6 +78,24 @@ function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile)
     broadcastNewProjectile(projectile)
 }
 
+function pickWeapon(agent) {
+    for (pickup of pickups) {
+        if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
+            switch (pickup.type) {
+                case ProjectileType.PISTOL:
+                    agent.weapon = new Pistol();
+                    agent.weapon.bulletsInChamber = 0;
+                    break;
+                case ProjectileType.MACHINE_GUN:
+                    agent.weapon = new MachineGun();
+                    agent.weapon.bulletsInChamber = 0;
+                    break;
+            }
+            pickups.splice(pickups.indexOf(pickup), 1);
+        }
+    }
+}
+
 function checkControls(agent, delta, broadcastNewProjectile) {
     if (agent.isRPressed && agent.reloadMark === -1) {
         if (agent.weapon.bulletsInChamber !== agent.weapon.maxBulletsInChamber) {
@@ -89,6 +107,12 @@ function checkControls(agent, delta, broadcastNewProjectile) {
     if (agent.reloadMark !== -1 && new Date().getTime() - agent.reloadMark > agent.weapon.magazineRefillTime) {
         agent.weapon.reload();
         agent.reloadMark = -1;
+    }
+
+    if (agent.pickWeapon) {
+        agent.pickWeapon = false;
+        pickWeapon(agent);
+        return
     }
 
     if (agent.isLMPressed && agent.canShoot() && !agent.isDead) {

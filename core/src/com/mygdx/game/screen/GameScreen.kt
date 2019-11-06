@@ -217,6 +217,8 @@ class GameScreen(
 
         checkKeyJustPressed(Input.Keys.R, "R")
         checkKeyJustReleased(rWasReleased, "R")
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) socket.emit("pickWeapon")
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {

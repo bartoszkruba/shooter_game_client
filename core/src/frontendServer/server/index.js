@@ -152,6 +152,15 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on("pickWeapon", data => {
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === socket.id) {
+                console.log('player found')
+                agents[i].pickWeapon = true;
+            }
+        }
+    });
+
     socket.on('isDead', (data) => {
         let isDead = Object.values(data)[1];
         let id = Object.values(data)[0];
@@ -192,7 +201,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, false, 220, new MachineGun(), 0, socket.id);
+    const agent = new Agent(500, 500, false, 220, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
@@ -253,7 +262,6 @@ async function gameDataLoop(socket) {
         const pickupData = [];
 
         for (pickup of pickups) {
-            console.log(pickup);
             pickupData.push({
                 x: pickup.bounds.bounds.min.x,
                 y: pickup.bounds.bounds.min.y,
