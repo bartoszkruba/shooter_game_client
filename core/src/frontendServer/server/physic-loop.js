@@ -11,6 +11,7 @@ const constants = require('./settings/constants');
 
 const agents = [];
 const projectiles = [];
+const pickups = [];
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
@@ -43,7 +44,7 @@ function calculateProjectilePositions(delta) {
             projectiles.splice(projectiles.indexOf(projectile), 1);
         }
 
-        for(let i = 0; i < agents.length; i++){
+        for (let i = 0; i < agents.length; i++) {
             const agent = agents[i];
             if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided) {
                 //console.log("id:", agent.id,", before:", agent.currentHealth)
@@ -175,5 +176,5 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-module.exports = {physicLoop, agents, projectiles, lastLoop};
+module.exports = {physicLoop, agents, projectiles, lastLoop, pickups};
 

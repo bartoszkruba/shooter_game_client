@@ -80,14 +80,6 @@ class GameScreen(
         music.isLooping = true
         music.volume = 0f
         music.play()
-
-        pickups["dd"] = pistolPickupPool.obtain().apply {
-            setPosition(200f, 200f)
-        }
-
-        pickups["cc"] = machineGunPickupPool.obtain().apply {
-            setPosition(500f, 500f)
-        }
     }
 
     private var pressedKeys = 0
@@ -115,10 +107,10 @@ class GameScreen(
 
         if (::player.isInitialized) {
             batch.use {
+                drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
                 moveOpponents(delta)
-                drawPickups(it)
                 drawPlayer(it, player)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
@@ -310,11 +302,6 @@ class GameScreen(
 
                     val proj = obj.getJSONArray("projectileData")
 
-                    for (projectile in projectiles.values) {
-                        pistolProjectilePool.free(projectile as PistolProjectile)
-                    }
-                    projectiles.clear()
-
                     for (i in 0 until proj.length()) {
                         val projectile = proj[i] as JSONObject
                         val type = projectile.getString("type")
@@ -339,6 +326,28 @@ class GameScreen(
                                 velocity.x = xSpeed
                                 velocity.y = ySpeed
                             }
+                        }
+                    }
+
+                    val picks = obj.getJSONArray("pickupData")
+
+                    for (pickup in pickups.values) {
+                        if (pickup is PistolPickup) pistolPickupPool.free(pickup)
+                        if (pickup is MachineGunPickup) machineGunPickupPool.free(pickup)
+                    }
+
+                    pickups.clear()
+
+                    for (i in 0 until picks.length()) {
+                        val pickup = picks[i] as JSONObject
+                        val id = pickup.getString("id")
+                        val x = pickup.getDouble("x").toFloat()
+                        val y = pickup.getDouble("y").toFloat()
+                        val type = pickup.getString("type")
+
+                        pickups[id] = when (type) {
+                            ProjectileType.PISTOL -> pistolPickupPool.obtain().apply { setPosition(x, y) }
+                            else -> machineGunPickupPool.obtain().apply { setPosition(x, y) }
                         }
                     }
                 }
