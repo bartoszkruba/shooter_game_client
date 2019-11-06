@@ -254,14 +254,12 @@ class GameScreen(
                         val y = agent.getLong("y").toFloat()
                         val xVelocity = agent.getLong("xVelocity").toFloat()
                         val yVelocity = agent.getLong("yVelocity").toFloat()
-                        println(currentHealth)
                         if (id == player.id) {
                             if (!isDead) {
                             player.setPosition(x, y)
                             val bulletsLeft = agent.getInt("bulletsLeft")
                             if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
                             player.weapon.bulletsInChamber = bulletsLeft
-                            val currentHealth = agent.getLong("currentHealth").toFloat()
                                 player.setPosition(x, y)
                                 player.currentHealth = currentHealth
                                 player.setHealthBar(currentHealth, x, y)
@@ -272,6 +270,7 @@ class GameScreen(
                                 opponents[id]?.velocity?.y = yVelocity
                                 opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
+                                //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
@@ -420,10 +419,11 @@ class GameScreen(
                         pistolProjectilePool.free(entry.value as PistolProjectile)
                         //println(opponent.value.currentHealth)
                         //opponent.value.takeDamage(opponent.value.currentHealth)
-                        val data = JSONObject()
-                        data.put("currentHealth", opponent.value.currentHealth)
-                        data.put("id", opponent.value.id)
-                        socket.emit("takeDamage", data)
+                        //val data = JSONObject()
+                        //data.put("currentHealth", opponent.value.currentHealth)
+                        //data.put("id", opponent.value.id)
+                        //data.put("takeDamage", true)
+                        //socket.emit("takeDamage", data)
                         projectiles.remove(entry.key)
                         removed = true
                     }

@@ -6,8 +6,8 @@ const Agent = require('./models/Agent');
 const Pistol = require('./models/Pistol');
 const constants = require('./settings/constants');
 
-const agents = engine.agents;
 const projectiles = engine.projectiles;
+const agents = engine.agents;
 let players = [];
 
 let loopAlreadyRunning = false;
@@ -126,17 +126,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('takeDamage', (data) => {
-        let currentHealth = Object.values(data)[0];
-        let id = Object.values(data)[1];
-        console.log(data)
-        for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === id) {
-                agents[i].takeDamage(currentHealth)
-            }
-        }
-    });
-
     socket.on('currentPlayerHealth', (data) => {
         let currentHealth = Object.values(data)[0];
         let id = Object.values(data)[1];
@@ -226,6 +215,7 @@ async function gameDataLoop(socket) {
         const agentData = [];
 
         for (agent of agents) {
+            //console.log(agent.currentHealth)
             agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
@@ -234,14 +224,13 @@ async function gameDataLoop(socket) {
                 bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1,
                 isDead: agent.isDead,
                 currentHealth: agent.currentHealth,
-                id: agent.id
+                id: agent.id,
             })
         }
 
         const projectileData = [];
 
         for (projectile of projectiles) {
-
             projectileData.push({
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,

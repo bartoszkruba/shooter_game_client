@@ -5,7 +5,7 @@ const BaseObject = require('./BaseObject');
 
 class Agent extends BaseObject {
 
-    constructor(x = 0, y = 0, isDead = false, currentHealth = PLAYER_MAX_HEALTH, weapon = new Pistol(), facingDirectionAngle = 0, id) {
+    constructor(x = 0, y = 0, isDead = false, currentHealth, weapon = new Pistol(), facingDirectionAngle = 0, id) {
         super(id);
         this.bounds = Matter.Bodies.rectangle(x, y, constants.PLAYER_SPRITE_WIDTH, constants.PLAYER_SPRITE_HEIGHT);
         this.weapon = weapon;
@@ -33,9 +33,12 @@ class Agent extends BaseObject {
         this.weapon.shoot();
     }
 
-    takeDamage(currentHealth){
-        if(currentHealth >= 50) {
-            this.currentHealth =  this.currentHealth - 50;
+    takeDamage(){
+            //console.log("before",  currentHealth)
+        if(this.currentHealth >= constants.TAKE_DAMAGE) {
+            this.currentHealth -= constants.TAKE_DAMAGE;
+            //this.takeHp = takeHp;
+            //console.log("after",  this.currentHealth)
         } else {this.isDead = true}
     }
 }
