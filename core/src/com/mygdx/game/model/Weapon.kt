@@ -2,7 +2,7 @@ package com.mygdx.game.model
 
 import com.badlogic.gdx.utils.TimeUtils
 
-abstract class Weapon(private val reloadTime: Long, maxBulletsInChamber: Int) {
+abstract class Weapon(private val reloadTime: Long, val maxBulletsInChamber: Int, val type: String) {
     private var lastShoot = 0L
 
     var bulletsInChamber = maxBulletsInChamber

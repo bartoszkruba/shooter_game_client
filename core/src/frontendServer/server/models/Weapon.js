@@ -1,11 +1,12 @@
 class Weapon {
 
-    constructor(reloadTime, bulletsInChamber, magazineRefillTime) {
+    constructor(reloadTime, bulletsInChamber, magazineRefillTime, projectileType) {
         this.reloadTime = reloadTime;
         this.lastShoot = 0;
         this.maxBulletsInChamber = bulletsInChamber;
         this.bulletsInChamber = bulletsInChamber;
         this.magazineRefillTime = magazineRefillTime;
+        this.projectileType = projectileType;
     }
 
     canShoot() {

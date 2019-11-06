@@ -4,6 +4,7 @@ let io = require('socket.io')(server);
 const engine = require('./physic-loop');
 const Agent = require('./models/Agent');
 const Pistol = require('./models/Pistol');
+const MachineGun = require('./models/MachineGun');
 const constants = require('./settings/constants');
 
 const projectiles = engine.projectiles;
@@ -188,7 +189,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, false, 220, new Pistol(), 0, socket.id);
+    const agent = new Agent(500, 500, false, 220, new MachineGun(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
@@ -196,12 +197,15 @@ io.on('connection', (socket) => {
         loopAlreadyRunning = true;
         engine.lastLoop = new Date().getTime();
         engine.physicLoop(projectile => {
+            console.log("new projectile: " + projectile);
+
             socket.broadcast.emit("newProjectile", {
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,
                 id: projectile.id,
                 xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y
+                ySpeed: projectile.velocity.y,
+                type: projectile.type
             })
         });
     }
@@ -225,6 +229,7 @@ async function gameDataLoop(socket) {
                 isDead: agent.isDead,
                 currentHealth: agent.currentHealth,
                 id: agent.id,
+                weapon: agent.weapon.projectileType,
             })
         }
 
@@ -236,7 +241,8 @@ async function gameDataLoop(socket) {
                 y: projectile.bounds.position.y,
                 id: projectile.id,
                 xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y
+                ySpeed: projectile.velocity.y,
+                type: projectile.type
             })
         }
 
