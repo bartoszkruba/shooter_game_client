@@ -43,8 +43,12 @@ function calculateProjectilePositions(delta) {
             projectiles.splice(projectiles.indexOf(projectile), 1);
         }
 
-        for (agent of agents) {
+        for(let i = 0; i < agents.length; i++){
+            const agent = agents[i];
             if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided) {
+                //console.log("id:", agent.id,", before:", agent.currentHealth)
+                agent.takeDamage();
+                //console.log("id:", agent.id,", current health:", agent.currentHealth)
                 projectiles.splice(projectiles.indexOf(projectile), 1);
             }
         }
@@ -86,7 +90,7 @@ function checkControls(agent, delta, broadcastNewProjectile) {
         agent.reloadMark = -1;
     }
 
-    if (agent.isLMPressed && agent.canShoot()) {
+    if (agent.isLMPressed && agent.canShoot() && !agent.isDead) {
         agent.shoot();
         const xCentre = agent.bounds.position.x;
         const yCentre = agent.bounds.position.y;
@@ -112,20 +116,22 @@ function checkControls(agent, delta, broadcastNewProjectile) {
     let movementSpeed = constants.PLAYER_MOVEMENT_SPEED;
     let pressedKeys = 0;
 
-    if (agent.isWPressed) pressedKeys++;
-    if (agent.isAPressed) pressedKeys++;
-    if (agent.isSPressed) pressedKeys++;
-    if (agent.isDPressed) pressedKeys++;
+    if (!agent.isDead) {
+        if (agent.isWPressed) pressedKeys++;
+        if (agent.isAPressed) pressedKeys++;
+        if (agent.isSPressed) pressedKeys++;
+        if (agent.isDPressed) pressedKeys++;
 
-    if (pressedKeys > 1) movementSpeed *= 0.7;
+        if (pressedKeys > 1) movementSpeed *= 0.7;
 
-    if (agent.isWPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y + movementSpeed * delta);
+        if (agent.isWPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y + movementSpeed * delta);
 
-    if (agent.isSPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y - movementSpeed * delta);
+        if (agent.isSPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y - movementSpeed * delta);
 
-    if (agent.isAPressed) moveAgent(agent, agent.bounds.position.x - movementSpeed * delta, agent.bounds.position.y);
+        if (agent.isAPressed) moveAgent(agent, agent.bounds.position.x - movementSpeed * delta, agent.bounds.position.y);
 
-    if (agent.isDPressed) moveAgent(agent, agent.bounds.position.x + movementSpeed * delta, agent.bounds.position.y)
+        if (agent.isDPressed) moveAgent(agent, agent.bounds.position.x + movementSpeed * delta, agent.bounds.position.y)
+    }
 }
 
 function projectToRectEdge(angle, agent) {

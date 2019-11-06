@@ -7,8 +7,8 @@ const Pistol = require('./models/Pistol');
 const MachineGun = require('./models/MachineGun');
 const constants = require('./settings/constants');
 
-const agents = engine.agents;
 const projectiles = engine.projectiles;
+const agents = engine.agents;
 let players = [];
 
 let loopAlreadyRunning = false;
@@ -127,11 +127,35 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('currentPlayerHealth', (data) => {
+        let currentHealth = Object.values(data)[0];
+        let id = Object.values(data)[1];
+        //console.log(data)
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === id) {
+                agents[i].currentHealth =  currentHealth;
+                //console.log(agents[i].currentHealth)
+                //console.log("Player current health: " + agents[i].currentHealth);
+            }
+        }
+    });
+
     socket.on('mouseStart', (data) => {
         // console.log(Object.keys(data)[0] + " just pressed");
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].isLMPressed = true;
+            }
+        }
+    });
+
+    socket.on('isDead', (data) => {
+        let isDead = Object.values(data)[1];
+        let id = Object.values(data)[0];
+         //console.log("playerId: " + id);
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === id) {
+                agents[i].isDead =  isDead;
             }
         }
     });
@@ -165,7 +189,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, new MachineGun(), 0, socket.id);
+    const agent = new Agent(500, 500, false, 220, new MachineGun(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
@@ -188,29 +212,30 @@ io.on('connection', (socket) => {
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
-    
+
 async function gameDataLoop(socket) {
 
     while (true) {
         const agentData = [];
 
         for (agent of agents) {
-
+            //console.log(agent.currentHealth)
             agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
                 xVelocity: agent.velocity.x,
                 yVelocity: agent.velocity.y,
+                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1,
+                isDead: agent.isDead,
+                currentHealth: agent.currentHealth,
                 id: agent.id,
                 weapon: agent.weapon.projectileType,
-                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1
             })
         }
 
         const projectileData = [];
 
         for (projectile of projectiles) {
-
             projectileData.push({
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,

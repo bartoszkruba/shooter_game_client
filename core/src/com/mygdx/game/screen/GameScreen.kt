@@ -91,6 +91,8 @@ class GameScreen(
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
+            updateServerPlayerHealth()
+            updateServerOpponentsHealth()
         }
 
         camera.update()
@@ -120,6 +122,25 @@ class GameScreen(
                 drawMagazineInfo(it)
             }
         }
+    }
+
+
+    private fun updateServerOpponentsHealth() {
+        if (opponents.values.isNotEmpty()) {
+            val data = JSONObject()
+            for (opponent in opponents.values){
+                data.put("health", opponent.currentHealth)
+                data.put("id", opponent.id)
+                socket.emit("currentPlayerHealth", data)
+            }
+        }
+    }
+
+    private fun updateServerPlayerHealth() {
+        val data = JSONObject()
+        data.put("health", player.currentHealth)
+        data.put("id", player.id)
+        socket.emit("currentPlayerHealth", data)
     }
 
     private fun updateServerRotation() {
@@ -191,8 +212,7 @@ class GameScreen(
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
-        if (Gdx.input.isKeyJustPressed(keyNumber)) {
-            player.reduceHealthBarWidth()
+        if (Gdx.input.isKeyJustPressed(keyNumber)){
             val data = JSONObject()
             data.put(keyLetter, true)
             socket.emit("startKey", data)
@@ -215,7 +235,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, playerTexture, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTexture, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -230,12 +250,15 @@ class GameScreen(
                     for (i in 0 until agents.length()) {
                         val agent = agents[i] as JSONObject
                         val id = agent.getString("id")
+                        val isDead = agent.getBoolean("isDead")
+                        val currentHealth = agent.getLong("currentHealth").toFloat()
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
                         val weapon = agent.getString("weapon")
                         val xVelocity = agent.getLong("xVelocity").toFloat()
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
+                            if (!isDead) {
                             player.setPosition(x, y)
 
                             if (player.weapon.type != weapon) {
@@ -247,15 +270,24 @@ class GameScreen(
                             val bulletsLeft = agent.getInt("bulletsLeft")
                             if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
                             player.weapon.bulletsInChamber = bulletsLeft
-                        } else {
+                                player.setPosition(x, y)
+                                player.currentHealth = currentHealth
+                                player.setHealthBar(currentHealth, x, y)
+                            } else player.isDead = true
+                        }else {
                             if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
+                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
                             } else {
+                                //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
+                                opponents[id]?.setHealthBar(currentHealth, x, y)
+                                opponents[id]?.isDead = isDead
+                                opponents[id]?.currentHealth = currentHealth
+                                opponents[id]?.healthBarSprite!!.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
                             }
                         }
                     }
@@ -436,8 +468,14 @@ class GameScreen(
 //    }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
-        agent.sprite.draw(batch)
-        agent.healthBarSprite.draw(batch)
+        if (!player.isDead && player.currentHealth >= 10) {
+            agent.sprite.draw(batch)
+            agent.healthBarSprite.draw(batch)
+        }else {
+            val data = JSONObject()
+            data.put("isDead", true)
+            data.put("id", player.id)
+            socket.emit("isDead", data)}
     }
 
     private fun drawProjectiles(batch: Batch) = projectiles.values.forEach {
@@ -448,8 +486,21 @@ class GameScreen(
         }
     }
 
+    private fun drawOpponents(batch: Batch) {
+        opponents.values.forEach {
+            //println("id: "+it.id + ", is " + it.isDead)
+            if (!it.isDead) {
+                //println("health: ${it.currentHealth}")
+                it.healthBarSprite.draw(batch);
+                it.sprite.draw(batch)
+            }else {
+                val data = JSONObject()
+                data.put("isDead", true)
+                data.put("id", it.id)
+                socket.emit("isDead", data)}
+        }
+    }
 
-    private fun drawOpponents(batch: Batch) = opponents.values.forEach { it.sprite.draw(batch) }
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
