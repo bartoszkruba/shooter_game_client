@@ -126,6 +126,18 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('restart', () => {
+        // console.log(Object.keys(data)[0] + " just pressed");
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === socket.id) {
+                agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
+                agents[i].isDead = false;
+                agents[i].bounds.position.x = 500;
+                agents[i].bounds.position.y = 500;
+            }
+        }
+    });
+
     socket.on('currentPlayerHealth', (data) => {
         let currentHealth = Object.values(data)[0];
         let id = Object.values(data)[1];
@@ -142,7 +154,7 @@ io.on('connection', (socket) => {
     socket.on('mouseStart', (data) => {
         // console.log(Object.keys(data)[0] + " just pressed");
         for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === socket.id) {
+            if (agents[i].id === socket.id && !agents[i].isDead) {
                 agents[i].isLMPressed = true;
             }
         }
@@ -188,7 +200,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, false, 220, new Pistol(), 0, socket.id);
+    const agent = new Agent(500, 500, false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
@@ -214,7 +226,7 @@ async function gameDataLoop(socket) {
     while (true) {
         const agentData = [];
 
-        for (agent of agents) {
+          for (agent of agents) {
             //console.log(agent.currentHealth)
             agentData.push({
                 x: agent.bounds.bounds.min.x,

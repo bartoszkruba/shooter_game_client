@@ -91,6 +91,7 @@ class GameScreen(
             setCameraPosition()
             updateServerPlayerHealth()
             updateServerOpponentsHealth()
+            checkRestart()
         }
 
         camera.update()
@@ -123,9 +124,19 @@ class GameScreen(
         }
     }
 
-    private fun drawGameOver(it: SpriteBatch) {
+    private fun checkRestart() {
         if (player.isDead){
-            font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f)
+            if (Gdx.input.isButtonPressed((Input.Buttons.LEFT))){
+                    socket.emit("restart")
+            }
+        }
+    }
+
+    private fun drawGameOver(batch: Batch) {
+        if (player.isDead){
+            font.draw(batch, "Tap anywhere to restart!", (WINDOW_WIDTH / 2) - 80f, (WINDOW_HEIGHT / 2) - 30f);
+            font.getData().setScale(3f, 3f);
+            font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f);
             font.getData().setScale(3f, 3f);
         }
     }
@@ -264,6 +275,8 @@ class GameScreen(
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             if (!isDead) {
+                                println("$x, $y")
+                                player.isDead = isDead
                                 player.setPosition(x, y)
                                 val bulletsLeft = agent.getInt("bulletsLeft")
                                 if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
@@ -494,11 +507,13 @@ class GameScreen(
             font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
+            font.getData().setScale(1f, 1f);
         } else {
             if(!player.isDead)
             font.draw(batch, "Reloading...",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
+            font.getData().setScale(1f, 1f);
         }
     }
 

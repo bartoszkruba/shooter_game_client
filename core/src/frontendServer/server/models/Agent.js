@@ -34,11 +34,11 @@ class Agent extends BaseObject {
     }
 
     takeDamage(){
-            //console.log("before",  currentHealth)
+            console.log("before",  this.currentHealth)
         if(this.currentHealth >= constants.TAKE_DAMAGE) {
-            this.currentHealth -= constants.TAKE_DAMAGE;
+            this.currentHealth = this.currentHealth - 30;
             //this.takeHp = takeHp;
-            //console.log("after",  this.currentHealth)
+            console.log("after",  this.currentHealth)
         } else {this.isDead = true}
     }
 }

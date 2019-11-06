@@ -47,6 +47,7 @@ function calculateProjectilePositions(delta) {
                 agent.takeDamage();
                 console.log("id:", agent.id,", current health:", agent.currentHealth)
                 projectiles.splice(projectiles.indexOf(projectile), 1);
+                break;
             }
         }
     }
