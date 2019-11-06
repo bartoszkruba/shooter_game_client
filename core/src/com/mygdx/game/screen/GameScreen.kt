@@ -89,8 +89,6 @@ class GameScreen(
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
-            updateServerPlayerHealth()
-            updateServerOpponentsHealth()
             checkRestart()
         }
 
@@ -139,25 +137,6 @@ class GameScreen(
             font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f);
             font.getData().setScale(3f, 3f);
         }
-    }
-
-
-    private fun updateServerOpponentsHealth() {
-        if (opponents.values.isNotEmpty()) {
-            val data = JSONObject()
-            for (opponent in opponents.values){
-                data.put("health", opponent.currentHealth)
-                data.put("id", opponent.id)
-                socket.emit("currentPlayerHealth", data)
-            }
-        }
-    }
-
-    private fun updateServerPlayerHealth() {
-        val data = JSONObject()
-        data.put("health", player.currentHealth)
-        data.put("id", player.id)
-        socket.emit("currentPlayerHealth", data)
     }
 
     private fun updateServerRotation() {
@@ -275,7 +254,7 @@ class GameScreen(
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             if (!isDead) {
-                                println("$x, $y")
+                                //println("$x, $y")
                                 player.isDead = isDead
                                 player.setPosition(x, y)
                                 val bulletsLeft = agent.getInt("bulletsLeft")

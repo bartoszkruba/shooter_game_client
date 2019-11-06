@@ -43,9 +43,7 @@ function calculateProjectilePositions(delta) {
         for(let i = 0; i < agents.length; i++){
             const agent = agents[i];
             if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead){
-                console.log("id:", agent.id,", before:", agent.currentHealth)
                 agent.takeDamage();
-                console.log("id:", agent.id,", current health:", agent.currentHealth)
                 projectiles.splice(projectiles.indexOf(projectile), 1);
                 break;
             }
