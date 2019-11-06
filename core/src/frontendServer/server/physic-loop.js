@@ -5,7 +5,7 @@ const Agent = require('./models/Agent');
 const Pistol = require('./models/Pistol');
 const MachineGun = require('./models/MachineGun');
 const PistolProjectile = require('./models/PistolProjectile');
-const MachineGunProjectile = require('./models/MachineGun');
+const MachineGunProjectile = require('./models/MachineGunProjectile');
 const ProjectileType = require('./models/ProjectileType');
 const constants = require('./settings/constants');
 
@@ -68,13 +68,12 @@ function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
 }
 
 function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
-    const projectile = new MachineGunProjectile(x, y, xSpeed, ySpeed, shortid.generate())
+    const projectile = new MachineGunProjectile(x, y, xSpeed, ySpeed, shortid.generate());
     projectiles.push(projectile);
     broadcastNewProjectile(projectile)
 }
 
 function checkControls(agent, delta, broadcastNewProjectile) {
-
     if (agent.isRPressed && agent.reloadMark === -1) {
         if (agent.weapon.bulletsInChamber !== agent.weapon.maxBulletsInChamber) {
             agent.reloadMark = new Date().getTime();

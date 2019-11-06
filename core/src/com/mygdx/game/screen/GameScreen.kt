@@ -25,6 +25,7 @@ import ktx.graphics.use
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
+import com.sun.awt.SecurityWarning.setPosition
 import java.util.concurrent.ConcurrentHashMap
 
 import kotlin.math.tan
@@ -62,6 +63,7 @@ class GameScreen(
     lateinit var player: Player
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
+    val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
     val walls = Array<Wall>()
 
     val projectiles = ConcurrentHashMap<String, Projectile>()
@@ -230,10 +232,18 @@ class GameScreen(
                         val id = agent.getString("id")
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
+                        val weapon = agent.getString("weapon")
                         val xVelocity = agent.getLong("xVelocity").toFloat()
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             player.setPosition(x, y)
+
+                            if (player.weapon.type != weapon) {
+                                when (weapon) {
+                                    ProjectileType.PISTOL -> player.weapon = Pistol()
+                                    ProjectileType.MACHINE_GUN -> player.weapon = MachineGun()
+                                }
+                            }
                             val bulletsLeft = agent.getInt("bulletsLeft")
                             if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
                             player.weapon.bulletsInChamber = bulletsLeft
@@ -259,6 +269,7 @@ class GameScreen(
 
                     for (i in 0 until proj.length()) {
                         val projectile = proj[i] as JSONObject
+                        val type = projectile.getString("type")
                         val id = projectile.getString("id")
                         val x = projectile.getLong("x").toFloat()
                         val y = projectile.getLong("y").toFloat()
@@ -266,7 +277,10 @@ class GameScreen(
                         val ySpeed = projectile.getDouble("ySpeed").toFloat()
 
                         if (projectiles[id] == null) {
-                            projectiles[id] = pistolProjectilePool.obtain().apply {
+                            projectiles[id] = when (type) {
+                                ProjectileType.PISTOL -> pistolProjectilePool.obtain()
+                                else -> machineGunProjectilePool.obtain()
+                            }.apply {
                                 setPosition(x, y)
                                 velocity.x = xSpeed
                                 velocity.y = ySpeed
@@ -282,6 +296,7 @@ class GameScreen(
                 }
                 .on("newProjectile") { data ->
                     val projectile = data[0] as JSONObject
+                    val type = projectile.getString("type")
                     val id = projectile.getString("id")
                     val x = projectile.getLong("x").toFloat()
                     val y = projectile.getLong("y").toFloat()
@@ -289,7 +304,10 @@ class GameScreen(
                     val ySpeed = projectile.getDouble("ySpeed").toFloat()
 
                     if (projectiles[id] == null) {
-                        projectiles[id] = pistolProjectilePool.obtain().apply {
+                        projectiles[id] = when (type) {
+                            ProjectileType.PISTOL -> pistolProjectilePool.obtain()
+                            else -> machineGunProjectilePool.obtain()
+                        }.apply {
                             setPosition(x, y)
                             velocity.x = xSpeed
                             velocity.y = ySpeed
@@ -378,21 +396,31 @@ class GameScreen(
 
             if (entry.value.bounds.x < 0 || entry.value.bounds.x > MAP_WIDTH ||
                     entry.value.bounds.y < 0 || entry.value.bounds.y > MAP_HEIGHT) {
-                pistolProjectilePool.free(entry.value as PistolProjectile)
+
+                if (entry.value is PistolProjectile)
+                    pistolProjectilePool.free(entry.value as PistolProjectile)
+                else if (entry.value is MachineGunProjectile)
+                    machineGunProjectilePool.free(entry.value as MachineGunProjectile)
+
                 projectiles.remove(entry.key)
             } else {
                 for (opponent in opponents.entries) {
                     if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds)) {
-                        // todo should check projectile type
-                        pistolProjectilePool.free(entry.value as PistolProjectile)
+                        if (entry.value is PistolProjectile)
+                            pistolProjectilePool.free(entry.value as PistolProjectile)
+                        else if (entry.value is MachineGunProjectile)
+                            machineGunProjectilePool.free(entry.value as MachineGunProjectile)
+
                         projectiles.remove(entry.key)
                         removed = true
                     }
                 }
                 if (!removed) {
                     if (Intersector.overlaps(entry.value.bounds, player.bounds)) {
-                        // todo should check projectile type
-                        pistolProjectilePool.free(entry.value as PistolProjectile)
+                        if (entry.value is PistolProjectile)
+                            pistolProjectilePool.free(entry.value as PistolProjectile)
+                        else if (entry.value is MachineGunProjectile)
+                            machineGunProjectilePool.free(entry.value as MachineGunProjectile)
                         projectiles.remove(entry.key)
                     }
                 }
@@ -429,7 +457,7 @@ class GameScreen(
 
     private fun drawMagazineInfo(batch: Batch) {
         if (player.weapon.bulletsInChamber != -1) {
-            font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
+            font.draw(batch, "${player.weapon.type}, Ammo: ${player.weapon.bulletsInChamber}/${player.weapon.maxBulletsInChamber}",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
         } else {
