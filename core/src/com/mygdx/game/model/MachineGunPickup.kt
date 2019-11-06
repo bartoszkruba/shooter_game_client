@@ -1,7 +1,6 @@
 package com.mygdx.game.model
 
 import com.badlogic.gdx.graphics.Texture
-import com.mygdx.game.settings.MACHINE_GUN_BULLET_SPEED
 import com.mygdx.game.settings.MACHINE_GUN_SPRITE_HEIGHT
 import com.mygdx.game.settings.MACHINE_GUN_SPRITE_WIDTH
 
