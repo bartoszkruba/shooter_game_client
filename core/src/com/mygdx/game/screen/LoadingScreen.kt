@@ -31,6 +31,8 @@ class LoadingScreen(private val game: Game,
         //TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/player.png", Texture::class.java)
         assets.load("images/player/right.png", Texture::class.java)
+        assets.load("images/miniMap.png", Texture::class.java)
+        assets.load("images/playersInMiniMap2.png", Texture::class.java)
         assets.load("images/player/left.png", Texture::class.java)
         assets.load("images/player/up.png", Texture::class.java)
         assets.load("images/player/down.png", Texture::class.java)

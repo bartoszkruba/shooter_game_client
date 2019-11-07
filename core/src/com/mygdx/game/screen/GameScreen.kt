@@ -11,11 +11,9 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
-import com.badlogic.gdx.utils.SnapshotArray
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
@@ -25,12 +23,8 @@ import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.graphics.use
 import org.json.JSONObject
-import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
-import java.awt.Label
 import java.util.concurrent.ConcurrentHashMap
-
-import kotlin.math.tan
 
 
 class GameScreen(
@@ -76,6 +70,10 @@ class GameScreen(
     val machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
 
     val pickups = ConcurrentHashMap<String, Pickup>()
+    var imgpos = 0.0
+    var imgposdir = 0.1
+    var showMiniMap = 0
+
 
     init {
         playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
@@ -114,8 +112,6 @@ class GameScreen(
             batch.use {
                 drawPickups(it)
                 drawProjectiles(it)
-                //drawPlayerName(it)
-                //drawOpponentName(it)
                 drawOpponents(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
@@ -136,20 +132,44 @@ class GameScreen(
             batch.use {
                 drawGameOver(it)
                 drawMagazineInfo(it)
+                checkAllPlayersOnMap(it)
             }
         }
     }
 
-    private fun drawOpponentName(batch: Batch) {
-        opponents.values.forEach {
-            if (!it.isDead) {
-                font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f);
-            }
+    private fun checkAllPlayersOnMap(batch: Batch) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
+        if (showMiniMap == 2 ) showMiniMap = 0
+        if (showMiniMap != 1) {
+            font.draw(batch, "Press \"M\" to show map",  440f, 15f);
+            //font.getData().setScale(0.5f, 0.5f);
         }
-    }
 
-    private fun drawPlayerName(batch: Batch) {
-        font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f);
+        if (showMiniMap == 1) {
+            imgpos += (imgposdir / 3);
+            if (imgpos < 0.0) imgposdir = -imgposdir;
+            if (imgpos > 1.0) imgposdir = -imgposdir;
+            val miniMapSize = 200f;
+            val playerSize = 9f;
+            val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize;
+            val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize;
+
+            font.draw(batch, "Press \"M\" to hide map",  440f, 15f);
+
+            val miniMapexture = assets.get("images/miniMap.png", Texture::class.java)
+            val c = batch.color;
+            batch.setColor(c.r, c.g, c.b, .5f)
+            batch.draw(miniMapexture, 0f, 0f, miniMapSize, miniMapSize);
+
+            val playersInMiniMapexture = assets.get("images/playersInMiniMap2.png", Texture::class.java)
+            batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
+
+            batch.draw(playersInMiniMapexture,
+                    playerPosPercentageX - playerSize / 2f,
+                    playerPosPercentageY - playerSize / 2f,
+                    playerSize,
+                    playerSize);
+        }
     }
 
     private fun checkRestart() {
