@@ -6,11 +6,14 @@ const Pistol = require('./models/Pistol');
 const MachineGun = require('./models/MachineGun');
 const PistolProjectile = require('./models/PistolProjectile');
 const MachineGunProjectile = require('./models/MachineGunProjectile');
+const PistolPickup = require('./models/PistolPickup');
+const MachineGunPickup = require('./models/MachineGunPickup');
 const ProjectileType = require('./models/ProjectileType');
 const constants = require('./settings/constants');
 
 const agents = [];
 const projectiles = [];
+const pickups = [];
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
@@ -43,7 +46,7 @@ function calculateProjectilePositions(delta) {
             projectiles.splice(projectiles.indexOf(projectile), 1);
         }
 
-        for(let i = 0; i < agents.length; i++){
+        for (let i = 0; i < agents.length; i++) {
             const agent = agents[i];
             if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided) {
                 //console.log("id:", agent.id,", before:", agent.currentHealth)
@@ -77,6 +80,35 @@ function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile)
     broadcastNewProjectile(projectile)
 }
 
+function pickWeapon(agent) {
+    for (pickup of pickups) {
+        if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
+            switch (agent.weapon.projectileType) {
+                case ProjectileType.PISTOL:
+                    pickups.push(new PistolPickup(pickup.bounds.position.x, pickup.bounds.position.y,
+                        shortid.generate(), agent.weapon.bulletsInChamber));
+                    break;
+                case ProjectileType.MACHINE_GUN:
+                    pickups.push(new MachineGunPickup(pickup.bounds.position.x, pickup.bounds.position.y,
+                        shortid.generate(), agent.weapon.bulletsInChamber));
+                    break;
+            }
+
+            switch (pickup.type) {
+                case ProjectileType.PISTOL:
+                    agent.weapon = new Pistol();
+                    break;
+                case ProjectileType.MACHINE_GUN:
+                    agent.weapon = new MachineGun();
+                    break;
+            }
+
+            agent.weapon.bulletsInChamber = pickup.ammunition;
+            pickups.splice(pickups.indexOf(pickup), 1);
+        }
+    }
+}
+
 function checkControls(agent, delta, broadcastNewProjectile) {
     if (agent.isRPressed && agent.reloadMark === -1) {
         if (agent.weapon.bulletsInChamber !== agent.weapon.maxBulletsInChamber) {
@@ -88,6 +120,12 @@ function checkControls(agent, delta, broadcastNewProjectile) {
     if (agent.reloadMark !== -1 && new Date().getTime() - agent.reloadMark > agent.weapon.magazineRefillTime) {
         agent.weapon.reload();
         agent.reloadMark = -1;
+    }
+
+    if (agent.pickWeapon) {
+        agent.pickWeapon = false;
+        pickWeapon(agent);
+        return
     }
 
     if (agent.isLMPressed && agent.canShoot() && !agent.isDead) {
@@ -175,5 +213,5 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-module.exports = {physicLoop, agents, projectiles, lastLoop};
+module.exports = {physicLoop, agents, projectiles, lastLoop, pickups};
 

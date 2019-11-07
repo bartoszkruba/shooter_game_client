@@ -1,15 +1,18 @@
 let app = require('express')();
 let server = require('http').Server(app);
 let io = require('socket.io')(server);
+const shortid = require('shortid');
 const engine = require('./physic-loop');
 const Agent = require('./models/Agent');
 const Pistol = require('./models/Pistol');
 const MachineGun = require('./models/MachineGun');
+const PistolPickup = require('./models/PistolPickup');
+const MachineGunPickup = require('./models/MachineGunPickup');
 const constants = require('./settings/constants');
 
 const projectiles = engine.projectiles;
 const agents = engine.agents;
-let players = [];
+const pickups = engine.pickups;
 
 let loopAlreadyRunning = false;
 
@@ -133,7 +136,7 @@ io.on('connection', (socket) => {
         //console.log(data)
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === id) {
-                agents[i].currentHealth =  currentHealth;
+                agents[i].currentHealth = currentHealth;
                 //console.log(agents[i].currentHealth)
                 //console.log("Player current health: " + agents[i].currentHealth);
             }
@@ -149,13 +152,21 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on("pickWeapon", data => {
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === socket.id) {
+                agents[i].pickWeapon = true;
+            }
+        }
+    });
+
     socket.on('isDead', (data) => {
         let isDead = Object.values(data)[1];
         let id = Object.values(data)[0];
-         //console.log("playerId: " + id);
+        //console.log("playerId: " + id);
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === id) {
-                agents[i].isDead =  isDead;
+                agents[i].isDead = isDead;
             }
         }
     });
@@ -189,15 +200,15 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, false, 220, new MachineGun(), 0, socket.id);
+    const agent = new Agent(500, 500, false, 220, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
-        gameDataLoop(socket);
         loopAlreadyRunning = true;
+        pickups.push(new PistolPickup(300, 300, shortid.generate()));
+        pickups.push(new MachineGunPickup(400, 400, shortid.generate()));
         engine.lastLoop = new Date().getTime();
         engine.physicLoop(projectile => {
-            console.log("new projectile: " + projectile);
 
             socket.broadcast.emit("newProjectile", {
                 x: projectile.bounds.position.x,
@@ -208,6 +219,7 @@ io.on('connection', (socket) => {
                 type: projectile.type
             })
         });
+        gameDataLoop(socket);
     }
 });
 
@@ -246,7 +258,18 @@ async function gameDataLoop(socket) {
             })
         }
 
-        socket.broadcast.emit("gameData", {agentData, projectileData});
+        const pickupData = [];
+
+        for (pickup of pickups) {
+            pickupData.push({
+                x: pickup.bounds.bounds.min.x,
+                y: pickup.bounds.bounds.min.y,
+                type: pickup.type,
+                id: pickup.id,
+            })
+        }
+
+        socket.broadcast.emit("gameData", {agentData, projectileData, pickupData});
         await sleep(1000 / constants.UPDATES_PER_SECOND)
     }
 
