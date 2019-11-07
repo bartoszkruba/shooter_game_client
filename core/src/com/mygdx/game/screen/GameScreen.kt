@@ -27,7 +27,7 @@ import ktx.graphics.use
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
-import java.awt.Label
+import com.mygdx.game.util.inFrustum
 import java.util.concurrent.ConcurrentHashMap
 
 import kotlin.math.tan
@@ -49,6 +49,7 @@ class GameScreen(
     private val music = assets.get("music/music.wav", Music::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
+    private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
 
     private var shouldPlayReload = false
 
@@ -77,6 +78,8 @@ class GameScreen(
 
     val pickups = ConcurrentHashMap<String, Pickup>()
 
+    private val ground = Array<Sprite>()
+
     init {
         playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
@@ -84,8 +87,18 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
         music.isLooping = true
-        music.volume = 0f
+        music.volume = 0.13f
         music.play()
+
+        for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
+            for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
+                println("$i $j ")
+                val groundSprite = Sprite(groundTexture)
+                groundSprite.setPosition(i * GROUND_TEXTURE_WIDTH, j * GROUND_TEXTURE_HEIGHT)
+                groundSprite.setSize(GROUND_TEXTURE_WIDTH, GROUND_TEXTURE_HEIGHT)
+                ground.add(groundSprite)
+            }
+        }
     }
 
     private var pressedKeys = 0
@@ -112,6 +125,7 @@ class GameScreen(
 
         if (::player.isInitialized) {
             batch.use {
+                ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
                 drawPickups(it)
                 drawProjectiles(it)
                 //drawPlayerName(it)
