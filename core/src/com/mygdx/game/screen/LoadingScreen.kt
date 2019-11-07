@@ -31,6 +31,7 @@ class LoadingScreen(private val game: Game,
         //TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/player.png", Texture::class.java)
         assets.load("images/brickwall2.jpg", Texture::class.java)
+        assets.load("images/gameOver.png", Texture::class.java)
         assets.load("images/projectile.png", Texture::class.java)
         assets.load("images/healthBar3.png", Texture::class.java)
         assets.load("sounds/pistol_shot.wav", Sound::class.java)

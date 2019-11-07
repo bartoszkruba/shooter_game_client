@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
@@ -132,10 +133,15 @@ class GameScreen(
 
     private fun drawGameOver(batch: Batch) {
         if (player.isDead){
-            font.draw(batch, "Tap anywhere to restart!", (WINDOW_WIDTH / 2) - 80f, (WINDOW_HEIGHT / 2) - 30f);
-            font.getData().setScale(3f, 3f);
-            font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f);
-            font.getData().setScale(3f, 3f);
+            val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
+            val c: Color = batch.color;
+            batch.setColor(c.r, c.g, c.b, .7f)
+            batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            //font.draw(batch, "Tap anywhere to restart!", (WINDOW_WIDTH / 2) - 80f, (WINDOW_HEIGHT / 2) - 30f);
+            //font.getData().setScale(3f, 3f);
+            //font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f);
+            //font.getData().setScale(3f, 3f);
         }
     }
 
