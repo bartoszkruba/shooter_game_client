@@ -306,6 +306,7 @@ class GameScreen(
                         val weapon = agent.getString("weapon")
                         val xVelocity = agent.getLong("xVelocity").toFloat()
                         val yVelocity = agent.getLong("yVelocity").toFloat()
+                        val angle = agent.getDouble("angle").toFloat()
                         if (id == player.id) {
                             if (!isDead) {
                                 //println("$x, $y")
@@ -328,10 +329,12 @@ class GameScreen(
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, name, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
+                                opponents[id]?.setAngle(angle)
                                 opponents[id]?.velocity?.y = yVelocity
                             } else {
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
+                                opponents[id]?.setAngle(angle)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
                                 opponents[id]?.setHealthBar(currentHealth, x, y)
