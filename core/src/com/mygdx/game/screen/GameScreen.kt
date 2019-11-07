@@ -127,6 +127,8 @@ class GameScreen(
                 ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
                 drawPickups(it)
                 drawProjectiles(it)
+                //drawPlayerName(it)
+                //drawOpponentName(it)
                 drawOpponents(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
@@ -149,6 +151,18 @@ class GameScreen(
                 drawMagazineInfo(it)
             }
         }
+    }
+
+    private fun drawOpponentName(batch: Batch) {
+        opponents.values.forEach {
+            if (!it.isDead) {
+                font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f);
+            }
+        }
+    }
+
+    private fun drawPlayerName(batch: Batch) {
+        font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f);
     }
 
     private fun checkRestart() {
@@ -267,7 +281,8 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, "Rami",false,
+                            PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -282,6 +297,7 @@ class GameScreen(
                     for (i in 0 until agents.length()) {
                         val agent = agents[i] as JSONObject
                         val id = agent.getString("id")
+                        val name = agent.getString("name")
                         val isDead = agent.getBoolean("isDead")
                         val currentHealth = agent.getLong("currentHealth").toFloat()
                         val x = agent.getLong("x").toFloat()
@@ -309,10 +325,9 @@ class GameScreen(
                             } else player.isDead = true
                         } else {
                             if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, name, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
-                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTextures, id, healthBarTexture)
                             } else {
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
@@ -517,6 +532,7 @@ class GameScreen(
             setPlayerRotation()
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
+            font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f);
         }
     }
 
@@ -533,6 +549,7 @@ class GameScreen(
             if (!it.isDead) {
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
+                font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f);
             } else {
                 val data = JSONObject()
                 data.put("isDead", true)

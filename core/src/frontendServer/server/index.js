@@ -211,7 +211,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
+    const agent = new Agent(500, 500, "Rami",  false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
@@ -248,6 +248,7 @@ async function gameDataLoop(socket) {
               agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
+                name: agent.name,
                 xVelocity: agent.velocity.x,
                 yVelocity: agent.velocity.y,
                 bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1,

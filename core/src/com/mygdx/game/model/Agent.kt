@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.mygdx.game.settings.*
 
-abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth: Float, texture: Array<Texture>, healthBarTexture: Texture, var weapon: Weapon,
+abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, var currentHealth: Float, texture: Array<Texture>, healthBarTexture: Texture, var weapon: Weapon,
                      var facingDirectionAngle: Float, var id: String) {
     var sprite: Sprite
     private val spriteUp = Sprite(texture[0])
