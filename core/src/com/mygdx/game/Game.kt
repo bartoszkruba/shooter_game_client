@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.mygdx.game.screen.GameScreen
 import com.mygdx.game.screen.LoadingScreen
+import com.mygdx.game.screen.MenuScreen
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
 import io.socket.client.IO
@@ -39,5 +40,11 @@ class Game : KtxGame<KtxScreen>() {
     override fun dispose() {
         context.dispose()
         super.dispose()
+    }
+
+    fun changeToMenu() {
+        removeScreen<LoadingScreen>()
+        addScreen(MenuScreen(context.inject(), context.inject(), context.inject()))
+        setScreen<MenuScreen>()
     }
 }

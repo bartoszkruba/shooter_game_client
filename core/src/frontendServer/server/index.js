@@ -211,7 +211,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, "Rami",  false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
+    const agent = new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
@@ -241,11 +241,11 @@ async function gameDataLoop(socket) {
     while (true) {
         const agentData = [];
 
-          for (agent of agents) {
+        for (agent of agents) {
             //console.log(agent.currentHealth)
-              //console.log("x:", agents[i].bounds.position.x, ",y:", agents[i].bounds.position.y)
+            //console.log("x:", agents[i].bounds.position.x, ",y:", agents[i].bounds.position.y)
 
-              agentData.push({
+            agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
                 name: agent.name,
