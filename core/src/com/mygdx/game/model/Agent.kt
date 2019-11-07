@@ -66,6 +66,7 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
                 //angle >= 292.5 && angle < 337.5 -> println("LOOKING DOWN-RIGHT")
             }
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
+        sprite.setPosition(bounds.x, bounds.y)
     }
 
 
