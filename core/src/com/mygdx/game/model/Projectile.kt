@@ -12,7 +12,6 @@ abstract class Projectile(
         ySpeed: Float = 0f,
         texture: Texture,
         radius: Float,
-        val type: ProjectileType,
         val speed: Float) {
 
     val bounds: Circle = Circle()

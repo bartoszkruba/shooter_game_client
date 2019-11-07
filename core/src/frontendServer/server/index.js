@@ -1,14 +1,18 @@
 let app = require('express')();
 let server = require('http').Server(app);
 let io = require('socket.io')(server);
+const shortid = require('shortid');
 const engine = require('./physic-loop');
 const Agent = require('./models/Agent');
 const Pistol = require('./models/Pistol');
+const MachineGun = require('./models/MachineGun');
+const PistolPickup = require('./models/PistolPickup');
+const MachineGunPickup = require('./models/MachineGunPickup');
 const constants = require('./settings/constants');
 
-const agents = engine.agents;
 const projectiles = engine.projectiles;
-let players = [];
+const agents = engine.agents;
+const pickups = engine.pickups;
 
 let loopAlreadyRunning = false;
 
@@ -41,7 +45,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -49,7 +53,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -57,7 +61,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -65,7 +69,14 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = true;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
+                    }
+                }
+                break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = true;
                     }
                 }
                 break;
@@ -81,7 +92,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isWPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -89,7 +100,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isAPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -97,7 +108,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isSPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
@@ -105,10 +116,30 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isDPressed = false;
-                        setVelocity(agents[i]);
+                        if (!agent.isRPressed) setVelocity(agents[i]);
                     }
                 }
                 break;
+            case "R":
+                for (let i = 0; i < agents.length; i++) {
+                    if (agents[i].id === socket.id) {
+                        agents[i].isRPressed = false;
+                    }
+                }
+                break;
+        }
+    });
+
+    socket.on('currentPlayerHealth', (data) => {
+        let currentHealth = Object.values(data)[0];
+        let id = Object.values(data)[1];
+        //console.log(data)
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === id) {
+                agents[i].currentHealth = currentHealth;
+                //console.log(agents[i].currentHealth)
+                //console.log("Player current health: " + agents[i].currentHealth);
+            }
         }
     });
 
@@ -117,6 +148,25 @@ io.on('connection', (socket) => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].isLMPressed = true;
+            }
+        }
+    });
+
+    socket.on("pickWeapon", data => {
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === socket.id) {
+                agents[i].pickWeapon = true;
+            }
+        }
+    });
+
+    socket.on('isDead', (data) => {
+        let isDead = Object.values(data)[1];
+        let id = Object.values(data)[0];
+        //console.log("playerId: " + id);
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === id) {
+                agents[i].isDead = isDead;
             }
         }
     });
@@ -150,22 +200,26 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, new Pistol(), 0, socket.id);
+    const agent = new Agent(500, 500, false, 220, new Pistol(), 0, socket.id);
     agents.push(agent);
 
     if (!loopAlreadyRunning) {
-        gameDataLoop(socket);
         loopAlreadyRunning = true;
+        pickups.push(new PistolPickup(300, 300, shortid.generate()));
+        pickups.push(new MachineGunPickup(400, 400, shortid.generate()));
         engine.lastLoop = new Date().getTime();
         engine.physicLoop(projectile => {
+
             socket.broadcast.emit("newProjectile", {
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,
                 id: projectile.id,
                 xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y
+                ySpeed: projectile.velocity.y,
+                type: projectile.type
             })
         });
+        gameDataLoop(socket);
     }
 });
 
@@ -177,30 +231,45 @@ async function gameDataLoop(socket) {
         const agentData = [];
 
         for (agent of agents) {
-
+            //console.log(agent.currentHealth)
             agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
                 xVelocity: agent.velocity.x,
                 yVelocity: agent.velocity.y,
-                id: agent.id
+                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1,
+                isDead: agent.isDead,
+                currentHealth: agent.currentHealth,
+                id: agent.id,
+                weapon: agent.weapon.projectileType,
             })
         }
 
         const projectileData = [];
 
         for (projectile of projectiles) {
-
             projectileData.push({
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,
                 id: projectile.id,
                 xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y
+                ySpeed: projectile.velocity.y,
+                type: projectile.type
             })
         }
 
-        socket.broadcast.emit("gameData", {agentData, projectileData});
+        const pickupData = [];
+
+        for (pickup of pickups) {
+            pickupData.push({
+                x: pickup.bounds.bounds.min.x,
+                y: pickup.bounds.bounds.min.y,
+                type: pickup.type,
+                id: pickup.id,
+            })
+        }
+
+        socket.broadcast.emit("gameData", {agentData, projectileData, pickupData});
         await sleep(1000 / constants.UPDATES_PER_SECOND)
     }
 

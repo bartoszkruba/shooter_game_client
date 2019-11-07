@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.mygdx.game.settings.*
 
-abstract class Agent(x: Float, y: Float, texture: Array<Texture>, healthBarTexture: Texture, var weapon: Weapon,
+abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth: Float, texture: Array<Texture>, healthBarTexture: Texture, var weapon: Weapon,
                      var facingDirectionAngle: Float, var id: String) {
     var sprite: Sprite
     private val spriteUp = Sprite(texture[0])
@@ -22,7 +22,8 @@ abstract class Agent(x: Float, y: Float, texture: Array<Texture>, healthBarTextu
 
     init {
         bounds = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
-        sprite = spriteRight
+        // todo should be changed to loading assets from assetManager
+        sprite = Sprite(texture)
         healthBarSprite = Sprite(healthBarTexture)
 
         healthBarSprite.setSize(healthBarSpriteWidth, HEALTH_BAR_SPRITE_HEIGHT)
@@ -34,9 +35,14 @@ abstract class Agent(x: Float, y: Float, texture: Array<Texture>, healthBarTextu
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
     }
 
+    fun setHealthBar(currentHealth: Float, x: Float, y: Float){
+        healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
+        healthBarSprite.setPosition((x - ((currentHealth - 45)/2)), y)
+    }
+
     fun setPosition(x: Float, y: Float) {
         sprite.setPosition(x, y)
-        healthBarSprite.setPosition((x - counter), y)
+        healthBarSprite.setPosition((x - ((currentHealth - 45)/2)), y)
         bounds.setPosition(x, y)
     }
 
