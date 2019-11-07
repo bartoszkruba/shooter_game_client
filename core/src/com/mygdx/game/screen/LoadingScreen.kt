@@ -47,6 +47,8 @@ class LoadingScreen(private val game: Game,
         assets.load("sounds/pistol_shot.wav", Sound::class.java)
         assets.load("sounds/reload_sound.mp3", Sound::class.java)
         assets.load("music/music.wav", Music::class.java)
+        assets.load("images/splash.jpg", Texture::class.java)
+        assets.load("images/splashtext.png", Texture::class.java)
     }
 
     override fun render(delta: Float) {
@@ -64,15 +66,12 @@ class LoadingScreen(private val game: Game,
             }
         }
 
-        if (Gdx.input.isTouched && assets.isFinished) {
-            val gameScreen = GameScreen(game, batch, assets, camera, font)
-            game.addScreen(gameScreen)
-            gameScreen.connectionSocket()
-            gameScreen.configSocketEvents()
-            game.setScreen<GameScreen>()
+        if (assets.isFinished) {
+            val splashScreen = SplashScreen(game, batch, font, assets, camera)
+            game.addScreen(splashScreen)
+            game.setScreen<SplashScreen>()
             game.removeScreen<LoadingScreen>()
             dispose()
-
         }
     }
 }
