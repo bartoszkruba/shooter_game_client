@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
@@ -91,7 +92,7 @@ class GameScreen(
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
-                println("$i $j ")
+                //println("$i $j ")
                 val groundSprite = Sprite(groundTexture)
                 groundSprite.setPosition(i * GROUND_TEXTURE_WIDTH, j * GROUND_TEXTURE_HEIGHT)
                 groundSprite.setSize(GROUND_TEXTURE_WIDTH, GROUND_TEXTURE_HEIGHT)
@@ -157,7 +158,7 @@ class GameScreen(
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
             if (showMiniMap == 2) showMiniMap = 0
             if (showMiniMap != 1) {
-                font.draw(batch, "Press \"M\" to show map", 440f, 15f);
+                font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f);
                 //font.getData().setScale(0.5f, 0.5f);
             }
 
@@ -170,7 +171,7 @@ class GameScreen(
                 val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize;
                 val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize;
 
-                font.draw(batch, "Press \"M\" to hide map", 440f, 15f);
+                font.draw(batch, "Press \"M\" to hide map", WINDOW_WIDTH - 160f, 15f);
 
                 val miniMapexture = assets.get("images/miniMap.png", Texture::class.java)
                 val c = batch.color;
@@ -213,11 +214,6 @@ class GameScreen(
             val c: Color = batch.color;
             batch.setColor(c.r, c.g, c.b, .7f)
             batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-            //font.draw(batch, "Tap anywhere to restart!", (WINDOW_WIDTH / 2) - 80f, (WINDOW_HEIGHT / 2) - 30f);
-            //font.getData().setScale(3f, 3f);
-            //font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f);
-            //font.getData().setScale(3f, 3f);
         }
     }
 
@@ -315,7 +311,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, "Rami",false,
+                    player = Player(500f, 500f, "Rami",false,
                             PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
@@ -365,6 +361,7 @@ class GameScreen(
                                 opponents[id]?.setAngle(angle)
                                 opponents[id]?.velocity?.y = yVelocity
                             } else {
+                                //println("$x, $y")
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
                                 opponents[id]?.setAngle(angle)
@@ -587,11 +584,6 @@ class GameScreen(
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
                 font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f);
-            } else {
-                val data = JSONObject()
-                data.put("isDead", true)
-                data.put("id", it.id)
-                socket.emit("isDead", data)
             }
         }
     }
