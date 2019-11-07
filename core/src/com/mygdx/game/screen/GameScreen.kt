@@ -40,7 +40,6 @@ class GameScreen(
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val music = assets.get("music/music.wav", Music::class.java)
-
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
 
     private lateinit var socket: Socket
@@ -54,6 +53,7 @@ class GameScreen(
     private var forIf = true
 
     lateinit var player: Player
+    val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
     val walls = Array<Wall>()
@@ -62,6 +62,10 @@ class GameScreen(
     val projectiles = ConcurrentHashMap<String, Projectile>()
 
     init {
+        playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
         music.isLooping=true
         music.play()
@@ -185,7 +189,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, playerTexture, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -208,7 +212,7 @@ class GameScreen(
                             player.setPosition(x, y)
                         } else {
                             if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, 0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
                             } else {
@@ -294,20 +298,7 @@ class GameScreen(
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
         if (angle < 0) angle += 360f
-        if (angle != player.facingDirectionAngle) {
-            player.facingDirectionAngle = angle
-           when {
-               // TODO: Add actual animation-setters
-                angle >= 337.5 || angle < 22.5 -> println("LOOKING: RIGHT")
-                angle >= 22.5 && angle < 67.5 -> println("LOOKING UP-RIGHT")
-                angle >= 67.5 && angle < 112.5 -> println("LOOKING UP")
-                angle >= 112.5 && angle < 157.5 -> println("LOOKING UP-LEFT")
-                angle >= 157.5 && angle < 202.5 -> println("LOOKING LEFT")
-                angle >= 202.5 && angle < 247.5 -> println("LOOKING DOWN-LEFT")
-                angle >= 247.5 && angle < 292.5 -> println("LOOKING DOWN")
-                angle >= 292.5 && angle < 337.5 -> println("LOOKING DOWN-RIGHT")
-            }
-        }
+        player.setAngle(angle)
     }
 
     private fun checkControls(delta: Float) {
@@ -391,6 +382,7 @@ class GameScreen(
 //    }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
+        setPlayerRotation()
         agent.sprite.draw(batch)
         agent.healthBarSprite.draw(batch)
     }
