@@ -23,7 +23,7 @@ abstract class Agent(x: Float, y: Float, var isDead: Boolean, var currentHealth:
     init {
         bounds = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
         // todo should be changed to loading assets from assetManager
-        sprite = Sprite(texture)
+        sprite = spriteRight
         healthBarSprite = Sprite(healthBarTexture)
 
         healthBarSprite.setSize(healthBarSpriteWidth, HEALTH_BAR_SPRITE_HEIGHT)

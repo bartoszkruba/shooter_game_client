@@ -290,10 +290,10 @@ class GameScreen(
                             } else player.isDead = true
                         } else {
                             if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, 0f, 0f, playerTextures, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
-                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTextures, id, healthBarTexture)
                             } else {
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
