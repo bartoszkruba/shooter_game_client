@@ -280,12 +280,13 @@ class GameScreen(
                                 //println("$x, $y")
                                 player.isDead = isDead
                                 player.setPosition(x, y)
-    if (player.weapon.type != weapon) {
+                                 if (player.weapon.type != weapon) {
                                     when (weapon) {
                                         ProjectileType.PISTOL -> player.weapon = Pistol()
                                         ProjectileType.MACHINE_GUN -> player.weapon = MachineGun()
                                     }
-                                }                            val bulletsLeft = agent.getInt("bulletsLeft")
+                                }
+                                val bulletsLeft = agent.getInt("bulletsLeft")
                                 if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
                                 player.weapon.bulletsInChamber = bulletsLeft
                                 player.setPosition(x, y)
