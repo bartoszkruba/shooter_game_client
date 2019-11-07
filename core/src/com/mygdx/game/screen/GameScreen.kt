@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
@@ -42,8 +43,9 @@ class GameScreen(
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
+    private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
+    private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val music = assets.get("music/music.wav", Music::class.java)
-
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
 
@@ -61,13 +63,24 @@ class GameScreen(
     private var forIf = true
 
     lateinit var player: Player
+    val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
+    val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
     val walls = Array<Wall>()
 
     val projectiles = ConcurrentHashMap<String, Projectile>()
 
+    val pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
+    val machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
+
+    val pickups = ConcurrentHashMap<String, Pickup>()
+
     init {
+        playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
         music.isLooping = true
         music.volume = 0f
@@ -98,6 +111,7 @@ class GameScreen(
 
         if (::player.isInitialized) {
             batch.use {
+                drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
                 moveOpponents(delta)
@@ -211,10 +225,12 @@ class GameScreen(
 
         checkKeyJustPressed(Input.Keys.R, "R")
         checkKeyJustReleased(rWasReleased, "R")
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) socket.emit("pickWeapon")
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
-        if (Gdx.input.isKeyJustPressed(keyNumber)){
+        if (Gdx.input.isKeyJustPressed(keyNumber)) {
             val data = JSONObject()
             data.put(keyLetter, true)
             socket.emit("startKey", data)
@@ -237,7 +253,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTexture, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -256,6 +272,7 @@ class GameScreen(
                         val currentHealth = agent.getLong("currentHealth").toFloat()
                         val x = agent.getLong("x").toFloat()
                         val y = agent.getLong("y").toFloat()
+                        val weapon = agent.getString("weapon")
                         val xVelocity = agent.getLong("xVelocity").toFloat()
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
@@ -263,18 +280,24 @@ class GameScreen(
                                 //println("$x, $y")
                                 player.isDead = isDead
                                 player.setPosition(x, y)
-                                val bulletsLeft = agent.getInt("bulletsLeft")
+    if (player.weapon.type != weapon) {
+                                    when (weapon) {
+                                        ProjectileType.PISTOL -> player.weapon = Pistol()
+                                        ProjectileType.MACHINE_GUN -> player.weapon = MachineGun()
+                                    }
+                                }                            val bulletsLeft = agent.getInt("bulletsLeft")
                                 if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
                                 player.weapon.bulletsInChamber = bulletsLeft
                                 player.setPosition(x, y)
                                 player.currentHealth = currentHealth
                                 player.setHealthBar(currentHealth, x, y)
                             } else player.isDead = true
-                        }else {
+                        } else {
                             if (opponents[id] == null) {
+                                opponents[id] = Opponent(x, y, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
-                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTextures, id, healthBarTexture)
                             } else {
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
@@ -290,13 +313,9 @@ class GameScreen(
 
                     val proj = obj.getJSONArray("projectileData")
 
-                    for (projectile in projectiles.values) {
-                        pistolProjectilePool.free(projectile as PistolProjectile)
-                    }
-                    projectiles.clear()
-
                     for (i in 0 until proj.length()) {
                         val projectile = proj[i] as JSONObject
+                        val type = projectile.getString("type")
                         val id = projectile.getString("id")
                         val x = projectile.getLong("x").toFloat()
                         val y = projectile.getLong("y").toFloat()
@@ -304,7 +323,10 @@ class GameScreen(
                         val ySpeed = projectile.getDouble("ySpeed").toFloat()
 
                         if (projectiles[id] == null) {
-                            projectiles[id] = pistolProjectilePool.obtain().apply {
+                            projectiles[id] = when (type) {
+                                ProjectileType.PISTOL -> pistolProjectilePool.obtain()
+                                else -> machineGunProjectilePool.obtain()
+                            }.apply {
                                 setPosition(x, y)
                                 velocity.x = xSpeed
                                 velocity.y = ySpeed
@@ -317,9 +339,32 @@ class GameScreen(
                             }
                         }
                     }
+
+                    val picks = obj.getJSONArray("pickupData")
+
+                    for (pickup in pickups.values) {
+                        if (pickup is PistolPickup) pistolPickupPool.free(pickup)
+                        if (pickup is MachineGunPickup) machineGunPickupPool.free(pickup)
+                    }
+
+                    pickups.clear()
+
+                    for (i in 0 until picks.length()) {
+                        val pickup = picks[i] as JSONObject
+                        val id = pickup.getString("id")
+                        val x = pickup.getDouble("x").toFloat()
+                        val y = pickup.getDouble("y").toFloat()
+                        val type = pickup.getString("type")
+
+                        pickups[id] = when (type) {
+                            ProjectileType.PISTOL -> pistolPickupPool.obtain().apply { setPosition(x, y) }
+                            else -> machineGunPickupPool.obtain().apply { setPosition(x, y) }
+                        }
+                    }
                 }
                 .on("newProjectile") { data ->
                     val projectile = data[0] as JSONObject
+                    val type = projectile.getString("type")
                     val id = projectile.getString("id")
                     val x = projectile.getLong("x").toFloat()
                     val y = projectile.getLong("y").toFloat()
@@ -327,7 +372,10 @@ class GameScreen(
                     val ySpeed = projectile.getDouble("ySpeed").toFloat()
 
                     if (projectiles[id] == null) {
-                        projectiles[id] = pistolProjectilePool.obtain().apply {
+                        projectiles[id] = when (type) {
+                            ProjectileType.PISTOL -> pistolProjectilePool.obtain()
+                            else -> machineGunProjectilePool.obtain()
+                        }.apply {
                             setPosition(x, y)
                             velocity.x = xSpeed
                             velocity.y = ySpeed
@@ -363,7 +411,7 @@ class GameScreen(
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
         if (angle < 0) angle += 360f
-        player.facingDirectionAngle = angle
+        player.setAngle(angle)
     }
 
     private fun checkControls(delta: Float) {
@@ -418,28 +466,30 @@ class GameScreen(
 
             if (entry.value.bounds.x < 0 || entry.value.bounds.x > MAP_WIDTH ||
                     entry.value.bounds.y < 0 || entry.value.bounds.y > MAP_HEIGHT) {
-                pistolProjectilePool.free(entry.value as PistolProjectile)
+
+                if (entry.value is PistolProjectile)
+                    pistolProjectilePool.free(entry.value as PistolProjectile)
+                else if (entry.value is MachineGunProjectile)
+                    machineGunProjectilePool.free(entry.value as MachineGunProjectile)
+
                 projectiles.remove(entry.key)
             } else {
                 for (opponent in opponents.entries) {
                     if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds) && !opponent.value.isDead) {
-                        // todo should check projectile type
-                        pistolProjectilePool.free(entry.value as PistolProjectile)
-                        //println(opponent.value.currentHealth)
-                        //opponent.value.takeDamage(opponent.value.currentHealth)
-                        //val data = JSONObject()
-                        //data.put("currentHealth", opponent.value.currentHealth)
-                        //data.put("id", opponent.value.id)
-                        //data.put("takeDamage", true)
-                        //socket.emit("takeDamage", data)
+                        if (entry.value is PistolProjectile)
+                            pistolProjectilePool.free(entry.value as PistolProjectile)
+                        else if (entry.value is MachineGunProjectile)
+                            machineGunProjectilePool.free(entry.value as MachineGunProjectile)
                         projectiles.remove(entry.key)
                         removed = true
                     }
                 }
                 if (!removed) {
                     if (Intersector.overlaps(entry.value.bounds, player.bounds)) {
-                        // todo should check projectile type
-                        pistolProjectilePool.free(entry.value as PistolProjectile)
+                        if (entry.value is PistolProjectile)
+                            pistolProjectilePool.free(entry.value as PistolProjectile)
+                        else if (entry.value is MachineGunProjectile)
+                            machineGunProjectilePool.free(entry.value as MachineGunProjectile)
                         projectiles.remove(entry.key)
                     }
                 }
@@ -447,15 +497,9 @@ class GameScreen(
         }
     }
 
-//    private fun spawnPistolProjectile(x: Float, y: Float, xSpeed: Float, ySpeed: Float) {
-//        val projectile = pistolProjectilePool.obtain()
-//        projectile.setPosition(x, y)
-//        projectile.velocity.set(xSpeed, ySpeed)
-//        ghostProjectiles.add(projectile)
-//    }
-
     private fun drawPlayer(batch: Batch, agent: Agent) {
         if (!player.isDead && player.currentHealth >= 10) {
+            setPlayerRotation()
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
         }
@@ -474,11 +518,12 @@ class GameScreen(
             if (!it.isDead) {
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
-            }else {
+            } else {
                 val data = JSONObject()
                 data.put("isDead", true)
                 data.put("id", it.id)
-                socket.emit("isDead", data)}
+                socket.emit("isDead", data)
+            }
         }
     }
 
@@ -487,9 +532,13 @@ class GameScreen(
         for (i in 0 until walls.size) walls[i].draw(batch)
     }
 
+    private fun drawPickups(batch: Batch) {
+        for (pickup in pickups.values) pickup.sprite.draw(batch)
+    }
+
     private fun drawMagazineInfo(batch: Batch) {
         if (player.weapon.bulletsInChamber != -1 && !player.isDead) {
-            font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/$PISTOL_BULLETS_IN_CHAMBER",
+            font.draw(batch, "${player.weapon.type}, Ammo: ${player.weapon.bulletsInChamber}/${player.weapon.maxBulletsInChamber}",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
             font.getData().setScale(1f, 1f);
@@ -520,48 +569,4 @@ class GameScreen(
         if (player.bounds.y > WINDOW_HEIGHT / 2f && player.bounds.y < MAP_HEIGHT - WINDOW_HEIGHT / 2f)
             camera.position.y = player.bounds.y
     }
-
-//    fun projectToRectEdgeRad(angle: Double, rect: Rectangle): Vector2 {
-//
-//        var theta = angle * MathUtils.degreesToRadians
-//
-//        while (theta < -MathUtils.PI) theta += MathUtils.PI2
-//        while (theta > MathUtils.PI) theta -= MathUtils.PI2
-//
-//        val rectAtan = MathUtils.atan2(rect.height, rect.width)
-//        val tanTheta = tan(theta)
-//        val region: Int
-//
-//        region = if ((theta > -rectAtan) && (theta <= rectAtan)) 1
-//        else if ((theta > rectAtan) && (theta <= (Math.PI - rectAtan))) 2
-//        else if ((theta > (Math.PI - rectAtan)) || (theta <= -(Math.PI - rectAtan))) 3
-//        else 4
-//
-//        val edgePoint = Vector2().apply {
-//            x = rect.width / 2f
-//            y = rect.height / 2f
-//        }
-//        var xFactor = 1
-//        var yFactor = 1
-//
-//        when (region) {
-//            3, 4 -> {
-//                xFactor = -1
-//                yFactor = -1
-//            }
-//        }
-//
-//        when (region) {
-//            1, 3 -> {
-//                edgePoint.x += xFactor * (rect.width / 2f)
-//                edgePoint.y += yFactor * (rect.width / 2f) * tanTheta.toFloat()
-//            }
-//            else -> {
-//                edgePoint.x += xFactor * (rect.height / (2f * tanTheta.toFloat()))
-//                edgePoint.y += yFactor * (rect.height / 2f)
-//            }
-//        }
-//
-//        return edgePoint
-//    }
 }

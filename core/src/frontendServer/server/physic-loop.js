@@ -3,11 +3,17 @@ const shortid = require('shortid');
 
 const Agent = require('./models/Agent');
 const Pistol = require('./models/Pistol');
+const MachineGun = require('./models/MachineGun');
 const PistolProjectile = require('./models/PistolProjectile');
+const MachineGunProjectile = require('./models/MachineGunProjectile');
+const PistolPickup = require('./models/PistolPickup');
+const MachineGunPickup = require('./models/MachineGunPickup');
+const ProjectileType = require('./models/ProjectileType');
 const constants = require('./settings/constants');
 
 const agents = [];
 const projectiles = [];
+const pickups = [];
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
@@ -40,7 +46,7 @@ function calculateProjectilePositions(delta) {
             projectiles.splice(projectiles.indexOf(projectile), 1);
         }
 
-        for(let i = 0; i < agents.length; i++){
+        for (let i = 0; i < agents.length; i++) {
             const agent = agents[i];
             if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead){
                 agent.takeDamage();
@@ -67,8 +73,42 @@ function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
     broadcastNewProjectile(projectile)
 }
 
-function checkControls(agent, delta, broadcastNewProjectile) {
+function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
+    const projectile = new MachineGunProjectile(x, y, xSpeed, ySpeed, shortid.generate());
+    projectiles.push(projectile);
+    broadcastNewProjectile(projectile)
+}
 
+function pickWeapon(agent) {
+    for (pickup of pickups) {
+        if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
+            switch (agent.weapon.projectileType) {
+                case ProjectileType.PISTOL:
+                    pickups.push(new PistolPickup(pickup.bounds.position.x, pickup.bounds.position.y,
+                        shortid.generate(), agent.weapon.bulletsInChamber));
+                    break;
+                case ProjectileType.MACHINE_GUN:
+                    pickups.push(new MachineGunPickup(pickup.bounds.position.x, pickup.bounds.position.y,
+                        shortid.generate(), agent.weapon.bulletsInChamber));
+                    break;
+            }
+
+            switch (pickup.type) {
+                case ProjectileType.PISTOL:
+                    agent.weapon = new Pistol();
+                    break;
+                case ProjectileType.MACHINE_GUN:
+                    agent.weapon = new MachineGun();
+                    break;
+            }
+
+            agent.weapon.bulletsInChamber = pickup.ammunition;
+            pickups.splice(pickups.indexOf(pickup), 1);
+        }
+    }
+}
+
+function checkControls(agent, delta, broadcastNewProjectile) {
     if (agent.isRPressed && agent.reloadMark === -1) {
         if (agent.weapon.bulletsInChamber !== agent.weapon.maxBulletsInChamber) {
             agent.reloadMark = new Date().getTime();
@@ -81,6 +121,12 @@ function checkControls(agent, delta, broadcastNewProjectile) {
         agent.reloadMark = -1;
     }
 
+    if (agent.pickWeapon) {
+        agent.pickWeapon = false;
+        pickWeapon(agent);
+        return
+    }
+
     if (agent.isLMPressed && agent.canShoot() && !agent.isDead) {
         agent.shoot();
         const xCentre = agent.bounds.position.x;
@@ -91,9 +137,17 @@ function checkControls(agent, delta, broadcastNewProjectile) {
         edgePoint.x += xCentre - constants.PLAYER_SPRITE_WIDTH / 2;
         edgePoint.y += yCentre - constants.PLAYER_SPRITE_HEIGHT / 2;
 
-        spawnPistolProjectile(edgePoint.x, edgePoint.y,
-            Math.cos(Math.PI / 180 * agent.facingDirectionAngle),
-            Math.sin(Math.PI / 180 * agent.facingDirectionAngle), broadcastNewProjectile)
+        xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
+        ySpeed = Math.sin(Math.PI / 180 * agent.facingDirectionAngle);
+
+        switch (agent.weapon.projectileType) {
+            case ProjectileType.PISTOL:
+                spawnPistolProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile);
+                break;
+            case ProjectileType.MACHINE_GUN:
+                spawnMachineGunProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile);
+                break;
+        }
     }
 
     let movementSpeed = constants.PLAYER_MOVEMENT_SPEED;
@@ -158,5 +212,5 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop};
+module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop, pickups};
 
