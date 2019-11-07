@@ -155,7 +155,6 @@ io.on('connection', (socket) => {
     socket.on("pickWeapon", data => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
-                console.log('player found')
                 agents[i].pickWeapon = true;
             }
         }
