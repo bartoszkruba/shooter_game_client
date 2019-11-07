@@ -45,7 +45,6 @@ class GameScreen(
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val music = assets.get("music/music.wav", Music::class.java)
-
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
 
@@ -63,6 +62,7 @@ class GameScreen(
     private var forIf = true
 
     lateinit var player: Player
+    val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
     val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
@@ -76,6 +76,10 @@ class GameScreen(
     val pickups = ConcurrentHashMap<String, Pickup>()
 
     init {
+        playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
         music.isLooping = true
         music.volume = 0f
@@ -245,7 +249,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTexture, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -286,9 +290,10 @@ class GameScreen(
                             } else player.isDead = true
                         } else {
                             if (opponents[id] == null) {
+                                opponents[id] = Opponent(x, y, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
-                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTextures, id, healthBarTexture)
                             } else {
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
@@ -402,7 +407,7 @@ class GameScreen(
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
         if (angle < 0) angle += 360f
-        player.facingDirectionAngle = angle
+        player.setAngle(angle)
     }
 
     private fun checkControls(delta: Float) {
@@ -489,6 +494,7 @@ class GameScreen(
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
         if (!player.isDead && player.currentHealth >= 10) {
+            setPlayerRotation()
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
         } else {
