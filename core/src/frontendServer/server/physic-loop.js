@@ -6,6 +6,8 @@ const Pistol = require('./models/Pistol');
 const MachineGun = require('./models/MachineGun');
 const PistolProjectile = require('./models/PistolProjectile');
 const MachineGunProjectile = require('./models/MachineGunProjectile');
+const PistolPickup = require('./models/PistolPickup');
+const MachineGunPickup = require('./models/MachineGunPickup');
 const ProjectileType = require('./models/ProjectileType');
 const constants = require('./settings/constants');
 
@@ -81,16 +83,27 @@ function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile)
 function pickWeapon(agent) {
     for (pickup of pickups) {
         if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
+            switch (agent.weapon.projectileType) {
+                case ProjectileType.PISTOL:
+                    pickups.push(new PistolPickup(pickup.bounds.position.x, pickup.bounds.position.y,
+                        shortid.generate(), agent.weapon.bulletsInChamber));
+                    break;
+                case ProjectileType.MACHINE_GUN:
+                    pickups.push(new MachineGunPickup(pickup.bounds.position.x, pickup.bounds.position.y,
+                        shortid.generate(), agent.weapon.bulletsInChamber));
+                    break;
+            }
+
             switch (pickup.type) {
                 case ProjectileType.PISTOL:
                     agent.weapon = new Pistol();
-                    agent.weapon.bulletsInChamber = 0;
                     break;
                 case ProjectileType.MACHINE_GUN:
                     agent.weapon = new MachineGun();
-                    agent.weapon.bulletsInChamber = 0;
                     break;
             }
+
+            agent.weapon.bulletsInChamber = pickup.ammunition;
             pickups.splice(pickups.indexOf(pickup), 1);
         }
     }
