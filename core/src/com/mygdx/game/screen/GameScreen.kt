@@ -27,6 +27,7 @@ import ktx.graphics.use
 import org.json.JSONObject
 import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
+import java.awt.Label
 import java.util.concurrent.ConcurrentHashMap
 
 import kotlin.math.tan
@@ -113,6 +114,7 @@ class GameScreen(
             batch.use {
                 drawPickups(it)
                 drawProjectiles(it)
+                drawPlayerName(it, "Rami")
                 drawOpponents(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
@@ -135,6 +137,10 @@ class GameScreen(
                 drawMagazineInfo(it)
             }
         }
+    }
+
+    private fun drawPlayerName(batch: Batch, name: String) {
+        font.draw(batch, name, player.bounds.x + 10f, player.bounds.y + 88f);
     }
 
     private fun checkRestart() {
@@ -253,7 +259,8 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false,
+                            PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
