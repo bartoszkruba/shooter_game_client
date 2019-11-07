@@ -36,6 +36,7 @@ class SplashScreen(private val game: Game,
 
     override fun render(delta: Float){
         camera.update()
+        background.setScale(background.scaleX*1.001f, background.scaleY*1.001f)
         if(text.x > WINDOW_WIDTH/3 ){ text.setPosition(text.x-(text.x*0.01f), text.y) }
         batch.projectionMatrix = camera.combined
         batch.use{
