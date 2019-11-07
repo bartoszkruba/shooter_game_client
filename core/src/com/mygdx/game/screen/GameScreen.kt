@@ -416,7 +416,7 @@ class GameScreen(
                 projectiles.remove(entry.key)
             } else {
                 for (opponent in opponents.entries) {
-                    if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds)) {
+                    if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds) && !opponent.value.isDead) {
                         // todo should check projectile type
                         pistolProjectilePool.free(entry.value as PistolProjectile)
                         //println(opponent.value.currentHealth)

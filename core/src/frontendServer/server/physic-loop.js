@@ -158,5 +158,5 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-module.exports = {physicLoop, agents, projectiles, lastLoop};
+module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop};
 

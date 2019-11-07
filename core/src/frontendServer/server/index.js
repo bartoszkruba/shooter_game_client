@@ -127,13 +127,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('restart', () => {
-        // console.log(Object.keys(data)[0] + " just pressed");
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
                 agents[i].isDead = false;
-                agents[i].bounds.position.x = 500;
-                agents[i].bounds.position.y = 500;
+                engine.moveAgent(agents[i], 500, 500);
+                break;
             }
         }
     });
@@ -228,7 +227,9 @@ async function gameDataLoop(socket) {
 
           for (agent of agents) {
             //console.log(agent.currentHealth)
-            agentData.push({
+              //console.log("x:", agents[i].bounds.position.x, ",y:", agents[i].bounds.position.y)
+
+              agentData.push({
                 x: agent.bounds.bounds.min.x,
                 y: agent.bounds.bounds.min.y,
                 xVelocity: agent.velocity.x,
