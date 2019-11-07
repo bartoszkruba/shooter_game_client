@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
@@ -46,7 +47,6 @@ class GameScreen(
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val music = assets.get("music/music.wav", Music::class.java)
-
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
@@ -65,6 +65,7 @@ class GameScreen(
     private var forIf = true
 
     lateinit var player: Player
+    val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
     val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
     val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
@@ -80,6 +81,10 @@ class GameScreen(
     private val ground = Array<Sprite>()
 
     init {
+        playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
+        playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
         music.isLooping = true
         music.volume = 0.13f
@@ -111,8 +116,7 @@ class GameScreen(
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
-            updateServerPlayerHealth()
-            updateServerOpponentsHealth()
+            checkRestart()
         }
 
         camera.update()
@@ -141,28 +145,32 @@ class GameScreen(
 
         if (::player.isInitialized) {
             batch.use {
+                drawGameOver(it)
                 drawMagazineInfo(it)
             }
         }
     }
 
-
-    private fun updateServerOpponentsHealth() {
-        if (opponents.values.isNotEmpty()) {
-            val data = JSONObject()
-            for (opponent in opponents.values) {
-                data.put("health", opponent.currentHealth)
-                data.put("id", opponent.id)
-                socket.emit("currentPlayerHealth", data)
+    private fun checkRestart() {
+        if (player.isDead){
+            if (Gdx.input.isButtonPressed((Input.Buttons.LEFT))){
+                    socket.emit("restart")
             }
         }
     }
 
-    private fun updateServerPlayerHealth() {
-        val data = JSONObject()
-        data.put("health", player.currentHealth)
-        data.put("id", player.id)
-        socket.emit("currentPlayerHealth", data)
+    private fun drawGameOver(batch: Batch) {
+        if (player.isDead){
+            val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
+            val c: Color = batch.color;
+            batch.setColor(c.r, c.g, c.b, .7f)
+            batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            //font.draw(batch, "Tap anywhere to restart!", (WINDOW_WIDTH / 2) - 80f, (WINDOW_HEIGHT / 2) - 30f);
+            //font.getData().setScale(3f, 3f);
+            //font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f);
+            //font.getData().setScale(3f, 3f);
+        }
     }
 
     private fun updateServerRotation() {
@@ -259,7 +267,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTexture, healthBarTexture, playerId)
+                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, false, PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
                 }
@@ -283,9 +291,10 @@ class GameScreen(
                         val yVelocity = agent.getLong("yVelocity").toFloat()
                         if (id == player.id) {
                             if (!isDead) {
+                                //println("$x, $y")
+                                player.isDead = isDead
                                 player.setPosition(x, y)
-
-                                if (player.weapon.type != weapon) {
+                                 if (player.weapon.type != weapon) {
                                     when (weapon) {
                                         ProjectileType.PISTOL -> player.weapon = Pistol()
                                         ProjectileType.MACHINE_GUN -> player.weapon = MachineGun()
@@ -300,9 +309,10 @@ class GameScreen(
                             } else player.isDead = true
                         } else {
                             if (opponents[id] == null) {
+                                opponents[id] = Opponent(x, y, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
-                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTexture, id, healthBarTexture)
+                                opponents[id] = Opponent(x, y, isDead, currentHealth, 0f, 0f, playerTextures, id, healthBarTexture)
                             } else {
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
@@ -416,32 +426,34 @@ class GameScreen(
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
         if (angle < 0) angle += 360f
-        player.facingDirectionAngle = angle
+        player.setAngle(angle)
     }
 
     private fun checkControls(delta: Float) {
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
         pressedKeys = 0
+        if(!player.isDead) {
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedKeys++
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedKeys++
 
-        if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
+            if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W))
-            movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta)
+            if (Gdx.input.isKeyPressed(Input.Keys.W))
+                movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta)
 
-        if (Gdx.input.isKeyPressed(Input.Keys.S))
-            movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta)
+            if (Gdx.input.isKeyPressed(Input.Keys.S))
+                movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta)
 
-        if (Gdx.input.isKeyPressed(Input.Keys.A))
-            movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y)
+            if (Gdx.input.isKeyPressed(Input.Keys.A))
+                movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y)
 
-        if (Gdx.input.isKeyPressed(Input.Keys.D))
-            movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
+            if (Gdx.input.isKeyPressed(Input.Keys.D))
+                movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
+        }
     }
 
     private fun moveOpponents(delta: Float) {
@@ -478,12 +490,11 @@ class GameScreen(
                 projectiles.remove(entry.key)
             } else {
                 for (opponent in opponents.entries) {
-                    if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds)) {
+                    if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds) && !opponent.value.isDead) {
                         if (entry.value is PistolProjectile)
                             pistolProjectilePool.free(entry.value as PistolProjectile)
                         else if (entry.value is MachineGunProjectile)
                             machineGunProjectilePool.free(entry.value as MachineGunProjectile)
-
                         projectiles.remove(entry.key)
                         removed = true
                     }
@@ -503,13 +514,9 @@ class GameScreen(
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
         if (!player.isDead && player.currentHealth >= 10) {
+            setPlayerRotation()
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
-        } else {
-            val data = JSONObject()
-            data.put("isDead", true)
-            data.put("id", player.id)
-            socket.emit("isDead", data)
         }
     }
 
@@ -523,9 +530,7 @@ class GameScreen(
 
     private fun drawOpponents(batch: Batch) {
         opponents.values.forEach {
-            //println("id: "+it.id + ", is " + it.isDead)
             if (!it.isDead) {
-                //println("health: ${it.currentHealth}")
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
             } else {
@@ -547,14 +552,17 @@ class GameScreen(
     }
 
     private fun drawMagazineInfo(batch: Batch) {
-        if (player.weapon.bulletsInChamber != -1) {
+        if (player.weapon.bulletsInChamber != -1 && !player.isDead) {
             font.draw(batch, "${player.weapon.type}, Ammo: ${player.weapon.bulletsInChamber}/${player.weapon.maxBulletsInChamber}",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
+            font.getData().setScale(1f, 1f);
         } else {
+            if(!player.isDead)
             font.draw(batch, "Reloading...",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
+            font.getData().setScale(1f, 1f);
         }
     }
 

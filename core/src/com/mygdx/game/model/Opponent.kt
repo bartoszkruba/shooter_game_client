@@ -2,6 +2,7 @@ package com.mygdx.game.model
 
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.utils.Array
 
 class Opponent(
         x: Float,
@@ -10,7 +11,7 @@ class Opponent(
         currentHealth: Float,
         xSpeed: Float = 0f,
         ySpeed: Float = 0f,
-        texture: Texture,
+        texture: Array<Texture>,
         id: String,
         healthBarTexture: Texture,
         weapon: Weapon = Pistol(),

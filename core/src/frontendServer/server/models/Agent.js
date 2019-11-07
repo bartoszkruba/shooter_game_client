@@ -36,11 +36,8 @@ class Agent extends BaseObject {
     }
 
     takeDamage(){
-            //console.log("before",  currentHealth)
-        if(this.currentHealth >= constants.TAKE_DAMAGE) {
-            this.currentHealth -= constants.TAKE_DAMAGE;
-            //this.takeHp = takeHp;
-            //console.log("after",  this.currentHealth)
+        if(this.currentHealth > constants.PLAYER_MIN_HEALTH) {
+            this.currentHealth = this.currentHealth - constants.TAKE_DAMAGE;
         } else {this.isDead = true}
     }
 }
