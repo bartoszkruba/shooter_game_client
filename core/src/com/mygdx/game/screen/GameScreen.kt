@@ -138,37 +138,49 @@ class GameScreen(
     }
 
     private fun checkAllPlayersOnMap(batch: Batch) {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
-        if (showMiniMap == 2 ) showMiniMap = 0
-        if (showMiniMap != 1) {
-            font.draw(batch, "Press \"M\" to show map",  440f, 15f);
-            //font.getData().setScale(0.5f, 0.5f);
-        }
+        if (!player.isDead) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
+            if (showMiniMap == 2) showMiniMap = 0
+            if (showMiniMap != 1) {
+                font.draw(batch, "Press \"M\" to show map", 440f, 15f);
+                //font.getData().setScale(0.5f, 0.5f);
+            }
 
-        if (showMiniMap == 1) {
-            imgpos += (imgposdir / 3);
-            if (imgpos < 0.0) imgposdir = -imgposdir;
-            if (imgpos > 1.0) imgposdir = -imgposdir;
-            val miniMapSize = 200f;
-            val playerSize = 9f;
-            val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize;
-            val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize;
+            if (showMiniMap == 1) {
+                imgpos += (imgposdir / 3);
+                if (imgpos < 0.0) imgposdir = -imgposdir;
+                if (imgpos > 1.0) imgposdir = -imgposdir;
+                val miniMapSize = 200f;
+                val playerSize = 6f;
+                val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize;
+                val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize;
 
-            font.draw(batch, "Press \"M\" to hide map",  440f, 15f);
+                font.draw(batch, "Press \"M\" to hide map", 440f, 15f);
 
-            val miniMapexture = assets.get("images/miniMap.png", Texture::class.java)
-            val c = batch.color;
-            batch.setColor(c.r, c.g, c.b, .5f)
-            batch.draw(miniMapexture, 0f, 0f, miniMapSize, miniMapSize);
+                val miniMapexture = assets.get("images/miniMap.png", Texture::class.java)
+                val c = batch.color;
+                batch.setColor(c.r, c.g, c.b, .5f)
+                batch.draw(miniMapexture, 0f, 0f, miniMapSize, miniMapSize);
+                val meInMiniMapexture = assets.get("images/meInMiniMap.png", Texture::class.java)
+                batch.setColor(c.r, c.g, c.b, 1f)
 
-            val playersInMiniMapexture = assets.get("images/playersInMiniMap2.png", Texture::class.java)
-            batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
+                batch.draw(meInMiniMapexture,
+                        playerPosPercentageX - playerSize / 2f,
+                        playerPosPercentageY - playerSize / 2f,
+                        playerSize,
+                        playerSize);
 
-            batch.draw(playersInMiniMapexture,
-                    playerPosPercentageX - playerSize / 2f,
-                    playerPosPercentageY - playerSize / 2f,
-                    playerSize,
-                    playerSize);
+
+                val playersInMiniMapexture = assets.get("images/opponentsInMiniMap.png", Texture::class.java)
+                batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
+                opponents.values.forEach {
+                    batch.draw(playersInMiniMapexture,
+                            ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
+                            ((it.bounds.y / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
+                            playerSize,
+                            playerSize);
+                }
+            }
         }
     }
 
