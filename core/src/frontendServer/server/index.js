@@ -256,6 +256,7 @@ async function gameDataLoop(socket) {
                 currentHealth: agent.currentHealth,
                 id: agent.id,
                 weapon: agent.weapon.projectileType,
+                  angle: agent.facingDirectionAngle
             })
         }
 
