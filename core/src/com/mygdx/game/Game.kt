@@ -22,7 +22,6 @@ import ktx.app.KtxScreen
 import ktx.inject.Context
 
 class Game : KtxGame<KtxScreen>() {
-    val assets = AssetManager()
     private val context = Context()
     override fun create() {
         context.register {
@@ -44,7 +43,16 @@ class Game : KtxGame<KtxScreen>() {
 
     fun changeToMenu() {
         removeScreen<LoadingScreen>()
-        addScreen(MenuScreen(context.inject(), context.inject(), context.inject()))
+        addScreen(MenuScreen(this, context.inject(), context.inject(), context.inject()))
         setScreen<MenuScreen>()
+    }
+
+    fun changeToGame() {
+        val gameScreen = GameScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
+        gameScreen.configSocketEvents()
+        gameScreen.connectionSocket()
+        addScreen(gameScreen)
+        removeScreen<MenuScreen>()
+        setScreen<GameScreen>()
     }
 }
