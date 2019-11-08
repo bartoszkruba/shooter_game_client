@@ -42,7 +42,7 @@ class GameScreen(
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
-    private val music = assets.get("music/music.wav", Music::class.java)
+    private val music = assets.get("music/ingame_music.ogg", Music::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
@@ -87,8 +87,8 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
         music.isLooping = true
-        music.volume = 0.13f
-//        music.play()
+        music.volume = 0.2f
+        music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {

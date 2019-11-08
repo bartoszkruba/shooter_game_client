@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.mygdx.game.screen.GameScreen
 import com.mygdx.game.screen.LoadingScreen
 import com.mygdx.game.screen.MenuScreen
-import com.mygdx.game.screen.SplashScreen
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
 import ktx.app.KtxGame
@@ -38,11 +37,7 @@ class Game : KtxGame<KtxScreen>() {
         addScreen(MenuScreen(context.inject(), context.inject(), context.inject(), context.inject(),context.inject()))
         setScreen<MenuScreen>()
     }
-    fun changeToSplash(){
-        val splashScreen = SplashScreen(context.inject(), context.inject(),context.inject(),context.inject(),context.inject())
-        addScreen(splashScreen)
-        setScreen<SplashScreen>()
-    }
+
     fun changeToGame() {
         val gameScreen = GameScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
 
