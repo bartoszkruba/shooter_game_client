@@ -64,8 +64,9 @@ class LoadingScreen(private val game: Game,
         assets.load("music/music.wav", Music::class.java)
         assets.load("music/rain.mp3", Music::class.java)
         assets.load("music/waiting.ogg", Music::class.java)
-        assets.load("images/splash.jpg", Texture::class.java)
-        assets.load("images/splashtext.png", Texture::class.java)
+        assets.load<Texture>("images/splashscreen/foreground.png")
+        assets.load<Texture>("images/splashscreen/background.png")
+        assets.load<Texture>("images/splashscreen/splashtext.png")
     }
 
     override fun render(delta: Float) {
@@ -76,11 +77,7 @@ class LoadingScreen(private val game: Game,
 
         batch.use {
             font.draw(it, "Welcome to Leprechaun Nuclear Invasion 420 (GOTY edition)", 100f, 150f)
-            if (assets.isFinished) {
-                font.draw(it, "Tap anywhere to begin!", 100f, 100f)
-            } else {
-                font.draw(it, "Loading assets...", 100f, 100f)
-            }
+            font.draw(it, "Loading assets...", 100f, 100f)
         }
 
         if (assets.isFinished) {

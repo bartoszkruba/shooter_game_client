@@ -20,37 +20,50 @@ class SplashScreen(private val game: Game,
                     private val assets: AssetManager,
                     private val camera: OrthographicCamera) : KtxScreen {
 
-    private val music = assets.get("music/music.wav", Music::class.java)
-    private val background =  Sprite(assets.get("images/splash.jpg", Texture::class.java))
-    private val text = Sprite(assets.get("images/splashtext.png", Texture::class.java))
+    private val rainMusic = assets.get<Music>("music/rain.mp3")
+    private val backgroundMusic = assets.get<Music>("music/waiting.ogg")
+    private val background: Sprite = Sprite(assets.get<Texture>("images/splashscreen/background.png"))
+    private val foreground: Sprite = Sprite(assets.get<Texture>("images/splashscreen/foreground.png"))
+    private val text = Sprite(assets.get<Texture>("images/splashscreen/splashtext.png"))
+    private var textCounter = 0
 
     init {
+        foreground.setPosition(0f,0f)
+        foreground.setBounds(-WINDOW_WIDTH*2,0f, WINDOW_WIDTH*3, WINDOW_HEIGHT)
+        background.setBounds(0f,0f, WINDOW_WIDTH*3, WINDOW_HEIGHT)
         background.setPosition(0f,0f)
-        background.setBounds(0f,0f, WINDOW_WIDTH, WINDOW_HEIGHT)
         text.setBounds(WINDOW_WIDTH,  WINDOW_HEIGHT, WINDOW_WIDTH/2,WINDOW_HEIGHT/2)
-        text.setPosition(WINDOW_WIDTH + text.width, WINDOW_HEIGHT/3)
-        music.isLooping = true
-        music.volume = 0.3f
-        music.play()
+        text.setPosition(WINDOW_WIDTH*3, WINDOW_HEIGHT/2)
     }
 
-    override fun render(delta: Float){
+    override fun render(delta: Float) {
+        foreground.setPosition(foreground.x + 0.1f, foreground.y)
+        background.setPosition(background.x - 0.03f, background.y)
+        if (text.x > WINDOW_WIDTH / 5) {
+            text.setPosition(text.x - (text.x * 0.01f), text.y)
+        }
         camera.update()
-        background.setScale(background.scaleX*1.001f, background.scaleY*1.001f)
-        if(text.x > WINDOW_WIDTH/3 ){ text.setPosition(text.x-(text.x*0.01f), text.y) }
         batch.projectionMatrix = camera.combined
-        batch.use{
-               background.draw(batch)
-                text.draw(batch)
+
+        batch.use {
+            background.draw(it)
+            foreground.draw(it)
+            text.draw(it)
+            font.draw(it, "PRESS ANY BUTTON TO CONTINUE", WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2)
         }
 
         if(Gdx.input.isTouched){
-            val gameScreen = GameScreen(game, batch, assets, camera, font)
-            game.addScreen(gameScreen)
-            gameScreen.connectionSocket()
-            gameScreen.configSocketEvents()
-            game.setScreen(GameScreen::class.java)
+            val loadingScreen = LoadingScreen(game, batch, font, assets, camera)
+            game.addScreen(loadingScreen)
+            game.setScreen<LoadingScreen>()
         }
+    }
+    override fun show() {
+        super.show()
+        rainMusic.isLooping = true
+        rainMusic.play()
+        backgroundMusic.isLooping = true
+        backgroundMusic.play()
     }
 
 
