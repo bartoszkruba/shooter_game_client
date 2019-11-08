@@ -28,8 +28,14 @@ import ktx.graphics.use
 
 private class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
 
+private enum class Menu {
+    MAIN, CREDITS, START_GAME, OPTIONS
+}
+
 class MenuScreen(private val game: Game, assets: AssetManager, private val batch: SpriteBatch,
                  private val camera: OrthographicCamera) : KtxScreen {
+
+    private var current_window = Menu.MAIN
 
     private val startGameChoice = "sg"
     private val quitChoice = "q"
@@ -161,7 +167,14 @@ class MenuScreen(private val game: Game, assets: AssetManager, private val batch
         currentChoice = newValue
     }
 
-    private fun drawMenuChoices(batch: SpriteBatch) = menuChoices.forEach { it.sprite.draw(batch) }
+    private fun drawMenuChoices(batch: SpriteBatch) = when(current_window){
+        Menu.MAIN -> drawMainMenuChoices(batch)
+        Menu.CREDITS -> {}
+        Menu.START_GAME -> {}
+        Menu.OPTIONS -> {}
+    }
+
+    private fun drawMainMenuChoices(batch: SpriteBatch) = menuChoices.forEach { it.sprite.draw(batch) }
 
     private fun getMousePosInGameWorld() {
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
