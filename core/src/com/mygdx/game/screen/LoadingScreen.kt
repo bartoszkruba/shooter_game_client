@@ -67,8 +67,6 @@ class LoadingScreen(private val game: Game,
         if (Gdx.input.isTouched && assets.isFinished) {
             val gameScreen = GameScreen(game, batch, assets, camera, font)
             game.addScreen(gameScreen)
-            gameScreen.connectionSocket()
-            gameScreen.configSocketEvents()
             game.setScreen<GameScreen>()
             game.removeScreen<LoadingScreen>()
             dispose()
