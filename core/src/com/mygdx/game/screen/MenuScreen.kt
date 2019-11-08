@@ -2,29 +2,44 @@ package com.mygdx.game.screen
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.game.settings.WINDOW_WIDTH
 import com.mygdx.game.ui.MenuChoice
 import com.badlogic.gdx.utils.Array
+import com.mygdx.game.settings.WINDOW_HEIGHT
 import ktx.app.KtxScreen
 import ktx.graphics.use
 
 class MenuScreen(assets: AssetManager, private val batch: SpriteBatch, private val camera: OrthographicCamera) : KtxScreen {
 
-    val startGameChoice = "sg"
-    val quitChoice = "q"
-    val optionsChoice = "op"
-    val creditsChoice = "cr"
+    private val startGameChoice = "sg"
+    private val quitChoice = "q"
+    private val optionsChoice = "op"
+    private val creditsChoice = "cr"
 
-    val mousePosition = Vector2()
+    private val mousePosition = Vector2()
 
-    val menuChoices = Array<MenuChoice>()
+    private val menuChoices = Array<MenuChoice>()
+
+    private val rainMusic = assets.get<Music>("music/rain.mp3")
+    private val backgroundMusic = assets.get<Music>("music/waiting.ogg")
+
+    private val backgroundOne: Sprite = Sprite(assets.get<Texture>("images/menu/far-buildings.png"))
+
+    private val backgroundTwo: Sprite = Sprite(assets.get<Texture>("images/menu/back-buildings.png"))
 
     init {
+
+        backgroundOne.setSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        backgroundOne.setPosition(0f, 0f)
+        backgroundTwo.setSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        backgroundTwo.setPosition(0f, 0f)
 
         menuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/menu_quit_selected.jpg"),
@@ -66,6 +81,8 @@ class MenuScreen(assets: AssetManager, private val batch: SpriteBatch, private v
         checkMouseOverlay()
 
         batch.use {
+            backgroundOne.draw(it)
+            backgroundTwo.draw(it)
             drawMenuChoices(it)
         }
     }
@@ -80,5 +97,13 @@ class MenuScreen(assets: AssetManager, private val batch: SpriteBatch, private v
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
         mousePosition.x = position.x
         mousePosition.y = position.y
+    }
+
+    override fun show() {
+        super.show()
+        rainMusic.isLooping = true
+        rainMusic.play()
+        backgroundMusic.isLooping = true
+        backgroundMusic.play()
     }
 }
