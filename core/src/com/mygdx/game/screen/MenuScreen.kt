@@ -30,7 +30,7 @@ import ktx.graphics.use
 private class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
 
 private enum class Menu {
-    MAIN, CREDITS, START_GAME, OPTIONS
+    MAIN, CREDITS, START_GAME, OPTIONS, SPLASH_SCREEN
 }
 
 class MenuScreen(
@@ -40,7 +40,7 @@ class MenuScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-    private var current_window = Menu.MAIN
+    private var currentWindow = Menu.SPLASH_SCREEN
 
     private val startGameChoice = "sg"
     private val quitChoice = "q"
@@ -49,14 +49,15 @@ class MenuScreen(
 
     private val mousePosition = Vector2()
 
-    private val menuChoices = Array<MenuChoice>()
+    private val mainMenuChoices = Array<MenuChoice>()
 
     private val rainMusic = assets.get<Music>("music/rain.mp3")
     private val backgroundMusic = assets.get<Music>("music/waiting.ogg")
 
-    private val backgroundOne: Sprite = Sprite(assets.get<Texture>("images/menu/far-buildings.png"))
+    private val background: Sprite = Sprite(assets.get<Texture>("images/splashscreen/background.png"))
+    private val foreground: Sprite = Sprite(assets.get<Texture>("images/splashscreen/foreground.png"))
 
-    private val backgroundTwo: Sprite = Sprite(assets.get<Texture>("images/menu/back-buildings.png"))
+    private val text = Sprite(assets.get<Texture>("images/splashscreen/splashtext.png"))
 
     private val hoverSound = assets.get<Sound>("sounds/menu_hover.wav")
     private val selectSound = assets.get<Sound>("sounds/menu_select.wav")
@@ -81,38 +82,40 @@ class MenuScreen(
     private var currentChoice = ""
 
     init {
-        backgroundOne.setSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-        backgroundOne.setPosition(0f, 0f)
-        backgroundTwo.setSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-        backgroundTwo.setPosition(0f, 0f)
+        foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
+        background.setBounds(0f, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
+        background.setPosition(0f, 0f)
 
-        menuChoices.add(MenuChoice(
+        text.setBounds(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+        text.setPosition(WINDOW_WIDTH * 3, WINDOW_HEIGHT / 2)
+
+        mainMenuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/menu_quit_selected.jpg"),
                 assets.get<Texture>("images/menu/menu_quit.png"),
                 quitChoice
         ))
 
-        menuChoices.add(MenuChoice(
+        mainMenuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/menu_credits_selected.jpg"),
                 assets.get<Texture>("images/menu/menu_credits.png"),
                 creditsChoice
         ))
 
-        menuChoices.add(MenuChoice(
+        mainMenuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/menu_options_selected.jpg"),
                 assets.get<Texture>("images/menu/menu_options.png"),
                 optionsChoice
         ))
 
-        menuChoices.add(MenuChoice(
+        mainMenuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/menu_start_game_selected.jpg"),
                 assets.get<Texture>("images/menu/menu_start_game.png"),
                 startGameChoice
         ))
-        val x = (WINDOW_WIDTH - menuChoices[0].sprite.width) / 2
+        val x = (WINDOW_WIDTH - mainMenuChoices[0].sprite.width) / 2
         var y = 100f
 
-        menuChoices.forEach {
+        mainMenuChoices.forEach {
             it.setPosition(x, y)
             y += it.sprite.height + 50
         }
@@ -120,6 +123,13 @@ class MenuScreen(
     }
 
     override fun render(delta: Float) {
+        foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
+        background.setPosition(background.x - 0.03f * 60 * delta, background.y)
+
+        if (text.x > WINDOW_WIDTH / 5) {
+            text.setPosition(text.x - (text.x * 0.01f), text.y)
+        }
+
         moveDroplets(delta)
         if (TimeUtils.millis() - lastSpawn > spawnRate) spawnDroplet()
 
@@ -132,11 +142,13 @@ class MenuScreen(
         checkMouseClick()
 
         batch.use {
-            backgroundOne.draw(it)
-            backgroundTwo.draw(it)
+            background.draw(it)
+            foreground.draw(it)
         }
 
         drawRain()
+
+        if (Gdx.input.isTouched && currentWindow == Menu.SPLASH_SCREEN) currentWindow = Menu.MAIN
 
         batch.use {
             drawMenuChoices(it)
@@ -158,28 +170,38 @@ class MenuScreen(
 
     private fun checkMouseOverlay() {
         var newValue = ""
-        menuChoices.forEach { choice ->
-            choice.active = if (choice.bounds.contains(mousePosition)) {
-                if (currentChoice != choice.type) {
-                    hoverSound.play()
+        if(currentWindow == Menu.MAIN){
+            mainMenuChoices.forEach { choice ->
+                choice.active = if (choice.bounds.contains(mousePosition)) {
+                    if (currentChoice != choice.type) {
+                        hoverSound.play()
+                    }
+                    newValue = choice.type
+                    true
+                } else {
+                    false
                 }
-                newValue = choice.type
-                true
-            } else {
-                false
             }
         }
         currentChoice = newValue
     }
 
-    private fun drawMenuChoices(batch: SpriteBatch) = when(current_window){
+    private fun drawMenuChoices(batch: SpriteBatch) = when (currentWindow) {
         Menu.MAIN -> drawMainMenuChoices(batch)
-        Menu.CREDITS -> {}
-        Menu.START_GAME -> {}
-        Menu.OPTIONS -> {}
+        Menu.CREDITS -> {
+        }
+        Menu.START_GAME -> {
+        }
+        Menu.OPTIONS -> {
+        }
+        Menu.SPLASH_SCREEN -> drawSplashScreen(batch)
     }
 
-    private fun drawMainMenuChoices(batch: SpriteBatch) = menuChoices.forEach { it.sprite.draw(batch) }
+    private fun drawSplashScreen(batch: SpriteBatch) {
+        text.draw(batch)
+    }
+
+    private fun drawMainMenuChoices(batch: SpriteBatch) = mainMenuChoices.forEach { it.sprite.draw(batch) }
 
     private fun getMousePosInGameWorld() {
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))

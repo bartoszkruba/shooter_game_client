@@ -54,9 +54,6 @@ class LoadingScreen(private val game: Game,
         assets.load("images/menu/menu_start_game.png", Texture::class.java)
         assets.load("images/menu/menu_start_game_selected.jpg", Texture::class.java)
 
-        assets.load("images/menu/far-buildings.png", Texture::class.java)
-        assets.load("images/menu/back-buildings.png", Texture::class.java)
-
         assets.load("sounds/menu_hover.wav", Sound::class.java)
         assets.load("sounds/menu_select.wav", Sound::class.java)
 
@@ -84,7 +81,7 @@ class LoadingScreen(private val game: Game,
         }
 
         if (assets.isFinished) {
-            game.changeToSplash()
+            game.changeToMenu()
             game.removeScreen<LoadingScreen>()
             dispose()
         }
