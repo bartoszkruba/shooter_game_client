@@ -49,8 +49,8 @@ class Game : KtxGame<KtxScreen>() {
 
     fun changeToGame() {
         val gameScreen = GameScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
-        gameScreen.configSocketEvents()
         gameScreen.connectionSocket()
+        gameScreen.configSocketEvents()
         addScreen(gameScreen)
         removeScreen<MenuScreen>()
         setScreen<GameScreen>()

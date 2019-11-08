@@ -207,6 +207,7 @@ class MenuScreen(private val game: Game, assets: AssetManager, private val batch
         rainMusic.isLooping = true
         rainMusic.play()
         backgroundMusic.isLooping = true
+        backgroundMusic.volume = 0.3f
         backgroundMusic.play()
     }
 }
