@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap
 class Server {
     companion object {
         private lateinit var socket: Socket
-
         val pickups = ConcurrentHashMap<String, Pickup>()
 
         lateinit var projectileTexture: Texture
@@ -27,14 +26,11 @@ class Server {
 
         lateinit private var player: Player
         val projectiles = ConcurrentHashMap<String, Projectile>()
-
         val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
         var machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
         var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
         var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
-
         val opponents = ConcurrentHashMap<String, Opponent>()
-
 
         fun connectionSocket() {
             try {
@@ -44,12 +40,10 @@ class Server {
             }
         }
 
-
         fun getPlayer(): Player? {
             if (::player.isInitialized) {return player}
             return null
         }
-
 
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
                                playerTextures: Array<Texture>, healthBarTexture: Texture) {
@@ -65,15 +59,12 @@ class Server {
                 val obj: JSONObject = data[0] as JSONObject
                 val playerId = obj.getString("id")
 
-                player = Player(500f, 500f, "Rami",false,
-                        PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
+                createPlayer(playerId, healthBarTexture, playerTextures)
 
                 Gdx.app.log("SocketIO", "My ID: $playerId")
             }
             .on("playerDisconnected") { data ->
-                val obj: JSONObject = data[0] as JSONObject
-                val playerId = obj.getString("id")
-                opponents.remove(playerId)
+                removeOpponent(data)
             }
             .on("gameData") { data ->
                 val obj = data[0] as JSONObject
@@ -110,8 +101,7 @@ class Server {
                         } else player.isDead = true
                     } else {
                         if (opponents[id] == null) {
-                            opponents[id] = Opponent(x, y, name, isDead, currentHealth,0f, 0f,
-                                                    playerTextures, id, healthBarTexture)
+                            createOpponent(id, x, y, name, currentHealth, playerTextures, healthBarTexture)
                             opponents[id]?.velocity?.x = xVelocity
                             opponents[id]?.setAngle(angle)
                             opponents[id]?.velocity?.y = yVelocity
@@ -209,6 +199,24 @@ class Server {
                     }
                 }
             }
+        }
+
+        private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
+                                   playerTextures: Array<Texture>,
+                                   healthBarTexture: Texture) {
+            opponents[id] = Opponent(x, y, name, false, currentHealth,0f, 0f,
+                    playerTextures, id, healthBarTexture)
+        }
+
+        private fun removeOpponent(data: kotlin.Array<Any>) {
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+            opponents.remove(playerId)
+        }
+
+        private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: Array<Texture>) {
+            player = Player(500f, 500f, "Rami",false,
+                    PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
         }
 
         fun startKey(keyLetter: String, b: Boolean) {
