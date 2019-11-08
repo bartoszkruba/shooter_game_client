@@ -84,10 +84,7 @@ class MenuScreen(
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
         background.setBounds(0f, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
-        background.setPosition(0f, 0f)
-
         text.setBounds(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH / 3, WINDOW_HEIGHT / 3)
-        text.setPosition(WINDOW_WIDTH * 3, WINDOW_HEIGHT*3)
 
         mainMenuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/quit_selected.png"),
@@ -125,8 +122,9 @@ class MenuScreen(
     override fun render(delta: Float) {
         foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
         background.setPosition(background.x - 0.03f * 60 * delta, background.y)
-        if(text.x>100 && text.y>200){
-        text.translate(-WINDOW_WIDTH/1000*delta, -WINDOW_HEIGHT/1000*delta)}
+        if ( text.x>100 && text.y>200 ) {
+            text.translate(-WINDOW_WIDTH/1000*text.width*delta, -WINDOW_HEIGHT/1000*text.height*delta)
+        }
 
         moveDroplets(delta)
         if (TimeUtils.millis() - lastSpawn > spawnRate) spawnDroplet()
@@ -142,6 +140,7 @@ class MenuScreen(
         batch.use {
             background.draw(it)
             foreground.draw(it)
+            text.draw(it)
         }
 
         drawRain()
