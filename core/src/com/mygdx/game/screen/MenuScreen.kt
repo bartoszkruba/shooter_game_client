@@ -8,6 +8,7 @@ import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
@@ -28,8 +29,12 @@ import ktx.graphics.use
 
 private class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
 
-class MenuScreen(private val game: Game, assets: AssetManager, private val batch: SpriteBatch,
-                 private val camera: OrthographicCamera) : KtxScreen {
+class MenuScreen(
+        val game: Game,
+        private val batch: SpriteBatch,
+        private val assets: AssetManager,
+        private val camera: OrthographicCamera,
+        private val font: BitmapFont) : KtxScreen {
 
     private val startGameChoice = "sg"
     private val quitChoice = "q"

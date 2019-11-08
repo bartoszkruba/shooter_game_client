@@ -14,11 +14,12 @@ import com.mygdx.game.settings.WINDOW_WIDTH
 import ktx.app.KtxScreen
 import ktx.graphics.use
 
-class SplashScreen(private val game: Game,
-                    private val batch: SpriteBatch,
-                    private val font: BitmapFont,
-                    private val assets: AssetManager,
-                    private val camera: OrthographicCamera) : KtxScreen {
+class SplashScreen(
+        val game: Game,
+        private val batch: SpriteBatch,
+        private val assets: AssetManager,
+        private val camera: OrthographicCamera,
+        private val font: BitmapFont) : KtxScreen {
 
     private val rainMusic = assets.get<Music>("music/rain.mp3")
     private val backgroundMusic = assets.get<Music>("music/waiting.ogg")
@@ -53,9 +54,7 @@ class SplashScreen(private val game: Game,
         }
 
         if(Gdx.input.isTouched){
-            val loadingScreen = LoadingScreen(game, batch, font, assets, camera)
-            game.addScreen(loadingScreen)
-            game.setScreen<LoadingScreen>()
+            game.changeToMenu()
         }
     }
     override fun show() {

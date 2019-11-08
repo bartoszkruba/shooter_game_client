@@ -83,9 +83,7 @@ class LoadingScreen(private val game: Game,
         }
 
         if (assets.isFinished) {
-            val splashScreen = SplashScreen(game, batch, font, assets, camera)
-            game.addScreen(splashScreen)
-            game.setScreen<SplashScreen>()
+            game.changeToSplash()
             game.removeScreen<LoadingScreen>()
             dispose()
         }

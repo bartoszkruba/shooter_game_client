@@ -4,6 +4,7 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.mygdx.game.screen.GameScreen
 import com.mygdx.game.screen.LoadingScreen
 import com.mygdx.game.screen.MenuScreen
 import com.mygdx.game.screen.SplashScreen
@@ -34,14 +35,19 @@ class Game : KtxGame<KtxScreen>() {
     }
 
     fun changeToMenu() {
-        addScreen(MenuScreen(context.inject(), context.inject(), context.inject()))
+        addScreen(MenuScreen(context.inject(), context.inject(), context.inject(), context.inject(),context.inject()))
         setScreen<MenuScreen>()
     }
-
+    fun changeToSplash(){
+        val splashScreen = SplashScreen(context.inject(), context.inject(),context.inject(),context.inject(),context.inject())
+        addScreen(splashScreen)
+        setScreen<SplashScreen>()
+    }
     fun changeToGame() {
         val gameScreen = GameScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
-        gameScreen.configSocketEvents()
+
         gameScreen.connectionSocket()
+        gameScreen.configSocketEvents()
         addScreen(gameScreen)
         removeScreen<MenuScreen>()
         setScreen<GameScreen>()
