@@ -1,4 +1,4 @@
-package backendServer
+package frontendServer
 
 import com.badlogic.gdx.Gdx
 import com.mygdx.game.model.Player

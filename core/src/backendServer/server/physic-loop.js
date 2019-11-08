@@ -1,15 +1,15 @@
 const Matter = require('matter-js');
 const shortid = require('shortid');
 
-const Agent = require('./models/Agent');
-const Pistol = require('./models/Pistol');
-const MachineGun = require('./models/MachineGun');
-const PistolProjectile = require('./models/PistolProjectile');
-const MachineGunProjectile = require('./models/MachineGunProjectile');
-const PistolPickup = require('./models/PistolPickup');
-const MachineGunPickup = require('./models/MachineGunPickup');
-const ProjectileType = require('./models/ProjectileType');
-const constants = require('./settings/constants');
+const Agent = require('../models/Agent');
+const Pistol = require('../models/Pistol');
+const MachineGun = require('../models/MachineGun');
+const PistolProjectile = require('../models/PistolProjectile');
+const MachineGunProjectile = require('../models/MachineGunProjectile');
+const PistolPickup = require('../models/PistolPickup');
+const MachineGunPickup = require('../models/MachineGunPickup');
+const ProjectileType = require('../models/ProjectileType');
+const constants = require('../settings/constants');
 
 const agents = [];
 const projectiles = [];

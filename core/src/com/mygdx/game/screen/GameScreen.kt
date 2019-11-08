@@ -192,7 +192,7 @@ class GameScreen(
                 opponents.values.forEach {
                     batch.draw(playersInMiniMapexture,
                             ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
-                            ((it.bounds.y / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
+                            ((it.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize) - playerSize / 2f,
                             playerSize,
                             playerSize);
                 }
