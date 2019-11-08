@@ -4,7 +4,9 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.mygdx.game.screen.GameScreen
 import com.mygdx.game.screen.LoadingScreen
+import com.mygdx.game.screen.MenuScreen
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
 import ktx.app.KtxGame
@@ -12,7 +14,6 @@ import ktx.app.KtxScreen
 import ktx.inject.Context
 
 class Game : KtxGame<KtxScreen>() {
-    val assets = AssetManager()
     private val context = Context()
     override fun create() {
         context.register {
@@ -30,5 +31,20 @@ class Game : KtxGame<KtxScreen>() {
     override fun dispose() {
         context.dispose()
         super.dispose()
+    }
+
+    fun changeToMenu() {
+        addScreen(MenuScreen(context.inject(), context.inject(), context.inject(), context.inject(),context.inject()))
+        setScreen<MenuScreen>()
+    }
+
+    fun changeToGame() {
+        val gameScreen = GameScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
+
+        gameScreen.connectionSocket()
+        gameScreen.configSocketEvents()
+        addScreen(gameScreen)
+        removeScreen<MenuScreen>()
+        setScreen<GameScreen>()
     }
 }

@@ -44,9 +44,30 @@ class LoadingScreen(private val game: Game,
         assets.load("images/pistol.png", Texture::class.java)
         assets.load("images/machine_gun.png", Texture::class.java)
         assets.load("images/ground.jpg", Texture::class.java)
+
+        assets.load("images/menu/credits.png", Texture::class.java)
+        assets.load("images/menu/credits_selected.png", Texture::class.java)
+        assets.load("images/menu/options.png", Texture::class.java)
+        assets.load("images/menu/options_selected.png", Texture::class.java)
+        assets.load("images/menu/quit.png", Texture::class.java)
+        assets.load("images/menu/quit_selected.png", Texture::class.java)
+        assets.load("images/menu/start.png", Texture::class.java)
+        assets.load("images/menu/start_selected.png", Texture::class.java)
+        assets.load("images/logo.png", Texture::class.java)
+
+        assets.load("sounds/menu_hover.wav", Sound::class.java)
+        assets.load("sounds/menu_select.wav", Sound::class.java)
+
         assets.load("sounds/pistol_shot.wav", Sound::class.java)
         assets.load("sounds/reload_sound.mp3", Sound::class.java)
+
+        assets.load("music/ingame_music.ogg", Music::class.java)
         assets.load("music/music.wav", Music::class.java)
+        assets.load("music/rain.mp3", Music::class.java)
+        assets.load("music/waiting.ogg", Music::class.java)
+        assets.load<Texture>("images/splashscreen/foreground.png")
+        assets.load<Texture>("images/splashscreen/background.png")
+        assets.load<Texture>("images/splashscreen/splashtext.png")
     }
 
     override fun render(delta: Float) {
@@ -57,20 +78,13 @@ class LoadingScreen(private val game: Game,
 
         batch.use {
             font.draw(it, "Welcome to Leprechaun Nuclear Invasion 420 (GOTY edition)", 100f, 150f)
-            if (assets.isFinished) {
-                font.draw(it, "Tap anywhere to begin!", 100f, 100f)
-            } else {
-                font.draw(it, "Loading assets...", 100f, 100f)
-            }
+            font.draw(it, "Loading assets...", 100f, 100f)
         }
 
-        if (Gdx.input.isTouched && assets.isFinished) {
-            val gameScreen = GameScreen(game, batch, assets, camera, font)
-            game.addScreen(gameScreen)
-            game.setScreen<GameScreen>()
+        if (assets.isFinished) {
+            game.changeToMenu()
             game.removeScreen<LoadingScreen>()
             dispose()
-
         }
     }
 }
