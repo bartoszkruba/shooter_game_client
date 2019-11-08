@@ -31,6 +31,9 @@ class LoadingScreen(private val game: Game,
         //TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/player.png", Texture::class.java)
         assets.load("images/player/right.png", Texture::class.java)
+        assets.load("images/miniMap.png", Texture::class.java)
+        assets.load("images/opponentsInMiniMap.png", Texture::class.java)
+        assets.load("images/meInMiniMap.png", Texture::class.java)
         assets.load("images/player/left.png", Texture::class.java)
         assets.load("images/player/up.png", Texture::class.java)
         assets.load("images/player/down.png", Texture::class.java)
@@ -64,6 +67,9 @@ class LoadingScreen(private val game: Game,
         assets.load("music/music.wav", Music::class.java)
         assets.load("music/rain.mp3", Music::class.java)
         assets.load("music/waiting.ogg", Music::class.java)
+        assets.load<Texture>("images/splashscreen/foreground.png")
+        assets.load<Texture>("images/splashscreen/background.png")
+        assets.load<Texture>("images/splashscreen/splashtext.png")
     }
 
     override fun render(delta: Float) {
@@ -74,15 +80,12 @@ class LoadingScreen(private val game: Game,
 
         batch.use {
             font.draw(it, "Welcome to Leprechaun Nuclear Invasion 420 (GOTY edition)", 100f, 150f)
-            if (assets.isFinished) {
-                font.draw(it, "Tap anywhere to begin!", 100f, 100f)
-            } else {
-                font.draw(it, "Loading assets...", 100f, 100f)
-            }
+            font.draw(it, "Loading assets...", 100f, 100f)
         }
 
-        if (Gdx.input.isTouched && assets.isFinished) {
-            game.changeToMenu()
+        if (assets.isFinished) {
+            game.changeToSplash()
+            game.removeScreen<LoadingScreen>()
             dispose()
         }
     }

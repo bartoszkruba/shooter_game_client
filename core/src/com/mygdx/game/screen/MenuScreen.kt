@@ -8,6 +8,7 @@ import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
@@ -32,8 +33,12 @@ private enum class Menu {
     MAIN, CREDITS, START_GAME, OPTIONS
 }
 
-class MenuScreen(private val game: Game, assets: AssetManager, private val batch: SpriteBatch,
-                 private val camera: OrthographicCamera) : KtxScreen {
+class MenuScreen(
+        val game: Game,
+        private val batch: SpriteBatch,
+        private val assets: AssetManager,
+        private val camera: OrthographicCamera,
+        private val font: BitmapFont) : KtxScreen {
 
     private var current_window = Menu.MAIN
 

@@ -15,7 +15,6 @@ import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
-import com.badlogic.gdx.utils.SnapshotArray
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
@@ -25,12 +24,9 @@ import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.graphics.use
 import org.json.JSONObject
-import kotlin.collections.HashMap
 import com.mygdx.game.model.Opponent
 import com.mygdx.game.util.inFrustum
 import java.util.concurrent.ConcurrentHashMap
-
-import kotlin.math.tan
 
 
 class GameScreen(
@@ -77,6 +73,10 @@ class GameScreen(
     val machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
 
     val pickups = ConcurrentHashMap<String, Pickup>()
+    var imgpos = 0.0
+    var imgposdir = 0.1
+    var showMiniMap = 0
+
 
     private val ground = Array<Sprite>()
 
@@ -92,6 +92,7 @@ class GameScreen(
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
+                //println("$i $j ")
                 val groundSprite = Sprite(groundTexture)
                 groundSprite.setPosition(i * GROUND_TEXTURE_WIDTH, j * GROUND_TEXTURE_HEIGHT)
                 groundSprite.setSize(GROUND_TEXTURE_WIDTH, GROUND_TEXTURE_HEIGHT)
@@ -127,8 +128,6 @@ class GameScreen(
                 ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
                 drawPickups(it)
                 drawProjectiles(it)
-                //drawPlayerName(it)
-                //drawOpponentName(it)
                 drawOpponents(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
@@ -149,20 +148,56 @@ class GameScreen(
             batch.use {
                 drawGameOver(it)
                 drawMagazineInfo(it)
+                checkAllPlayersOnMap(it)
             }
         }
     }
 
-    private fun drawOpponentName(batch: Batch) {
-        opponents.values.forEach {
-            if (!it.isDead) {
-                font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f);
+    private fun checkAllPlayersOnMap(batch: Batch) {
+        if (!player.isDead) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
+            if (showMiniMap == 2) showMiniMap = 0
+            if (showMiniMap != 1) {
+                font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f);
+                //font.getData().setScale(0.5f, 0.5f);
+            }
+
+            if (showMiniMap == 1) {
+                imgpos += (imgposdir / 3);
+                if (imgpos < 0.0) imgposdir = -imgposdir;
+                if (imgpos > 1.0) imgposdir = -imgposdir;
+                val miniMapSize = 200f;
+                val playerSize = 6f;
+                val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize;
+                val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize;
+
+                font.draw(batch, "Press \"M\" to hide map", WINDOW_WIDTH - 160f, 15f);
+
+                val miniMapexture = assets.get("images/miniMap.png", Texture::class.java)
+                val c = batch.color;
+                batch.setColor(c.r, c.g, c.b, .5f)
+                batch.draw(miniMapexture, 0f, 0f, miniMapSize, miniMapSize);
+                val meInMiniMapexture = assets.get("images/meInMiniMap.png", Texture::class.java)
+                batch.setColor(c.r, c.g, c.b, 1f)
+
+                batch.draw(meInMiniMapexture,
+                        playerPosPercentageX - playerSize / 2f,
+                        playerPosPercentageY - playerSize / 2f,
+                        playerSize,
+                        playerSize);
+
+
+                val playersInMiniMapexture = assets.get("images/opponentsInMiniMap.png", Texture::class.java)
+                batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
+                opponents.values.forEach {
+                    batch.draw(playersInMiniMapexture,
+                            ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
+                            ((it.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize) - playerSize / 2f,
+                            playerSize,
+                            playerSize);
+                }
             }
         }
-    }
-
-    private fun drawPlayerName(batch: Batch) {
-        font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f);
     }
 
     private fun checkRestart() {
@@ -179,11 +214,6 @@ class GameScreen(
             val c: Color = batch.color;
             batch.setColor(c.r, c.g, c.b, .7f)
             batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-            //font.draw(batch, "Tap anywhere to restart!", (WINDOW_WIDTH / 2) - 80f, (WINDOW_HEIGHT / 2) - 30f);
-            //font.getData().setScale(3f, 3f);
-            //font.draw(batch, "GAME OVER", (WINDOW_WIDTH / 2) - 130f, (WINDOW_HEIGHT / 2) + 30f);
-            //font.getData().setScale(3f, 3f);
         }
     }
 
@@ -281,7 +311,7 @@ class GameScreen(
                     val obj: JSONObject = data[0] as JSONObject
                     val playerId = obj.getString("id")
 
-                    player = Player(MAP_WIDTH / 2f, MAP_HEIGHT / 2f, "Rami",false,
+                    player = Player(500f, 500f, "Rami",false,
                             PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
 
                     Gdx.app.log("SocketIO", "My ID: $playerId")
@@ -305,6 +335,7 @@ class GameScreen(
                         val weapon = agent.getString("weapon")
                         val xVelocity = agent.getLong("xVelocity").toFloat()
                         val yVelocity = agent.getLong("yVelocity").toFloat()
+                        val angle = agent.getDouble("angle").toFloat()
                         if (id == player.id) {
                             if (!isDead) {
                                 //println("$x, $y")
@@ -327,10 +358,13 @@ class GameScreen(
                             if (opponents[id] == null) {
                                 opponents[id] = Opponent(x, y, name, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
                                 opponents[id]?.velocity?.x = xVelocity
+                                opponents[id]?.setAngle(angle)
                                 opponents[id]?.velocity?.y = yVelocity
                             } else {
+                                //println("$x, $y")
                                 //println(currentHealth)
                                 opponents[id]?.setPosition(x, y)
+                                opponents[id]?.setAngle(angle)
                                 opponents[id]?.velocity?.x = xVelocity
                                 opponents[id]?.velocity?.y = yVelocity
                                 opponents[id]?.setHealthBar(currentHealth, x, y)
@@ -550,11 +584,6 @@ class GameScreen(
                 it.healthBarSprite.draw(batch);
                 it.sprite.draw(batch)
                 font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f);
-            } else {
-                val data = JSONObject()
-                data.put("isDead", true)
-                data.put("id", it.id)
-                socket.emit("isDead", data)
             }
         }
     }

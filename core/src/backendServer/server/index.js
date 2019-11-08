@@ -3,12 +3,12 @@ let server = require('http').Server(app);
 let io = require('socket.io')(server);
 const shortid = require('shortid');
 const engine = require('./physic-loop');
-const Agent = require('./models/Agent');
-const Pistol = require('./models/Pistol');
-const MachineGun = require('./models/MachineGun');
-const PistolPickup = require('./models/PistolPickup');
-const MachineGunPickup = require('./models/MachineGunPickup');
-const constants = require('./settings/constants');
+const Agent = require('../models/Agent');
+const Pistol = require('../models/Pistol');
+const MachineGun = require('../models/MachineGun');
+const PistolPickup = require('../models/PistolPickup');
+const MachineGunPickup = require('../models/MachineGunPickup');
+const constants = require('../settings/constants');
 
 const projectiles = engine.projectiles;
 const agents = engine.agents;
@@ -136,20 +136,8 @@ io.on('connection', (socket) => {
                 agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
                 agents[i].isDead = false;
                 engine.moveAgent(agents[i], 500, 500);
+                //console.log(agents[i].isDead)
                 break;
-            }
-        }
-    });
-
-    socket.on('currentPlayerHealth', (data) => {
-        let currentHealth = Object.values(data)[0];
-        let id = Object.values(data)[1];
-        //console.log(data)
-        for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === id) {
-                agents[i].currentHealth = currentHealth;
-                //console.log(agents[i].currentHealth)
-                //console.log("Player current health: " + agents[i].currentHealth);
             }
         }
     });
@@ -167,17 +155,6 @@ io.on('connection', (socket) => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].pickWeapon = true;
-            }
-        }
-    });
-
-    socket.on('isDead', (data) => {
-        let isDead = Object.values(data)[1];
-        let id = Object.values(data)[0];
-        //console.log("playerId: " + id);
-        for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === id) {
-                agents[i].isDead = isDead;
             }
         }
     });
@@ -242,7 +219,7 @@ async function gameDataLoop(socket) {
         const agentData = [];
 
         for (agent of agents) {
-            //console.log(agent.currentHealth)
+            //console.log(agent.isDead)
             //console.log("x:", agents[i].bounds.position.x, ",y:", agents[i].bounds.position.y)
 
             agentData.push({
@@ -256,6 +233,7 @@ async function gameDataLoop(socket) {
                 currentHealth: agent.currentHealth,
                 id: agent.id,
                 weapon: agent.weapon.projectileType,
+                  angle: agent.facingDirectionAngle
             })
         }
 
