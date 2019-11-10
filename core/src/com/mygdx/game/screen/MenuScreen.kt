@@ -26,6 +26,7 @@ import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
+import kotlin.system.exitProcess
 
 
 private class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
@@ -185,9 +186,8 @@ class MenuScreen(
                     backgroundMusic.stop()
                     game.changeToGame()
                 }
-                creditsChoice -> {
-                    currentWindow = CREDITS
-                }
+                creditsChoice -> currentWindow = CREDITS
+                quitChoice -> exitProcess(0)
             }
             currentChoice = ""
         }
