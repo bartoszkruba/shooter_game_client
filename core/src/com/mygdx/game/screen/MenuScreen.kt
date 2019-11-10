@@ -20,11 +20,13 @@ import com.mygdx.game.ui.MenuChoice
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
+import com.mygdx.game.screen.Menu.*
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
+import kotlin.system.exitProcess
 
 
 private class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
@@ -40,7 +42,7 @@ class MenuScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-    private var currentWindow = Menu.SPLASH_SCREEN
+    private var currentWindow = SPLASH_SCREEN
 
     private val startGameChoice = "sg"
     private val quitChoice = "q"
@@ -81,10 +83,19 @@ class MenuScreen(
 
     private var currentChoice = ""
 
+    val bigFont = BitmapFont()
+    val smallFont = BitmapFont()
+
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
         background.setBounds(0f, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
         text.setBounds(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH / 3, WINDOW_HEIGHT / 3)
+        text.y = WINDOW_HEIGHT - 280f
+
+        bigFont.data.setScale(4f)
+        bigFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        smallFont.data.scale(2f)
+        smallFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
         mainMenuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/quit_selected.png"),
@@ -117,13 +128,19 @@ class MenuScreen(
             y += it.sprite.height + 50
         }
 
+        repeat(100) {
+            moveDroplets(0.1f)
+            spawnDroplet()
+        }
+
     }
 
     override fun render(delta: Float) {
         foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
         background.setPosition(background.x - 0.03f * 60 * delta, background.y)
-        if ( text.x>100 && text.y>200 ) {
-            text.translate(-WINDOW_WIDTH/1000*text.width*delta, -WINDOW_HEIGHT/1000*text.height*delta)
+        if (text.x > 60 && text.y > 100) {
+            text.x -= WINDOW_WIDTH / 1000 * text.width * delta
+//            text.translate(-WINDOW_WIDTH/1000*text.width*delta, -WINDOW_HEIGHT/1000*text.height*delta)
         }
 
         moveDroplets(delta)
@@ -135,7 +152,7 @@ class MenuScreen(
 
         getMousePosInGameWorld()
         checkMouseOverlay()
-        checkMouseClick()
+        checkControls()
 
         batch.use {
             background.draw(it)
@@ -145,14 +162,22 @@ class MenuScreen(
 
         drawRain()
 
-        if (Gdx.input.isTouched && currentWindow == Menu.SPLASH_SCREEN) currentWindow = Menu.MAIN
-
         batch.use {
             drawMenuChoices(it)
         }
     }
 
-    private fun checkMouseClick() {
+    private fun checkControls() {
+        when (currentWindow) {
+            SPLASH_SCREEN -> checkSplashScreenControls()
+            MAIN -> checkMainMenuControls()
+            CREDITS -> checkCreditsControls()
+            START_GAME -> checkStartGameControls()
+            OPTIONS -> checkOptionsControls()
+        }
+    }
+
+    private fun checkMainMenuControls() {
         if (currentChoice != "" && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             selectSound.play()
             when (currentChoice) {
@@ -161,42 +186,81 @@ class MenuScreen(
                     backgroundMusic.stop()
                     game.changeToGame()
                 }
-                quitChoice -> {
-                    assets.dispose()
-                    dispose()
-                    Gdx.app.exit()
-                }
+                creditsChoice -> currentWindow = CREDITS
+                quitChoice -> exitProcess(0)
             }
+            currentChoice = ""
         }
     }
 
+    private fun checkSplashScreenControls() {
+        if (Gdx.input.isTouched) currentWindow = MAIN
+    }
+
+    private fun checkCreditsControls() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY) || Gdx.input.isButtonJustPressed(Input.Buttons.LEFT))
+            currentWindow = MAIN
+    }
+
+    private fun checkStartGameControls() {
+
+    }
+
+    private fun checkOptionsControls() {
+
+    }
+
     private fun checkMouseOverlay() {
+        when (currentWindow) {
+            MAIN -> checkMainMenuOverlays()
+            CREDITS -> checkCreditsOverlays()
+            START_GAME -> checkStartGameOverlays()
+            OPTIONS -> checkOptionsOverlays()
+            SPLASH_SCREEN -> checkSplashScreenOverlays()
+        }
+
+    }
+
+    private fun checkMainMenuOverlays() {
         var newValue = ""
-        if(currentWindow == Menu.MAIN){
-            mainMenuChoices.forEach { choice ->
-                choice.active = if (choice.bounds.contains(mousePosition)) {
-                    if (currentChoice != choice.type) {
-                        hoverSound.play()
-                    }
-                    newValue = choice.type
-                    true
-                } else {
-                    false
+        mainMenuChoices.forEach { choice ->
+            choice.active = if (choice.bounds.contains(mousePosition)) {
+                if (currentChoice != choice.type) {
+                    hoverSound.play()
                 }
+                newValue = choice.type
+                true
+            } else {
+                false
             }
         }
         currentChoice = newValue
     }
 
+    private fun checkSplashScreenOverlays() {
+
+    }
+
+    private fun checkCreditsOverlays() {
+
+    }
+
+    private fun checkStartGameOverlays() {
+
+    }
+
+    private fun checkOptionsOverlays() {
+
+    }
+
     private fun drawMenuChoices(batch: SpriteBatch) = when (currentWindow) {
-        Menu.MAIN -> drawMainMenuChoices(batch)
-        Menu.CREDITS -> {
+        MAIN -> drawMainMenuChoices(batch)
+        CREDITS -> drawCredits(batch)
+        START_GAME -> {
         }
-        Menu.START_GAME -> {
+        OPTIONS -> {
         }
-        Menu.OPTIONS -> {
-        }
-        Menu.SPLASH_SCREEN -> drawSplashScreen(batch)
+        SPLASH_SCREEN -> drawSplashScreen(batch)
     }
 
     private fun drawSplashScreen(batch: SpriteBatch) {
@@ -204,6 +268,13 @@ class MenuScreen(
     }
 
     private fun drawMainMenuChoices(batch: SpriteBatch) = mainMenuChoices.forEach { it.sprite.draw(batch) }
+
+    private fun drawCredits(batch: SpriteBatch) {
+        bigFont.draw(batch, "Created By: ", 500f, 450f)
+        smallFont.draw(batch, "Anders Clark", 500f, 380f)
+        smallFont.draw(batch, "Bartosz Kruba", 500f, 330f)
+        smallFont.draw(batch, "Rami Albadri", 500f, 280f)
+    }
 
     private fun getMousePosInGameWorld() {
         val position = camera.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
@@ -251,5 +322,11 @@ class MenuScreen(
         backgroundMusic.isLooping = true
         backgroundMusic.volume = 0.3f
         backgroundMusic.play()
+    }
+
+    override fun dispose() {
+        super.dispose()
+        droplets.forEach { dropletPool.free(it) }
+        dropletPool.clear()
     }
 }

@@ -15,12 +15,13 @@ import ktx.inject.Context
 
 class Game : KtxGame<KtxScreen>() {
     private val context = Context()
+    private val assets = AssetManager()
     override fun create() {
         context.register {
             bindSingleton(this@Game)
             bindSingleton(SpriteBatch())
             bindSingleton(BitmapFont())
-            bindSingleton(AssetManager())
+            bindSingleton(assets)
             bindSingleton(OrthographicCamera().apply { setToOrtho(false, WINDOW_WIDTH, WINDOW_HEIGHT) })
             addScreen(LoadingScreen(inject(), inject(), inject(), inject(), inject()))
         }
@@ -30,6 +31,7 @@ class Game : KtxGame<KtxScreen>() {
 
     override fun dispose() {
         context.dispose()
+        assets.dispose()
         super.dispose()
     }
 
