@@ -89,6 +89,7 @@ class MenuScreen(
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
         background.setBounds(0f, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
         text.setBounds(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH / 3, WINDOW_HEIGHT / 3)
+        text.y = WINDOW_HEIGHT - 280f
 
         bigFont.data.setScale(4f)
         bigFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -126,13 +127,19 @@ class MenuScreen(
             y += it.sprite.height + 50
         }
 
+        repeat(100) {
+            moveDroplets(0.1f)
+            spawnDroplet()
+        }
+
     }
 
     override fun render(delta: Float) {
         foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
         background.setPosition(background.x - 0.03f * 60 * delta, background.y)
-        if ( text.x>100 && text.y>200 ) {
-            text.translate(-WINDOW_WIDTH/1000*text.width*delta, -WINDOW_HEIGHT/1000*text.height*delta)
+        if (text.x > 60 && text.y > 100) {
+            text.x -= WINDOW_WIDTH / 1000 * text.width * delta
+//            text.translate(-WINDOW_WIDTH/1000*text.width*delta, -WINDOW_HEIGHT/1000*text.height*delta)
         }
 
         moveDroplets(delta)
@@ -266,7 +273,7 @@ class MenuScreen(
         bigFont.draw(batch, "Created By: ", 500f, 450f)
         smallFont.draw(batch, "Anders Clark", 500f, 380f)
         smallFont.draw(batch, "Bartosz Kruba", 500f, 330f)
-        smallFont.draw(batch, "Rami", 500f, 280f)
+        smallFont.draw(batch, "Rami Albadri", 500f, 280f)
     }
 
     private fun getMousePosInGameWorld() {
@@ -315,5 +322,11 @@ class MenuScreen(
         backgroundMusic.isLooping = true
         backgroundMusic.volume = 0.3f
         backgroundMusic.play()
+    }
+
+    override fun dispose() {
+        super.dispose()
+        droplets.forEach { dropletPool.free(it) }
+        dropletPool.clear()
     }
 }
