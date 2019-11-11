@@ -68,6 +68,17 @@ function moveAgent(agent, x, y) {
     y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT + constants.PLAYER_SPRITE_HEIGHT / 2,
         constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT / 2);
 
+    oldZones = agent.zones;
+
+    agent.zones = getZonesForObject(agent.bounds);
+
+    oldZones.filter(zone => !agent.zones.includes(zone)).forEach(zone => {
+        matrix.agents[zone].splice(matrix.agents[zone].indexOf(agent), 1)
+    });
+    agent.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+        matrix.agents[zone].push(agent)
+    });
+
     Matter.Body.setPosition(agent.bounds, {x, y})
 }
 
@@ -217,12 +228,12 @@ function projectToRectEdge(angle, agent) {
 }
 
 addAgent = (agent, x, y) => {
-    moveAgent(agent, x, y);
+    agents.push(agent);
     agent.zones = getZonesForObject(agent.bounds);
     agent.zones.forEach(zone => {
         matrix.agents[zone].push(agent)
     });
-    agents.push(agent);
+    moveAgent(agent, x, y);
 };
 
 removeAgent = id => {
