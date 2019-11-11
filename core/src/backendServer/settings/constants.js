@@ -33,6 +33,8 @@ module.exports = {
     WALL_SPRITE_HEIGHT: 50,
 
     STANDARD_PROJECTILE_WIDTH: 8,
+
+    ZONE_SIZE: 100
 };
 
 
