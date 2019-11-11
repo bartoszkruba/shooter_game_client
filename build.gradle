@@ -126,5 +126,6 @@ project(":core") {
         api "io.github.libktx:ktx-inject:$ktxVersion"
         api "io.github.libktx:ktx-log:$ktxVersion"
         api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        compile "io.socket:socket.io-client:0.6.2"
     }
 }
