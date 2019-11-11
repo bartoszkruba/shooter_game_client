@@ -9,11 +9,12 @@ class Player(
         name: String,
         isDead: Boolean,
         currentHealth: Float,
+        gotShot: Boolean,
         texture: Array<Texture>,
         healthBarTexture: Texture,
         id: String,
         weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, name, isDead, currentHealth, texture, healthBarTexture, weapon, facingDirectionAngle, id) {
+        facingDirectionAngle: Float = 0f) : Agent(x, y, name, isDead, currentHealth,gotShot, texture, healthBarTexture, weapon, facingDirectionAngle, id) {
 
     fun canShoot() = weapon.canShoot()
     fun shoot() = weapon.shoot()

@@ -30,6 +30,7 @@ class LoadingScreen(private val game: Game,
     override fun show() {
         //TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/player.png", Texture::class.java)
+        assets.load("images/blood-animation.png", Texture::class.java)
         assets.load("images/player/right.png", Texture::class.java)
         assets.load("images/miniMap.png", Texture::class.java)
         assets.load("images/opponentsInMiniMap.png", Texture::class.java)
@@ -44,7 +45,7 @@ class LoadingScreen(private val game: Game,
         assets.load("images/pistol.png", Texture::class.java)
         assets.load("images/machine_gun.png", Texture::class.java)
         assets.load("images/ground.jpg", Texture::class.java)
-
+        assets.load("images/crosshair.png", Texture::class.java)
         assets.load("images/menu/credits.png", Texture::class.java)
         assets.load("images/menu/credits_selected.png", Texture::class.java)
         assets.load("images/menu/options.png", Texture::class.java)

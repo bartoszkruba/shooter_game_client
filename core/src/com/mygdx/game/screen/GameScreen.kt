@@ -5,27 +5,18 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.Batch
-import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.*
+import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.Pool
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
-import io.socket.client.IO
-import io.socket.client.Socket
 import ktx.app.KtxScreen
-import ktx.assets.pool
 import ktx.graphics.use
-import org.json.JSONObject
-import com.mygdx.game.model.Opponent
 import com.mygdx.game.util.inFrustum
+import frontendServer.Server
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -36,7 +27,6 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-    private val playerTexture: Texture = assets.get("images/player.png", Texture::class.java)
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
@@ -46,12 +36,9 @@ class GameScreen(
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
-
+    val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
     private var shouldPlayReload = false
-
-    private lateinit var socket: Socket
-    private val opponents = ConcurrentHashMap<String, Opponent>()
-    private var timer: Float = 0.0f
+    private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
     private var aWasPressed = false
     private var dWasPressed = false
@@ -60,27 +47,26 @@ class GameScreen(
     private var mouseWasPressed = false
     private var forIf = true
 
-    lateinit var player: Player
     val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
-    val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
-    val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
     val walls = Array<Wall>()
 
-    val projectiles = ConcurrentHashMap<String, Projectile>()
+    var projectiles = ConcurrentHashMap<String, Projectile>()
 
-    val pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
-    val machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
+    lateinit var pistolProjectilePool: Pool<PistolProjectile>
+    lateinit var machineGunProjectilePool: Pool<MachineGunProjectile>
 
-    val pickups = ConcurrentHashMap<String, Pickup>()
+    var pickups = ConcurrentHashMap<String, Pickup>()
     var imgpos = 0.0
     var imgposdir = 0.1
     var showMiniMap = 0
 
-
     private val ground = Array<Sprite>()
+    lateinit var player: Player
 
     init {
+        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor,16, 16));
+
         playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
@@ -98,11 +84,21 @@ class GameScreen(
                 ground.add(groundSprite)
             }
         }
+        Server.connectionSocket()
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerTextures, healthBarTexture)
     }
 
     private var pressedKeys = 0
-
     override fun render(delta: Float) {
+        if (Server.getPlayer() != null) {
+            player = Server.getPlayer()!!
+        }
+        projectiles = Server.projectiles
+        opponents = Server.opponents
+        pistolProjectilePool = Server.pistolProjectilePool
+        shouldPlayReload = Server.shouldPlayReload
+        machineGunProjectilePool = Server.machineGunProjectilePool
+        pickups = Server.pickups
 
         Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -128,11 +124,15 @@ class GameScreen(
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
+               // drawCursor(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
+                checkPlayerGotShot(it)
+                checkOpponentsGotShot(it)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
+                    Server.shouldPlayReload = false
                 }
                 drawWalls(it)
             }
@@ -149,6 +149,23 @@ class GameScreen(
                 drawMagazineInfo(it)
                 checkAllPlayersOnMap(it)
             }
+        }
+    }
+
+    private fun checkOpponentsGotShot(batch: Batch) {
+        opponents.values.forEach {
+            if (it.gotShot){
+                val blood = assets.get("images/blood-animation.png", Texture::class.java)
+                batch.draw(blood, it.bounds.x - 10f, it.bounds.y, 65f, 65f);
+            }
+        }
+    }
+
+    private fun checkPlayerGotShot(batch: Batch) {
+        if (player.gotShot){
+            val blood = assets.get("images/blood-animation.png", Texture::class.java)
+            batch.draw(blood, player.bounds.x - 10f, player.bounds.y, 65f, 65f);
+            //println(player.bounds.x.toString() +", " +player.bounds.y)
         }
     }
 
@@ -202,7 +219,7 @@ class GameScreen(
     private fun checkRestart() {
         if (player.isDead){
             if (Gdx.input.isButtonPressed((Input.Buttons.LEFT))){
-                    socket.emit("restart")
+                Server.restart()
             }
         }
     }
@@ -222,9 +239,7 @@ class GameScreen(
             val b = true
             val thread = Thread {
                 while (b) {
-                    val data = JSONObject()
-                    data.put("degrees", player.facingDirectionAngle)
-                    socket.emit("playerRotation", data)
+                    Server.playerRotation("degrees", player.facingDirectionAngle)
                     Thread.sleep(100)
                 }
             }
@@ -238,14 +253,10 @@ class GameScreen(
         mouseWasPressed = isMouseWPressed;
 
         if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
-            val data = JSONObject()
-            data.put("Mouse", true)
-            socket.emit("mouseStart", data)
+            Server.mouseStart()
         }
         if (wWasReleased) {
-            val data = JSONObject()
-            data.put("Mouse", true)
-            socket.emit("mouseStop", data)
+            Server.mouseStop()
         }
     }
 
@@ -283,183 +294,18 @@ class GameScreen(
         checkKeyJustPressed(Input.Keys.R, "R")
         checkKeyJustReleased(rWasReleased, "R")
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) socket.emit("pickWeapon")
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) Server.pickWeapon()
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
         if (Gdx.input.isKeyJustPressed(keyNumber)) {
-            val data = JSONObject()
-            data.put(keyLetter, true)
-            socket.emit("startKey", data)
+            Server.startKey(keyLetter, true)
         }
     }
 
     private fun checkKeyJustReleased(keyJustPressed: Boolean, key: String) {
         if (keyJustPressed) {
-            val data = JSONObject()
-            data.put(key, true)
-            socket.emit("stopKey", data)
-        }
-    }
-
-    fun configSocketEvents() {
-        socket.on(Socket.EVENT_CONNECT) {
-            Gdx.app.log("SocketIO", "Connected")
-        }
-                .on("socketID") { data ->
-                    val obj: JSONObject = data[0] as JSONObject
-                    val playerId = obj.getString("id")
-
-                    player = Player(500f, 500f, "Rami",false,
-                            PLAYER_MAX_HEALTH, playerTextures, healthBarTexture, playerId)
-
-                    Gdx.app.log("SocketIO", "My ID: $playerId")
-                }
-                .on("playerDisconnected") { data ->
-                    val obj: JSONObject = data[0] as JSONObject
-                    val playerId = obj.getString("id")
-                    opponents.remove(playerId)
-                }
-                .on("gameData") { data ->
-                    val obj = data[0] as JSONObject
-                    val agents = obj.getJSONArray("agentData")
-                    for (i in 0 until agents.length()) {
-                        val agent = agents[i] as JSONObject
-                        val id = agent.getString("id")
-                        val name = agent.getString("name")
-                        val isDead = agent.getBoolean("isDead")
-                        val currentHealth = agent.getLong("currentHealth").toFloat()
-                        val x = agent.getLong("x").toFloat()
-                        val y = agent.getLong("y").toFloat()
-                        val weapon = agent.getString("weapon")
-                        val xVelocity = agent.getLong("xVelocity").toFloat()
-                        val yVelocity = agent.getLong("yVelocity").toFloat()
-                        val angle = agent.getDouble("angle").toFloat()
-                        if (id == player.id) {
-                            if (!isDead) {
-                                //println("$x, $y")
-                                player.isDead = isDead
-                                player.setPosition(x, y)
-                                 if (player.weapon.type != weapon) {
-                                    when (weapon) {
-                                        ProjectileType.PISTOL -> player.weapon = Pistol()
-                                        ProjectileType.MACHINE_GUN -> player.weapon = MachineGun()
-                                    }
-                                }
-                                val bulletsLeft = agent.getInt("bulletsLeft")
-                                if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
-                                player.weapon.bulletsInChamber = bulletsLeft
-                                player.setPosition(x, y)
-                                player.currentHealth = currentHealth
-                                player.setHealthBar(currentHealth, x, y)
-                            } else player.isDead = true
-                        } else {
-                            if (opponents[id] == null) {
-                                opponents[id] = Opponent(x, y, name, isDead, currentHealth,0f, 0f, playerTextures, id, healthBarTexture)
-                                opponents[id]?.velocity?.x = xVelocity
-                                opponents[id]?.setAngle(angle)
-                                opponents[id]?.velocity?.y = yVelocity
-                            } else {
-                                //println("$x, $y")
-                                //println(currentHealth)
-                                opponents[id]?.setPosition(x, y)
-                                opponents[id]?.setAngle(angle)
-                                opponents[id]?.velocity?.x = xVelocity
-                                opponents[id]?.velocity?.y = yVelocity
-                                opponents[id]?.setHealthBar(currentHealth, x, y)
-                                opponents[id]?.isDead = isDead
-                                opponents[id]?.currentHealth = currentHealth
-                                opponents[id]?.healthBarSprite!!.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
-                            }
-                        }
-                    }
-
-                    val proj = obj.getJSONArray("projectileData")
-
-                    for (i in 0 until proj.length()) {
-                        val projectile = proj[i] as JSONObject
-                        val type = projectile.getString("type")
-                        val id = projectile.getString("id")
-                        val x = projectile.getLong("x").toFloat()
-                        val y = projectile.getLong("y").toFloat()
-                        val xSpeed = projectile.getDouble("xSpeed").toFloat()
-                        val ySpeed = projectile.getDouble("ySpeed").toFloat()
-
-                        if (projectiles[id] == null) {
-                            projectiles[id] = when (type) {
-                                ProjectileType.PISTOL -> pistolProjectilePool.obtain()
-                                else -> machineGunProjectilePool.obtain()
-                            }.apply {
-                                setPosition(x, y)
-                                velocity.x = xSpeed
-                                velocity.y = ySpeed
-                            }
-                        } else {
-                            projectiles[id]?.apply {
-                                setPosition(x, y)
-                                velocity.x = xSpeed
-                                velocity.y = ySpeed
-                            }
-                        }
-                    }
-
-                    val picks = obj.getJSONArray("pickupData")
-
-                    for (pickup in pickups.values) {
-                        if (pickup is PistolPickup) pistolPickupPool.free(pickup)
-                        if (pickup is MachineGunPickup) machineGunPickupPool.free(pickup)
-                    }
-
-                    pickups.clear()
-
-                    for (i in 0 until picks.length()) {
-                        val pickup = picks[i] as JSONObject
-                        val id = pickup.getString("id")
-                        val x = pickup.getDouble("x").toFloat()
-                        val y = pickup.getDouble("y").toFloat()
-                        val type = pickup.getString("type")
-
-                        pickups[id] = when (type) {
-                            ProjectileType.PISTOL -> pistolPickupPool.obtain().apply { setPosition(x, y) }
-                            else -> machineGunPickupPool.obtain().apply { setPosition(x, y) }
-                        }
-                    }
-                }
-                .on("newProjectile") { data ->
-                    val projectile = data[0] as JSONObject
-                    val type = projectile.getString("type")
-                    val id = projectile.getString("id")
-                    val x = projectile.getLong("x").toFloat()
-                    val y = projectile.getLong("y").toFloat()
-                    val xSpeed = projectile.getDouble("xSpeed").toFloat()
-                    val ySpeed = projectile.getDouble("ySpeed").toFloat()
-
-                    if (projectiles[id] == null) {
-                        projectiles[id] = when (type) {
-                            ProjectileType.PISTOL -> pistolProjectilePool.obtain()
-                            else -> machineGunProjectilePool.obtain()
-                        }.apply {
-                            setPosition(x, y)
-                            velocity.x = xSpeed
-                            velocity.y = ySpeed
-                            justFired = true
-                        }
-                    } else {
-                        projectiles[id]?.apply {
-                            setPosition(x, y)
-                            velocity.x = xSpeed
-                            velocity.y = ySpeed
-                            justFired = true
-                        }
-                    }
-                }
-    }
-
-    fun connectionSocket() {
-        try {
-            socket = IO.socket("http://localhost:8080");
-            socket.connect();
-        } catch (e: Exception) {
+            Server.stopKey(key, true)
         }
     }
 
@@ -586,7 +432,6 @@ class GameScreen(
             }
         }
     }
-
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
