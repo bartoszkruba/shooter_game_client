@@ -106,6 +106,7 @@ class Server {
                             opponents[id]?.setAngle(angle)
                             opponents[id]?.velocity?.y = yVelocity
                         } else {
+                            opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
                             opponents[id]?.setPosition(x, y)
                             opponents[id]?.setAngle(angle)
                             opponents[id]?.velocity?.x = xVelocity

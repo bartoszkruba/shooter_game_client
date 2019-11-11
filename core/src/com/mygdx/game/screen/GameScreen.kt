@@ -133,6 +133,7 @@ class GameScreen(
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
+                checkOpponentsGotShot(it)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
@@ -152,6 +153,15 @@ class GameScreen(
                 drawGameOver(it)
                 drawMagazineInfo(it)
                 checkAllPlayersOnMap(it)
+            }
+        }
+    }
+
+    private fun checkOpponentsGotShot(batch: Batch) {
+        opponents.values.forEach {
+            if (it.gotShot){
+                val blood = assets.get("images/blood-animation.png", Texture::class.java)
+                batch.draw(blood, it.bounds.x - 10f, it.bounds.y, 65f, 65f);
             }
         }
     }
