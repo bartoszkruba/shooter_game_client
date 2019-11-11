@@ -23,7 +23,7 @@ class Server {
         lateinit var machineGunTexture: Texture
         var shouldPlayReload = false
 
-        lateinit private var player: Player
+        private lateinit var player: Player
         val projectiles = ConcurrentHashMap<String, Projectile>()
         val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
         var machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }

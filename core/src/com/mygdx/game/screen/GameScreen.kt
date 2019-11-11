@@ -23,7 +23,6 @@ import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
-import io.socket.client.Socket
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -47,7 +46,6 @@ class GameScreen(
     private var shouldPlayReload = false
 
     private var opponents = ConcurrentHashMap<String, Opponent>()
-    private var timer: Float = 0.0f
     private var wWasPressed = false
     private var aWasPressed = false
     private var dWasPressed = false
@@ -137,6 +135,7 @@ class GameScreen(
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
+                    Server.shouldPlayReload = false
                 }
                 drawWalls(it)
             }
