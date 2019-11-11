@@ -21,7 +21,6 @@ class Server {
         lateinit var projectileTexture: Texture
         lateinit var pistolTexture: Texture
         lateinit var machineGunTexture: Texture
-
         var shouldPlayReload = false
 
         lateinit private var player: Player
@@ -106,8 +105,6 @@ class Server {
                             opponents[id]?.setAngle(angle)
                             opponents[id]?.velocity?.y = yVelocity
                         } else {
-                            //println("$x, $y")
-                            //println(currentHealth)
                             opponents[id]?.setPosition(x, y)
                             opponents[id]?.setAngle(angle)
                             opponents[id]?.velocity?.x = xVelocity

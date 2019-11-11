@@ -21,7 +21,6 @@ import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import ktx.app.KtxScreen
 import ktx.graphics.use
-import org.json.JSONObject
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
 import io.socket.client.Socket
@@ -35,9 +34,6 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-    private lateinit var socket: Socket
-
-    private val playerTexture: Texture = assets.get("images/player.png", Texture::class.java)
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
@@ -60,7 +56,6 @@ class GameScreen(
     private var mouseWasPressed = false
     private var forIf = true
 
-    //lateinit var player: Player
     val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
     val walls = Array<Wall>()
@@ -68,8 +63,6 @@ class GameScreen(
     var projectiles = ConcurrentHashMap<String, Projectile>()
 
     lateinit var pistolProjectilePool: Pool<PistolProjectile>
-    //lateinit var pistolPickupPool: Pool<MachineGunProjectile>
-    //lateinit var machineGunPickupPool: Pool<MachineGunPickup>
     lateinit var machineGunProjectilePool: Pool<MachineGunProjectile>
 
     var pickups = ConcurrentHashMap<String, Pickup>()
@@ -77,9 +70,7 @@ class GameScreen(
     var imgposdir = 0.1
     var showMiniMap = 0
 
-
     private val ground = Array<Sprite>()
-
     lateinit var player: Player
 
     init {
@@ -101,24 +92,13 @@ class GameScreen(
                 ground.add(groundSprite)
             }
         }
-
-
         Server.connectionSocket()
         Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerTextures, healthBarTexture)
-
-        //if (::player.isInitialized) {
-
-
-        //}
     }
 
     private var pressedKeys = 0
-    var s = true
     override fun render(delta: Float) {
-        //this.player = Server.player
         if (Server.getPlayer() != null) {
-
-            //println(Server.getPlayer()!!.name)
             player = Server.getPlayer()!!
         }
         projectiles = Server.projectiles
@@ -439,7 +419,6 @@ class GameScreen(
             }
         }
     }
-
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) walls[i].draw(batch)
