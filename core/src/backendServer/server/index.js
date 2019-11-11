@@ -180,16 +180,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Player disconnected, id:', socket.id);
         socket.broadcast.emit('playerDisconnected', {id: socket.id});
-        for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === socket.id) {
-                agents.splice(i, 1)
-            }
-        }
+        engine.removeAgent(socket.id);
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
-    agents.push(agent);
+    engine.addAgent(new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id),
+        500, 500);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
@@ -233,7 +229,7 @@ async function gameDataLoop(socket) {
                 currentHealth: agent.currentHealth,
                 id: agent.id,
                 weapon: agent.weapon.projectileType,
-                  angle: agent.facingDirectionAngle
+                angle: agent.facingDirectionAngle
             })
         }
 

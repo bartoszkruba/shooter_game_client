@@ -216,5 +216,24 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop, pickups, zones};
+addAgent = (agent, x, y) => {
+    moveAgent(agent, x, y);
+    agent.zones = getZonesForObject(agent.bounds);
+    agent.zones.forEach(zone => {
+        matrix.agents[zone].push(agent)
+    });
+    agents.push(agent);
+};
+
+removeAgent = id => {
+    for (let i = 0; i < agents.length; i++) {
+        if (agents[i].id === id) {
+            zones = agents[i].zones;
+            zones.forEach(zone => matrix.agents[zone].splice(matrix.agents[zone].indexOf(agents[i]), i));
+            agents.splice(i, 1);
+        }
+    }
+};
+
+module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop, pickups, matrix, addAgent, removeAgent};
 
