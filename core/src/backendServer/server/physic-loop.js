@@ -64,15 +64,6 @@ function calculateProjectilePositions(delta) {
                 }
             if (removed) break
         }
-
-        // for (let i = 0; i < agents.length; i++) {
-        //     const agent = agents[i];
-        //     if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
-        //         agent.takeDamage();
-        //         projectiles.splice(projectiles.indexOf(projectile), 1);
-        //         break;
-        //     }
-        // }
     }
 }
 
@@ -129,6 +120,20 @@ function moveAgent(agent, x, y) {
     });
 }
 
+function movePickup(pickup, x, y) {
+    Matter.Body.setPosition(pickup.bounds, {x, y});
+
+    oldZones = pickup.zones;
+    pickup.zones = getZonesForObject(pickup.bounds);
+
+    oldZones.filter(zone => !pickup.zones.includes(zone)).forEach(zone => {
+        matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(pickup), 1)
+    });
+    pickup.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+        matrix.pickups[zone].push(pickup)
+    });
+}
+
 function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
     const projectile = new PistolProjectile(x, y, xSpeed, ySpeed, shortid.generate());
     addProjectileToMatrix(projectile);
@@ -150,30 +155,36 @@ function addProjectileToMatrix(projectile) {
 }
 
 function pickWeapon(agent) {
-    for (pickup of pickups) {
-        if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
-            switch (agent.weapon.projectileType) {
-                case ProjectileType.PISTOL:
-                    pickups.push(new PistolPickup(pickup.bounds.position.x, pickup.bounds.position.y,
-                        shortid.generate(), agent.weapon.bulletsInChamber));
-                    break;
-                case ProjectileType.MACHINE_GUN:
-                    pickups.push(new MachineGunPickup(pickup.bounds.position.x, pickup.bounds.position.y,
-                        shortid.generate(), agent.weapon.bulletsInChamber));
-                    break;
-            }
+    let shouldBreak = false;
+    for (zone of agent.zones) {
+        if(shouldBreak) break;
+        for (pickup of matrix.pickups[zone]) {
+            if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
+                switch (agent.weapon.projectileType) {
+                    case ProjectileType.PISTOL:
+                        addPickup(new PistolPickup(0, 0, shortid.generate(),
+                            agent.weapon.bulletsInChamber), pickup.bounds.position.x, pickup.bounds.position.y);
+                        break;
+                    case ProjectileType.MACHINE_GUN:
+                        addPickup(new MachineGunPickup(0, 0, shortid.generate(),
+                            agent.weapon.bulletsInChamber), pickup.bounds.position.x, pickup.bounds.position.y);
+                        break;
+                }
 
-            switch (pickup.type) {
-                case ProjectileType.PISTOL:
-                    agent.weapon = new Pistol();
-                    break;
-                case ProjectileType.MACHINE_GUN:
-                    agent.weapon = new MachineGun();
-                    break;
-            }
+                switch (pickup.type) {
+                    case ProjectileType.PISTOL:
+                        agent.weapon = new Pistol();
+                        break;
+                    case ProjectileType.MACHINE_GUN:
+                        agent.weapon = new MachineGun();
+                        break;
+                }
 
-            agent.weapon.bulletsInChamber = pickup.ammunition;
-            pickups.splice(pickups.indexOf(pickup), 1);
+                agent.weapon.bulletsInChamber = pickup.ammunition;
+                removePickup(pickup.id);
+                shouldBreak = true;
+                break;
+            }
         }
     }
 }
@@ -302,5 +313,32 @@ removeAgent = id => {
     }
 };
 
-module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop, pickups, matrix, addAgent, removeAgent};
+removePickup = id => {
+    for (let i = 0; i < pickups.length; i++) {
+        if (pickups[i].id === id) {
+            zones = pickups[i].zones;
+            zones.forEach(zone => matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(pickups[i]), 1));
+            pickups.splice(i, 1);
+            break;
+        }
+    }
+};
+
+addPickup = (pickup, x, y) => {
+    pickups.push(pickup);
+    movePickup(pickup, x, y)
+};
+
+module.exports = {
+    physicLoop,
+    agents,
+    projectiles,
+    moveAgent,
+    lastLoop,
+    pickups,
+    matrix,
+    addAgent,
+    removeAgent,
+    addPickup
+};
 

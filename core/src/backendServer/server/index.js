@@ -189,11 +189,10 @@ io.on('connection', (socket) => {
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
-        pickups.push(new PistolPickup(300, 300, shortid.generate()));
-        pickups.push(new MachineGunPickup(400, 400, shortid.generate()));
+        engine.addPickup(new MachineGunPickup(0, 0, shortid.generate()), 300, 300);
+        engine.addPickup(new MachineGunPickup(0, 0, shortid.generate()), 400, 400);
         engine.lastLoop = new Date().getTime();
         engine.physicLoop(projectile => {
-
             socket.broadcast.emit("newProjectile", {
                 x: projectile.bounds.position.x,
                 y: projectile.bounds.position.y,
