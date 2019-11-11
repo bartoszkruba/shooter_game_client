@@ -5,14 +5,8 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.Batch
-import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.*
+import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
@@ -42,9 +36,8 @@ class GameScreen(
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
-
+    val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
     private var shouldPlayReload = false
-
     private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
     private var aWasPressed = false
@@ -72,6 +65,8 @@ class GameScreen(
     lateinit var player: Player
 
     init {
+        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor,16, 16));
+
         playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
@@ -130,6 +125,7 @@ class GameScreen(
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
+               // drawCursor(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 if (shouldPlayReload) {

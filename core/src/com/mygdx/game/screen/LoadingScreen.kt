@@ -44,7 +44,7 @@ class LoadingScreen(private val game: Game,
         assets.load("images/pistol.png", Texture::class.java)
         assets.load("images/machine_gun.png", Texture::class.java)
         assets.load("images/ground.jpg", Texture::class.java)
-
+        assets.load("images/crosshair.png", Texture::class.java)
         assets.load("images/menu/credits.png", Texture::class.java)
         assets.load("images/menu/credits_selected.png", Texture::class.java)
         assets.load("images/menu/options.png", Texture::class.java)
