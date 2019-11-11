@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
+import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
@@ -17,7 +18,9 @@ import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 
 class GameScreen(
@@ -63,6 +66,12 @@ class GameScreen(
 
     private val ground = Array<Sprite>()
     lateinit var player: Player
+
+    var time: Long = 0
+    var bloodOnTheFloorX = 0f
+    var bloodOnTheFloorY = 0f
+    var bloodOnTheFloorCounter = 1f
+
 
     init {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor,16, 16));
@@ -130,6 +139,7 @@ class GameScreen(
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
+                bloodOnTheFloor(it)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
@@ -153,6 +163,29 @@ class GameScreen(
         }
     }
 
+    private fun bloodOnTheFloor(batch: Batch) {
+        if (player.gotShot) {
+            bloodOnTheFloorX = player.bounds.x - 20f
+            bloodOnTheFloorY = player.bounds.y - 70f
+            time = TimeUtils.millis()
+            val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+            batch.draw(bloodOnTheFloor, bloodOnTheFloorX, bloodOnTheFloorY, 150f, 55f);
+            bloodOnTheFloorCounter = 1f
+        }else{
+            if (time != 0L) {
+                if (time + 16000 > TimeUtils.millis()) {
+                    bloodOnTheFloorCounter -= 0.001f
+                    val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+                    batch.draw(bloodOnTheFloor, bloodOnTheFloorX, bloodOnTheFloorY, 150f, 55f);
+                    val c = batch.color;
+                    batch.setColor(c.r, c.g, c.b, bloodOnTheFloorCounter)
+
+
+                }
+            }
+        }
+    }
+
     private fun checkOpponentsGotShot(batch: Batch) {
         opponents.values.forEach {
             if (it.gotShot){
@@ -166,7 +199,6 @@ class GameScreen(
         if (player.gotShot){
             val blood = assets.get("images/blood-animation.png", Texture::class.java)
             batch.draw(blood, player.bounds.x - 10f, player.bounds.y, 65f, 65f);
-            //println(player.bounds.x.toString() +", " +player.bounds.y)
         }
     }
 
