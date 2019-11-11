@@ -14,6 +14,8 @@ const projectiles = engine.projectiles;
 const agents = engine.agents;
 const pickups = engine.pickups;
 
+const getZonesForObject = require('../util/util').getZonesForObject
+
 let loopAlreadyRunning = false;
 
 server.listen(8080, () =>
@@ -23,21 +25,6 @@ io.on('connection', (socket) => {
     console.log("Player connected");
 
     socket.emit('socketID', {id: socket.id});
-
-    // socket.emit('getPlayers', players);
-
-    // socket.broadcast.emit('newPlayer', {id: socket.id});
-
-    // socket.on('playerMoved', (data) => {
-    //     data.id = socket.id;
-    //     socket.broadcast.emit('playerMoved', data);
-    //     for (let i = 0; i < players.length; i++) {
-    //         if (players[i].id === data.id) {
-    //             players[i].x = data.x;
-    //             players[i].y = data.y;
-    //         }
-    //     }
-    // });
 
     socket.on('startKey', (data) => {
         switch (Object.keys(data)[0]) {
@@ -174,7 +161,6 @@ io.on('connection', (socket) => {
                 agents[i].facingDirectionAngle = Object.values(data)[0]
             }
         }
-        // console.log("playerId:", socket.id, ",,,  ", Object.keys(data)[0] + " is", Object.values(data)[0])
     });
 
     socket.on('disconnect', () => {
@@ -193,77 +179,32 @@ io.on('connection', (socket) => {
         engine.addPickup(new MachineGunPickup(0, 0, shortid.generate()), 400, 400);
         engine.lastLoop = new Date().getTime();
         engine.physicLoop(projectile => {
-            socket.broadcast.emit("newProjectile", {
-                x: projectile.bounds.position.x,
-                y: projectile.bounds.position.y,
-                id: projectile.id,
-                xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y,
-                type: projectile.type
-            })
+
+            zones = getZonesForObject(projectile.bounds);
+
+            for (agent of agents) {
+                for (zone of zones) {
+                    if(agent.viewportZones.includes(zone)){
+                        io.to(agent.id).emit("newProjectile", {
+                            x: projectile.bounds.position.x,
+                            y: projectile.bounds.position.y,
+                            id: projectile.id,
+                            xSpeed: projectile.velocity.x,
+                            ySpeed: projectile.velocity.y,
+                            type: projectile.type
+                        });
+                        break
+                    }
+                }
+            }
         });
-        newGameDataLoop(socket);
-        // gameDataLoop(socket);
+        gameDataLoop(socket);
     }
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
-async function gameDataLoop(socket) {
-
-    while (true) {
-        const agentData = [];
-
-        for (agent of agents) {
-            //console.log(agent.isDead)
-            //console.log("x:", agents[i].bounds.position.x, ",y:", agents[i].bounds.position.y)
-
-            agentData.push({
-                x: agent.bounds.bounds.min.x,
-                y: agent.bounds.bounds.min.y,
-                name: agent.name,
-                xVelocity: agent.velocity.x,
-                yVelocity: agent.velocity.y,
-                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1,
-                isDead: agent.isDead,
-                currentHealth: agent.currentHealth,
-                id: agent.id,
-                weapon: agent.weapon.projectileType,
-                angle: agent.facingDirectionAngle
-            })
-        }
-
-        const projectileData = [];
-
-        for (projectile of projectiles) {
-            projectileData.push({
-                x: projectile.bounds.position.x,
-                y: projectile.bounds.position.y,
-                id: projectile.id,
-                xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y,
-                type: projectile.type
-            })
-        }
-
-        const pickupData = [];
-
-        for (pickup of pickups) {
-            pickupData.push({
-                x: pickup.bounds.bounds.min.x,
-                y: pickup.bounds.bounds.min.y,
-                type: pickup.type,
-                id: pickup.id,
-            })
-        }
-
-        socket.broadcast.emit("gameData", {agentData, projectileData, pickupData});
-        await sleep(1000 / constants.UPDATES_PER_SECOND)
-    }
-
-}
-
-async function newGameDataLoop() {
+async function gameDataLoop() {
     while (true) {
         for (agent of agents) {
             minX = agent.bounds.position.x - constants.WINDOW_WIDTH;
@@ -287,7 +228,7 @@ async function newGameDataLoop() {
                 maxY = constants.MAP_HEIGHT
             }
 
-            zones = getZonesForObject({
+            agent.viewportZones = getZonesForObject({
                 bounds: {
                     min: {x: minX, y: minY},
                     max: {x: maxX, y: maxY}
@@ -299,7 +240,7 @@ async function newGameDataLoop() {
             const pickupData = [];
 
             ids = [];
-            for (zone of zones) {
+            for (zone of agent.viewportZones) {
                 for (ag of engine.matrix.agents[zone]) {
                     if (ids.includes(ag.id)) continue;
                     ids.push(ag.id);
@@ -337,12 +278,7 @@ async function newGameDataLoop() {
                 }
             }
 
-            console.log("sending to: " + agent.id)
-            console.log(new Date().getTime() + " agentData: " + agentData.length)
-
             io.to(agent.id).emit("gameData", {agentData, projectileData, pickupData});
-            // io.sockets.connected[agent.id].emit("gameData", {agentData, projectileData, pickupData});
-            // socket.broadcast.emit("gameData", {agentData, projectileData, pickupData});
         }
         await sleep(1000 / constants.UPDATES_PER_SECOND)
     }

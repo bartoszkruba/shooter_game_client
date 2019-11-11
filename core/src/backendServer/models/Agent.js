@@ -26,6 +26,8 @@ class Agent extends BaseObject {
         this.velocity = {x: 0, y: 0};
 
         this.reloadMark = -1;
+
+        this.viewportZones = []
     }
 
     canShoot() {
