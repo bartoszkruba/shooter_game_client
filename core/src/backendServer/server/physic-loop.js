@@ -43,20 +43,67 @@ function calculateProjectilePositions(delta) {
         const x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
         const y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
 
-        Matter.Body.setPosition(projectile.bounds, {x, y});
+        moveProjectile(projectile, x, y);
 
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
-            projectiles.splice(projectiles.indexOf(projectile), 1);
+            removeProjectile(projectile.id);
+            break
         }
 
-        for (let i = 0; i < agents.length; i++) {
-            const agent = agents[i];
-            if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
-                agent.takeDamage();
-                projectiles.splice(projectiles.indexOf(projectile), 1);
-                break;
-            }
+        let removed = false;
+        for (zone of projectile.zones) {
+            if (matrix.agents[zone] != null)
+                for (agent of matrix.agents[zone]) {
+                    if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
+                        agent.takeDamage();
+                        removeProjectile(projectile.id);
+                        removed = true;
+                        break;
+                    }
+                }
+            if (removed) break
+        }
+
+        // for (let i = 0; i < agents.length; i++) {
+        //     const agent = agents[i];
+        //     if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
+        //         agent.takeDamage();
+        //         projectiles.splice(projectiles.indexOf(projectile), 1);
+        //         break;
+        //     }
+        // }
+    }
+}
+
+function moveProjectile(projectile, x, y) {
+    Matter.Body.setPosition(projectile.bounds, {x, y});
+
+    if (x < 0 || x > constants.MAP_WIDTH || y < 0 || y > constants.MAP_HEIGHT) return;
+
+    oldZones = projectile.zones;
+
+    projectile.zones = getZonesForObject(projectile.bounds);
+
+    oldZones.filter(zone => !projectile.zones.includes(zone)).forEach(zone => {
+        if (matrix.projectiles[zone] != null)
+            matrix.projectiles[zone].splice(matrix.projectiles[zone].indexOf(projectile), 1)
+    });
+    projectile.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+        if (matrix.projectiles[zone] != null) matrix.projectiles[zone].push(projectile)
+    });
+}
+
+function removeProjectile(id) {
+    for (let i = 0; i < projectiles.length; i++) {
+        if (projectiles[i].id === id) {
+            zones = projectiles[i].zones;
+            zones.forEach(zone => {
+                if (matrix.projectiles[zone] != null)
+                    matrix.projectiles[zone].splice(matrix.projectiles[zone].indexOf(projectiles[i]), 1)
+            });
+            projectiles.splice(i, 1);
+            break;
         }
     }
 }
@@ -68,6 +115,8 @@ function moveAgent(agent, x, y) {
     y = Matter.Common.clamp(y, constants.WALL_SPRITE_HEIGHT + constants.PLAYER_SPRITE_HEIGHT / 2,
         constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT / 2);
 
+    Matter.Body.setPosition(agent.bounds, {x, y});
+
     oldZones = agent.zones;
 
     agent.zones = getZonesForObject(agent.bounds);
@@ -78,20 +127,26 @@ function moveAgent(agent, x, y) {
     agent.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
         matrix.agents[zone].push(agent)
     });
-
-    Matter.Body.setPosition(agent.bounds, {x, y})
 }
 
 function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
     const projectile = new PistolProjectile(x, y, xSpeed, ySpeed, shortid.generate());
-    projectiles.push(projectile);
+    addProjectileToMatrix(projectile);
     broadcastNewProjectile(projectile)
 }
 
 function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
     const projectile = new MachineGunProjectile(x, y, xSpeed, ySpeed, shortid.generate());
-    projectiles.push(projectile);
+    addProjectileToMatrix(projectile);
     broadcastNewProjectile(projectile)
+}
+
+function addProjectileToMatrix(projectile) {
+    projectile.zones = getZonesForObject(projectile.bounds);
+    projectiles.push(projectile);
+    projectile.zones.forEach(zone => {
+        matrix.projectiles[zone].push(projectile)
+    })
 }
 
 function pickWeapon(agent) {
@@ -240,8 +295,9 @@ removeAgent = id => {
     for (let i = 0; i < agents.length; i++) {
         if (agents[i].id === id) {
             zones = agents[i].zones;
-            zones.forEach(zone => matrix.agents[zone].splice(matrix.agents[zone].indexOf(agents[i]), i));
+            zones.forEach(zone => matrix.agents[zone].splice(matrix.agents[zone].indexOf(agents[i]), 1));
             agents.splice(i, 1);
+            break;
         }
     }
 };

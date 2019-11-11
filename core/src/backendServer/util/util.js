@@ -23,8 +23,8 @@ getZonesMatrix = () => {
         pickups: {}
     };
 
-    for (let i = 0; i <= floor(constants.MAP_WIDTH / constants.ZONE_SIZE) - 1; i++) {
-        for (let j = 0; j <= floor(constants.MAP_HEIGHT / constants.ZONE_SIZE) - 1; j++) {
+    for (let i = 0; i <= floor(constants.MAP_WIDTH / constants.ZONE_SIZE); i++) {
+        for (let j = 0; j <= floor(constants.MAP_HEIGHT / constants.ZONE_SIZE); j++) {
             matrix.agents["_" + i + "_" + j] = [];
             matrix.projectiles["_" + i + "_" + j] = [];
             matrix.walls["_" + i + "_" + j] = [];
