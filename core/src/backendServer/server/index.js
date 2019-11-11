@@ -14,6 +14,8 @@ const projectiles = engine.projectiles;
 const agents = engine.agents;
 const pickups = engine.pickups;
 
+const getZonesForObject = require('../util/util').getZonesForObject
+
 let loopAlreadyRunning = false;
 
 server.listen(8080, () =>
@@ -23,21 +25,6 @@ io.on('connection', (socket) => {
     console.log("Player connected");
 
     socket.emit('socketID', {id: socket.id});
-
-    // socket.emit('getPlayers', players);
-
-    // socket.broadcast.emit('newPlayer', {id: socket.id});
-
-    // socket.on('playerMoved', (data) => {
-    //     data.id = socket.id;
-    //     socket.broadcast.emit('playerMoved', data);
-    //     for (let i = 0; i < players.length; i++) {
-    //         if (players[i].id === data.id) {
-    //             players[i].x = data.x;
-    //             players[i].y = data.y;
-    //         }
-    //     }
-    // });
 
     socket.on('startKey', (data) => {
         switch (Object.keys(data)[0]) {
@@ -174,38 +161,42 @@ io.on('connection', (socket) => {
                 agents[i].facingDirectionAngle = Object.values(data)[0]
             }
         }
-        // console.log("playerId:", socket.id, ",,,  ", Object.keys(data)[0] + " is", Object.values(data)[0])
     });
 
     socket.on('disconnect', () => {
         console.log('Player disconnected, id:', socket.id);
         socket.broadcast.emit('playerDisconnected', {id: socket.id});
-        for (let i = 0; i < agents.length; i++) {
-            if (agents[i].id === socket.id) {
-                agents.splice(i, 1)
-            }
-        }
+        engine.removeAgent(socket.id);
     });
 
     console.log("Adding new player, id " + socket.id);
-    const agent = new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
-    agents.push(agent);
+    engine.addAgent(new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id),
+        500, 500);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
-        pickups.push(new PistolPickup(300, 300, shortid.generate()));
-        pickups.push(new MachineGunPickup(400, 400, shortid.generate()));
+        engine.addPickup(new MachineGunPickup(0, 0, shortid.generate()), 300, 300);
+        engine.addPickup(new MachineGunPickup(0, 0, shortid.generate()), 400, 400);
         engine.lastLoop = new Date().getTime();
         engine.physicLoop(projectile => {
 
-            socket.broadcast.emit("newProjectile", {
-                x: projectile.bounds.position.x,
-                y: projectile.bounds.position.y,
-                id: projectile.id,
-                xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y,
-                type: projectile.type
-            })
+            zones = getZonesForObject(projectile.bounds);
+
+            for (agent of agents) {
+                for (zone of zones) {
+                    if(agent.viewportZones.includes(zone)){
+                        io.to(agent.id).emit("newProjectile", {
+                            x: projectile.bounds.position.x,
+                            y: projectile.bounds.position.y,
+                            id: projectile.id,
+                            xSpeed: projectile.velocity.x,
+                            ySpeed: projectile.velocity.y,
+                            type: projectile.type
+                        });
+                        break
+                    }
+                }
+            }
         });
         gameDataLoop(socket);
     }
@@ -213,58 +204,84 @@ io.on('connection', (socket) => {
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
-async function gameDataLoop(socket) {
-
+async function gameDataLoop() {
     while (true) {
-        const agentData = [];
-
         for (agent of agents) {
-            //console.log(agent.isDead)
-            //console.log("x:", agents[i].bounds.position.x, ",y:", agents[i].bounds.position.y)
+            minX = agent.bounds.position.x - constants.WINDOW_WIDTH;
+            minY = agent.bounds.position.y - constants.WINDOW_HEIGHT;
+            maxX = agent.bounds.position.x + constants.WINDOW_WIDTH;
+            maxY = agent.bounds.position.y + constants.WINDOW_HEIGHT;
 
-            agentData.push({
-                x: agent.bounds.bounds.min.x,
-                y: agent.bounds.bounds.min.y,
-                name: agent.name,
-                xVelocity: agent.velocity.x,
-                yVelocity: agent.velocity.y,
-                bulletsLeft: agent.reloadMark === -1 ? agent.weapon.bulletsInChamber : -1,
-                isDead: agent.isDead,
-                currentHealth: agent.currentHealth,
-                id: agent.id,
-                weapon: agent.weapon.projectileType,
-                  angle: agent.facingDirectionAngle
-            })
+            if (minX < 0) {
+                maxX -= minX;
+                minX = 0
+            } else if (maxX > constants.MAP_WIDTH) {
+                minX -= maxX;
+                maxX = constants.MAP_WIDTH
+            }
+
+            if (minY < 0) {
+                maxY -= minY;
+                minY = 0
+            } else if (maxY > constants.MAP_HEIGHT) {
+                minY -= maxY;
+                maxY = constants.MAP_HEIGHT
+            }
+
+            agent.viewportZones = getZonesForObject({
+                bounds: {
+                    min: {x: minX, y: minY},
+                    max: {x: maxX, y: maxY}
+                }
+            });
+
+            const agentData = [];
+            const projectileData = [];
+            const pickupData = [];
+
+            ids = [];
+            for (zone of agent.viewportZones) {
+                for (ag of engine.matrix.agents[zone]) {
+                    if (ids.includes(ag.id)) continue;
+                    ids.push(ag.id);
+                    agentData.push({
+                        x: ag.bounds.bounds.min.x,
+                        y: ag.bounds.bounds.min.y,
+                        name: ag.name,
+                        xVelocity: ag.velocity.x,
+                        yVelocity: ag.velocity.y,
+                        bulletsLeft: ag.reloadMark === -1 ? ag.weapon.bulletsInChamber : -1,
+                        isDead: ag.isDead,
+                        currentHealth: ag.currentHealth,
+                        id: ag.id,
+                        weapon: ag.weapon.projectileType,
+                        angle: ag.facingDirectionAngle
+                    })
+                }
+                for (projectile of engine.matrix.projectiles[zone]) {
+                    projectileData.push({
+                        x: projectile.bounds.position.x,
+                        y: projectile.bounds.position.y,
+                        id: projectile.id,
+                        xSpeed: projectile.velocity.x,
+                        ySpeed: projectile.velocity.y,
+                        type: projectile.type
+                    })
+                }
+                for (pickup of engine.matrix.pickups[zone]) {
+                    pickupData.push({
+                        x: pickup.bounds.bounds.min.x,
+                        y: pickup.bounds.bounds.min.y,
+                        type: pickup.type,
+                        id: pickup.id,
+                    })
+                }
+            }
+
+            io.to(agent.id).emit("gameData", {agentData, projectileData, pickupData});
         }
-
-        const projectileData = [];
-
-        for (projectile of projectiles) {
-            projectileData.push({
-                x: projectile.bounds.position.x,
-                y: projectile.bounds.position.y,
-                id: projectile.id,
-                xSpeed: projectile.velocity.x,
-                ySpeed: projectile.velocity.y,
-                type: projectile.type
-            })
-        }
-
-        const pickupData = [];
-
-        for (pickup of pickups) {
-            pickupData.push({
-                x: pickup.bounds.bounds.min.x,
-                y: pickup.bounds.bounds.min.y,
-                type: pickup.type,
-                id: pickup.id,
-            })
-        }
-
-        socket.broadcast.emit("gameData", {agentData, projectileData, pickupData});
         await sleep(1000 / constants.UPDATES_PER_SECOND)
     }
-
 }
 
 function setVelocity(agent) {

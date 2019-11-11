@@ -4,6 +4,9 @@ module.exports = {
     MAP_WIDTH: 6400,
     MAP_HEIGHT: 3600,
 
+    WINDOW_WIDTH: 1280,
+    WINDOW_HEIGHT: 720,
+
     PISTOL_RELOAD_TIME: 400,
     PISTOL_BULLET_SPEED: 1000,
     PISTOL_BULLETS_IN_CHAMBER: 18,
@@ -33,6 +36,8 @@ module.exports = {
     WALL_SPRITE_HEIGHT: 50,
 
     STANDARD_PROJECTILE_WIDTH: 8,
+
+    ZONE_SIZE: 100
 };
 
 
