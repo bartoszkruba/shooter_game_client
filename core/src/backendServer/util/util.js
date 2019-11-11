@@ -15,8 +15,28 @@ getZonesForCoordinates = (min, max) => {
     return zones
 };
 
+getZonesMatrix = () => {
+    matrix = {
+        agents: {},
+        projectiles: {},
+        walls: {},
+        pickups: {}
+    };
+
+    for (let i = 0; i <= floor(constants.MAP_WIDTH / constants.ZONE_SIZE) - 1; i++) {
+        for (let j = 0; j <= floor(constants.MAP_HEIGHT / constants.ZONE_SIZE) - 1; j++) {
+            matrix.agents["_" + i + "_" + j] = [];
+            matrix.projectiles["_" + i + "_" + j] = [];
+            matrix.walls["_" + i + "_" + j] = [];
+            matrix.pickups["_" + i + "_" + j] = [];
+        }
+    }
+
+    return matrix
+};
+
 getZonesForObject = object => {
     return getZonesForCoordinates(object.bounds.min, object.bounds.max)
 };
 
-module.exports = {getZonesForObject};
+module.exports = {getZonesForObject, getZonesMatrix};

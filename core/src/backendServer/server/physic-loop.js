@@ -15,9 +15,13 @@ const agents = [];
 const projectiles = [];
 const pickups = [];
 
+const {getZonesForObject, getZonesMatrix} = require('../util/util');
+
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
 let lastLoop;
+
+const matrix = getZonesMatrix();
 
 async function physicLoop(broadcastNewProjectile) {
     while (true) {
@@ -48,7 +52,7 @@ function calculateProjectilePositions(delta) {
 
         for (let i = 0; i < agents.length; i++) {
             const agent = agents[i];
-            if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead){
+            if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
                 agent.takeDamage();
                 projectiles.splice(projectiles.indexOf(projectile), 1);
                 break;
@@ -212,5 +216,5 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop, pickups};
+module.exports = {physicLoop, agents, projectiles, moveAgent, lastLoop, pickups, zones};
 
