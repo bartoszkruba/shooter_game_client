@@ -259,6 +259,8 @@ async function gameDataLoop() {
                     })
                 }
                 for (projectile of engine.matrix.projectiles[zone]) {
+                    if (ids.includes(projectile.id)) continue;
+                    ids.push(projectile.id);
                     projectileData.push({
                         x: projectile.bounds.position.x,
                         y: projectile.bounds.position.y,
@@ -269,6 +271,8 @@ async function gameDataLoop() {
                     })
                 }
                 for (pickup of engine.matrix.pickups[zone]) {
+                    if (ids.includes(pickup.id)) continue;
+                    ids.push(pickup.id);
                     pickupData.push({
                         x: pickup.bounds.bounds.min.x,
                         y: pickup.bounds.bounds.min.y,
