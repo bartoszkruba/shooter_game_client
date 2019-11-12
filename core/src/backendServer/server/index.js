@@ -184,7 +184,7 @@ io.on('connection', (socket) => {
 
             for (agent of agents) {
                 for (zone of zones) {
-                    if(agent.viewportZones.includes(zone)){
+                    if (agent.viewportZones.includes(zone)) {
                         io.to(agent.id).emit("newProjectile", {
                             x: projectile.bounds.position.x,
                             y: projectile.bounds.position.y,
@@ -241,23 +241,24 @@ async function gameDataLoop() {
 
             ids = [];
             for (zone of agent.viewportZones) {
-                for (ag of engine.matrix.agents[zone]) {
-                    if (ids.includes(ag.id)) continue;
-                    ids.push(ag.id);
-                    agentData.push({
-                        x: ag.bounds.bounds.min.x,
-                        y: ag.bounds.bounds.min.y,
-                        name: ag.name,
-                        xVelocity: ag.velocity.x,
-                        yVelocity: ag.velocity.y,
-                        bulletsLeft: ag.reloadMark === -1 ? ag.weapon.bulletsInChamber : -1,
-                        isDead: ag.isDead,
-                        currentHealth: ag.currentHealth,
-                        id: ag.id,
-                        weapon: ag.weapon.projectileType,
-                        angle: ag.facingDirectionAngle
-                    })
-                }
+                if (engine.matrix.agents[zone] != null)
+                    for (ag of engine.matrix.agents[zone]) {
+                        if (ids.includes(ag.id)) continue;
+                        ids.push(ag.id);
+                        agentData.push({
+                            x: ag.bounds.bounds.min.x,
+                            y: ag.bounds.bounds.min.y,
+                            name: ag.name,
+                            xVelocity: ag.velocity.x,
+                            yVelocity: ag.velocity.y,
+                            bulletsLeft: ag.reloadMark === -1 ? ag.weapon.bulletsInChamber : -1,
+                            isDead: ag.isDead,
+                            currentHealth: ag.currentHealth,
+                            id: ag.id,
+                            weapon: ag.weapon.projectileType,
+                            angle: ag.facingDirectionAngle
+                        })
+                    }
                 for (projectile of engine.matrix.projectiles[zone]) {
                     if (ids.includes(projectile.id)) continue;
                     ids.push(projectile.id);
