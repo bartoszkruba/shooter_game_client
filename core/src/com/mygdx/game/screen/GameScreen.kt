@@ -35,7 +35,7 @@ class GameScreen(
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
-    private val music = assets.get("music/ingame_music.ogg", Music::class.java)
+    //private val music = assets.get("music/ingame_music.ogg", Music::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
@@ -67,10 +67,17 @@ class GameScreen(
     private val ground = Array<Sprite>()
     lateinit var player: Player
 
-    var time: Long = 0
+    var playerTime: Long = 0
+    var opponentTime: Long = 0
+
+    var bloodOnTheFloorPlayerCounter = 1f
+    var bloodOnTheFloorOpponentsCounter = 1f
+
     var bloodOnTheFloorX = 0f
     var bloodOnTheFloorY = 0f
-    var bloodOnTheFloorCounter = 1f
+
+    var bloodOnTheFloorOpponentX = 0f
+    var bloodOnTheFloorOpponentY = 0f
 
 
     init {
@@ -81,9 +88,9 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
-        music.isLooping = true
-        music.volume = 0.2f
-        music.play()
+        //music.isLooping = true
+        //music.volume = 0.2f
+        //music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -138,7 +145,8 @@ class GameScreen(
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
-                bloodOnTheFloor(it)
+                bloodOnTheFloorPlayer(it)
+                bloodOnTheFloorOpponent(it)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
@@ -162,27 +170,55 @@ class GameScreen(
         }
     }
 
-    private fun bloodOnTheFloor(batch: Batch) {
-        if (player.gotShot) {
-            bloodOnTheFloorX = player.bounds.x - 20f
-            bloodOnTheFloorY = player.bounds.y - 70f
-            time = TimeUtils.millis()
-            val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
-            batch.draw(bloodOnTheFloor, bloodOnTheFloorX, bloodOnTheFloorY, 150f, 55f);
-            bloodOnTheFloorCounter = 1f
-        }else{
-            if (time != 0L) {
-                if (time + 16000 > TimeUtils.millis()) {
-                    bloodOnTheFloorCounter -= 0.001f
-                    val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
-                    batch.draw(bloodOnTheFloor, bloodOnTheFloorX, bloodOnTheFloorY, 150f, 55f);
-                    val c = batch.color;
-                    batch.setColor(c.r, c.g, c.b, bloodOnTheFloorCounter)
+    private fun bloodOnTheFloorOpponent(batch: SpriteBatch) {
+        opponents.values.forEach {
+            if(it.gotShot){
+                bloodOnTheFloorOpponentX = it.bounds.x - 20f
+                bloodOnTheFloorOpponentY = it.bounds.y - 70f
 
-
+                opponentTime = TimeUtils.millis()
+                drawBloodOnTheFloorOpponent(batch)
+                bloodOnTheFloorOpponentsCounter = 1f
+            }else{
+                if (opponentTime != 0L) {
+                    if (opponentTime + 16000 > TimeUtils.millis()) {
+                        bloodOnTheFloorOpponentsCounter -= 0.001f
+                        drawBloodOnTheFloorOpponent(batch)
+                        val c = batch.color;
+                        batch.setColor(c.r, c.g, c.b, bloodOnTheFloorOpponentsCounter)
+                    }
                 }
             }
         }
+    }
+
+    private fun bloodOnTheFloorPlayer(batch: Batch) {
+        if (player.gotShot) {
+            bloodOnTheFloorX = player.bounds.x - 20f
+            bloodOnTheFloorY = player.bounds.y - 70f
+            playerTime = TimeUtils.millis()
+            drawBloodOnTheFloorPlayer(batch)
+            bloodOnTheFloorPlayerCounter = 1f
+        }else{
+            if (playerTime != 0L) {
+                if (playerTime + 16000 > TimeUtils.millis()) {
+                    bloodOnTheFloorPlayerCounter -= 0.001f
+                    drawBloodOnTheFloorPlayer(batch)
+                    val c = batch.color;
+                    batch.setColor(c.r, c.g, c.b, bloodOnTheFloorPlayerCounter)
+                }
+            }
+        }
+    }
+
+    private fun drawBloodOnTheFloorPlayer(batch: Batch) {
+        val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+        batch.draw(bloodOnTheFloor, bloodOnTheFloorX, bloodOnTheFloorY, 150f, 55f);
+    }
+
+    private fun drawBloodOnTheFloorOpponent(batch: Batch) {
+        val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+        batch.draw(bloodOnTheFloor, bloodOnTheFloorOpponentX, bloodOnTheFloorOpponentY, 150f, 55f);
     }
 
     private fun checkOpponentsGotShot(batch: Batch) {
