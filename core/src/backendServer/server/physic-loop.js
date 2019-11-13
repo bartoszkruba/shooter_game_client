@@ -10,10 +10,12 @@ const PistolPickup = require('../models/PistolPickup');
 const MachineGunPickup = require('../models/MachineGunPickup');
 const ProjectileType = require('../models/ProjectileType');
 const constants = require('../settings/constants');
+const Wall = require('../models/Wall');
 
 const agents = [];
 const projectiles = [];
 const pickups = [];
+const walls = [];
 
 const {getZonesForObject, getZonesMatrix} = require('../util/util');
 
@@ -293,7 +295,7 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-addAgent = (agent, x, y) => {
+const addAgent = (agent, x, y) => {
     agents.push(agent);
     agent.zones = getZonesForObject(agent.bounds);
     agent.zones.forEach(zone => {
@@ -302,7 +304,7 @@ addAgent = (agent, x, y) => {
     moveAgent(agent, x, y);
 };
 
-removeAgent = id => {
+const removeAgent = id => {
     for (let i = 0; i < agents.length; i++) {
         if (agents[i].id === id) {
             zones = agents[i].zones;
@@ -313,7 +315,7 @@ removeAgent = id => {
     }
 };
 
-removePickup = id => {
+const removePickup = id => {
     for (let i = 0; i < pickups.length; i++) {
         if (pickups[i].id === id) {
             zones = pickups[i].zones;
@@ -324,9 +326,18 @@ removePickup = id => {
     }
 };
 
-addPickup = (pickup, x, y) => {
+const addPickup = (pickup, x, y) => {
     pickups.push(pickup);
     movePickup(pickup, x, y)
+};
+
+const addWall = (x, y) => {
+    const wall = new Wall(x, y, shortid.generate());
+    wall.zones = getZonesForObject(wall.bounds);
+    walls.push(wall);
+    for(zone of wall.zones){
+        matrix.walls[zone].push(wall)
+    }
 };
 
 module.exports = {
@@ -339,6 +350,8 @@ module.exports = {
     matrix,
     addAgent,
     removeAgent,
-    addPickup
+    addPickup,
+    addWall,
+    walls
 };
 

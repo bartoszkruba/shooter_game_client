@@ -13,6 +13,9 @@ const constants = require('../settings/constants');
 const projectiles = engine.projectiles;
 const agents = engine.agents;
 const pickups = engine.pickups;
+const walls = engine.walls;
+
+const worldGenerator = require('../util/worldGenerator');
 
 const getZonesForObject = require('../util/util').getZonesForObject
 
@@ -21,10 +24,13 @@ let loopAlreadyRunning = false;
 server.listen(8080, () =>
     console.log("Server is running.."));
 
+worldGenerator.generateWalls().forEach(wall => engine.addWall(wall.x, wall.y));
+
 io.on('connection', (socket) => {
     console.log("Player connected");
 
     socket.emit('socketID', {id: socket.id});
+    socket.emit("wallData", wallData());
 
     socket.on('startKey', (data) => {
         switch (Object.keys(data)[0]) {
@@ -316,6 +322,17 @@ async function agentDataLoop() {
         }
         await sleep(1000 / constants.AGENT_UPDATES_PER_SECOND)
     }
+}
+
+function wallData() {
+    wallData = [];
+    walls.forEach(wall => {
+        wallData.push({
+            x: wall.bounds.bounds.min.x,
+            y: wall.bounds.bounds.min.y
+        })
+    });
+    return wallData;
 }
 
 function setVelocity(agent) {
