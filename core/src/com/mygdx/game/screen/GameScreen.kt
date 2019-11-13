@@ -18,7 +18,10 @@ import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
 import java.util.concurrent.ConcurrentHashMap
-
+import com.mygdx.game.model.Pickup
+import com.mygdx.game.model.Projectile
+import com.mygdx.game.model.Opponent
+import ktx.assets.pool
 
 class GameScreen(
         val game: Game,
@@ -36,7 +39,9 @@ class GameScreen(
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
-    val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
+    private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
+    private val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+
     private var shouldPlayReload = false
     private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
@@ -63,6 +68,11 @@ class GameScreen(
 
     private val ground = Array<Sprite>()
     lateinit var player: Player
+
+    var bloodOnTheFloor = ArrayList<Blood>()
+    private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
+
+
 
     init {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor,16, 16));
@@ -121,14 +131,16 @@ class GameScreen(
         if (::player.isInitialized) {
             batch.use {
                 ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
+                drawBloodOnTheFloor(it)
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
-               // drawCursor(it)
+                // drawCursor(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
+                removeUnnecessaryBloodOnTheFloor()
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
@@ -152,11 +164,39 @@ class GameScreen(
         }
     }
 
+    private fun removeUnnecessaryBloodOnTheFloor() {
+        val iterator = bloodOnTheFloor.iterator()
+        while (iterator.hasNext()) {
+            val value = iterator.next()
+            if (value.transparent < 0) {
+                bloodOnTheFloorPool.free(value)
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun drawBloodOnTheFloor(batch: Batch) {
+        this.bloodOnTheFloor.forEach {
+            if (it.gotShot && it.transparent >= 0f) {
+                it.bloodOnTheFloorSprite.draw(batch, it.transparent)
+                it.changeTransparent()
+            }
+        }
+    }
+
     private fun checkOpponentsGotShot(batch: Batch) {
         opponents.values.forEach {
             if (it.gotShot){
                 val blood = assets.get("images/blood-animation.png", Texture::class.java)
                 batch.draw(blood, it.bounds.x - 10f, it.bounds.y, 65f, 65f);
+
+                bloodOnTheFloor.add(
+                    bloodOnTheFloorPool.obtain().apply {
+                        bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                        gotShot = true
+                        transparent = 1f
+                    }
+                )
             }
         }
     }
@@ -165,7 +205,14 @@ class GameScreen(
         if (player.gotShot){
             val blood = assets.get("images/blood-animation.png", Texture::class.java)
             batch.draw(blood, player.bounds.x - 10f, player.bounds.y, 65f, 65f);
-            //println(player.bounds.x.toString() +", " +player.bounds.y)
+
+            bloodOnTheFloor.add(
+                bloodOnTheFloorPool.obtain().apply {
+                    bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
+                    gotShot = true
+                    transparent = 1f
+                }
+            )
         }
     }
 
@@ -175,7 +222,6 @@ class GameScreen(
             if (showMiniMap == 2) showMiniMap = 0
             if (showMiniMap != 1) {
                 font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f);
-                //font.getData().setScale(0.5f, 0.5f);
             }
 
             if (showMiniMap == 1) {
@@ -449,9 +495,9 @@ class GameScreen(
             font.getData().setScale(1f, 1f);
         } else {
             if(!player.isDead)
-            font.draw(batch, "Reloading...",
-                    WINDOW_WIDTH - 150f,
-                    WINDOW_HEIGHT - 55f)
+                font.draw(batch, "Reloading...",
+                        WINDOW_WIDTH - 150f,
+                        WINDOW_HEIGHT - 55f)
             font.getData().setScale(1f, 1f);
         }
     }
