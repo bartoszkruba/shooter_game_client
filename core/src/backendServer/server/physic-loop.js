@@ -12,6 +12,8 @@ const ProjectileType = require('../models/ProjectileType');
 const constants = require('../settings/constants');
 const Wall = require('../models/Wall');
 
+const util = require('../util/util');
+
 const agents = [];
 const projectiles = [];
 const pickups = [];
@@ -332,6 +334,37 @@ const addAgent = (agent, x, y) => {
     moveAgent(agent, x, y, x, y);
 };
 
+const moveAgentToRandomPlace = (agent) => {
+    const minX = constants.WALL_SPRITE_WIDTH + 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const maxX = constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const minY = constants.WALL_SPRITE_HEIGHT + 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+    const maxY = constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+
+    while (true) {
+        console.log("moving")
+        collided = false;
+        const x = util.getRandomArbitrary(minX, maxX);
+        const y = util.getRandomArbitrary(minY, maxY);
+
+        Matter.Body.setPosition(agent.bounds, {x, y});
+        const oldZones = util.getZonesForObject(agent.bounds);
+
+        oldZones.filter(zone => !agent.zones.includes(zone)).forEach(zone => {
+            matrix.agents[zone].splice(matrix.agents[zone].indexOf(agent), 1)
+        });
+        agent.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+            matrix.agents[zone].push(agent)
+        });
+
+        agent.zones.forEach(zone => {
+            matrix.walls[zone].forEach(wall => {
+                if (Matter.SAT.collides(wall.bounds, agent.bounds).collided) collided = true
+            })
+        });
+        if (!collided) break
+    }
+};
+
 const removeAgent = id => {
     for (let i = 0; i < agents.length; i++) {
         if (agents[i].id === id) {
@@ -380,6 +413,7 @@ module.exports = {
     removeAgent,
     addPickup,
     addWall,
-    walls
+    walls,
+    moveAgentToRandomPlace
 };
 
