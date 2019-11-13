@@ -15,12 +15,10 @@ import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.generateWallMatrix
 import com.mygdx.game.util.getZonesForCircle
-import com.mygdx.game.util.getZonesForRectangle
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
-import ktx.collections.iterate
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -116,7 +114,7 @@ class GameScreen(
             updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
-            calculatePistolProjectilesPosition(delta)
+            calculateProjectilePositions(delta)
             checkControls(delta)
             setCameraPosition()
             checkRestart()
@@ -370,7 +368,7 @@ class GameScreen(
             MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
 
 
-    private fun calculatePistolProjectilesPosition(delta: Float) {
+    private fun calculateProjectilePositions(delta: Float) {
         var removed = false
         for (entry in projectiles.entries) {
             removed = false
@@ -378,14 +376,28 @@ class GameScreen(
                     entry.value.bounds.x + entry.value.velocity.x * delta * entry.value.speed,
                     entry.value.bounds.y + entry.value.velocity.y * delta * entry.value.speed)
 
-            removed = checkOutOfMapCollision(entry.value, entry.key)
+            removed = checkIfOutsideMap(entry.value, entry.key)
+            if (!removed) removed = checkIfOutsideViewport(entry.value, entry.key)
             if (!removed) removed = checkOpponentCollisions(entry.value, entry.key)
             if (!removed) removed = checkPlayerCollision(entry.value, entry.key)
             if (!removed) removed = checkWallsCollisions(entry.value, entry.key)
         }
     }
 
-    private fun checkOutOfMapCollision(projectile: Projectile, key: String): Boolean {
+    private fun checkIfOutsideViewport(projectile: Projectile, key: String): Boolean {
+        if (
+                projectile.bounds.x < camera.position.x - WINDOW_WIDTH ||
+                projectile.bounds.x > camera.position.x + WINDOW_WIDTH ||
+                projectile.bounds.y < camera.position.y - WINDOW_HEIGHT ||
+                projectile.bounds.y > camera.position.y + WINDOW_HEIGHT) {
+
+            removeProjectile(projectile, key)
+            return true
+        }
+        return false
+    }
+
+    private fun checkIfOutsideMap(projectile: Projectile, key: String): Boolean {
         if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
                 projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
             removeProjectile(projectile, key)
