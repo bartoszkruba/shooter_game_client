@@ -10,10 +10,12 @@ const PistolPickup = require('../models/PistolPickup');
 const MachineGunPickup = require('../models/MachineGunPickup');
 const ProjectileType = require('../models/ProjectileType');
 const constants = require('../settings/constants');
+const Wall = require('../models/Wall');
 
 const agents = [];
 const projectiles = [];
 const pickups = [];
+const walls = [];
 
 const {getZonesForObject, getZonesMatrix} = require('../util/util');
 
@@ -53,15 +55,22 @@ function calculateProjectilePositions(delta) {
 
         let removed = false;
         for (zone of projectile.zones) {
-            if (matrix.agents[zone] != null)
-                for (agent of matrix.agents[zone]) {
-                    if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
-                        agent.takeDamage();
-                        removeProjectile(projectile.id);
-                        removed = true;
-                        break;
-                    }
+            if (matrix.agents[zone] != null) for (agent of matrix.agents[zone]) {
+                if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
+                    agent.takeDamage();
+                    removeProjectile(projectile.id);
+                    removed = true;
+                    break;
                 }
+            }
+            if (matrix.walls[zone] != null) for (wall of matrix.walls[zone]) {
+                if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
+                    removeProjectile(projectile.id);
+                    removed = true;
+                    break;
+                }
+            }
+
             if (removed) break
         }
     }
@@ -99,7 +108,7 @@ function removeProjectile(id) {
     }
 }
 
-function moveAgent(agent, x, y) {
+function moveAgent(agent, x, y, oldX, oldY) {
     x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH + constants.PLAYER_SPRITE_WIDTH / 2,
         constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - constants.PLAYER_SPRITE_WIDTH / 2);
 
@@ -111,6 +120,19 @@ function moveAgent(agent, x, y) {
     oldZones = agent.zones;
 
     agent.zones = getZonesForObject(agent.bounds);
+
+    let collided = false;
+
+    agent.zones.forEach(zone => {
+        if (matrix.walls[zone] != null) matrix.walls[zone].forEach(wall => {
+            if (Matter.SAT.collides(wall.bounds, agent.bounds).collided) {
+                Matter.Body.setPosition(agent.bounds, {x: oldX, y: oldY});
+                collided = true
+            }
+        })
+    });
+
+    if (collided) return;
 
     oldZones.filter(zone => !agent.zones.includes(zone)).forEach(zone => {
         matrix.agents[zone].splice(matrix.agents[zone].indexOf(agent), 1)
@@ -157,7 +179,7 @@ function addProjectileToMatrix(projectile) {
 function pickWeapon(agent) {
     let shouldBreak = false;
     for (zone of agent.zones) {
-        if(shouldBreak) break;
+        if (shouldBreak) break;
         for (pickup of matrix.pickups[zone]) {
             if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
                 switch (agent.weapon.projectileType) {
@@ -242,13 +264,21 @@ function checkControls(agent, delta, broadcastNewProjectile) {
 
         if (pressedKeys > 1) movementSpeed *= 0.7;
 
-        if (agent.isWPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y + movementSpeed * delta);
+        if (agent.isWPressed) moveAgent(
+            agent, agent.bounds.position.x, agent.bounds.position.y + movementSpeed * delta,
+            agent.bounds.position.x, agent.bounds.position.y);
 
-        if (agent.isSPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y - movementSpeed * delta);
+        if (agent.isSPressed) moveAgent(
+            agent, agent.bounds.position.x, agent.bounds.position.y - movementSpeed * delta,
+            agent.bounds.position.x, agent.bounds.position.y);
 
-        if (agent.isAPressed) moveAgent(agent, agent.bounds.position.x - movementSpeed * delta, agent.bounds.position.y);
+        if (agent.isAPressed) moveAgent(
+            agent, agent.bounds.position.x - movementSpeed * delta, agent.bounds.position.y,
+            agent.bounds.position.x, agent.bounds.position.y);
 
-        if (agent.isDPressed) moveAgent(agent, agent.bounds.position.x + movementSpeed * delta, agent.bounds.position.y)
+        if (agent.isDPressed) moveAgent(
+            agent, agent.bounds.position.x + movementSpeed * delta, agent.bounds.position.y,
+            agent.bounds.position.x, agent.bounds.position.y)
     }
 }
 
@@ -293,16 +323,16 @@ function projectToRectEdge(angle, agent) {
     return edgePoint;
 }
 
-addAgent = (agent, x, y) => {
+const addAgent = (agent, x, y) => {
     agents.push(agent);
     agent.zones = getZonesForObject(agent.bounds);
     agent.zones.forEach(zone => {
         matrix.agents[zone].push(agent)
     });
-    moveAgent(agent, x, y);
+    moveAgent(agent, x, y, x, y);
 };
 
-removeAgent = id => {
+const removeAgent = id => {
     for (let i = 0; i < agents.length; i++) {
         if (agents[i].id === id) {
             zones = agents[i].zones;
@@ -313,7 +343,7 @@ removeAgent = id => {
     }
 };
 
-removePickup = id => {
+const removePickup = id => {
     for (let i = 0; i < pickups.length; i++) {
         if (pickups[i].id === id) {
             zones = pickups[i].zones;
@@ -324,9 +354,18 @@ removePickup = id => {
     }
 };
 
-addPickup = (pickup, x, y) => {
+const addPickup = (pickup, x, y) => {
     pickups.push(pickup);
     movePickup(pickup, x, y)
+};
+
+const addWall = (x, y) => {
+    const wall = new Wall(x, y, shortid.generate());
+    wall.zones = getZonesForObject(wall.bounds);
+    walls.push(wall);
+    for (zone of wall.zones) {
+        matrix.walls[zone].push(wall)
+    }
 };
 
 module.exports = {
@@ -339,6 +378,8 @@ module.exports = {
     matrix,
     addAgent,
     removeAgent,
-    addPickup
+    addPickup,
+    addWall,
+    walls
 };
 
