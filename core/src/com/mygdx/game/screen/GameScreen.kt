@@ -188,9 +188,7 @@ class GameScreen(
     private fun checkOpponentsGotShot(batch: Batch) {
         opponents.values.forEach {
             if (it.gotShot){
-                val blood = assets.get("images/blood-animation.png", Texture::class.java)
-                batch.draw(blood, it.bounds.x - 10f, it.bounds.y, 65f, 65f);
-
+                drawBloodOnPlayerBody(batch,it.bounds.x - 10f, it.bounds.y)
                 bloodOnTheFloor.add(
                     bloodOnTheFloorPool.obtain().apply {
                         bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
@@ -204,9 +202,7 @@ class GameScreen(
 
     private fun checkPlayerGotShot(batch: Batch) {
         if (player.gotShot){
-            val blood = assets.get("images/blood-animation.png", Texture::class.java)
-            batch.draw(blood, player.bounds.x - 10f, player.bounds.y, 65f, 65f);
-
+            drawBloodOnPlayerBody(batch,player.bounds.x - 10f, player.bounds.y)
             bloodOnTheFloor.add(
                 bloodOnTheFloorPool.obtain().apply {
                     bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
@@ -215,6 +211,11 @@ class GameScreen(
                 }
             )
         }
+    }
+
+    private fun drawBloodOnPlayerBody(batch: Batch, x: Float, y: Float) {
+        val blood = assets.get("images/blood-animation.png", Texture::class.java)
+        batch.draw(blood, x, y, 65f, 65f);
     }
 
     private fun checkAllPlayersOnMap(batch: Batch) {
