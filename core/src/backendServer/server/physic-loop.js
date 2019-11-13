@@ -55,15 +55,22 @@ function calculateProjectilePositions(delta) {
 
         let removed = false;
         for (zone of projectile.zones) {
-            if (matrix.agents[zone] != null)
-                for (agent of matrix.agents[zone]) {
-                    if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
-                        agent.takeDamage();
-                        removeProjectile(projectile.id);
-                        removed = true;
-                        break;
-                    }
+            if (matrix.agents[zone] != null) for (agent of matrix.agents[zone]) {
+                if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
+                    agent.takeDamage();
+                    removeProjectile(projectile.id);
+                    removed = true;
+                    break;
                 }
+            }
+            if (matrix.walls[zone] != null) for (wall of matrix.walls[zone]) {
+                if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
+                    removeProjectile(projectile.id);
+                    removed = true;
+                    break;
+                }
+            }
+
             if (removed) break
         }
     }
@@ -159,7 +166,7 @@ function addProjectileToMatrix(projectile) {
 function pickWeapon(agent) {
     let shouldBreak = false;
     for (zone of agent.zones) {
-        if(shouldBreak) break;
+        if (shouldBreak) break;
         for (pickup of matrix.pickups[zone]) {
             if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
                 switch (agent.weapon.projectileType) {
@@ -335,7 +342,7 @@ const addWall = (x, y) => {
     const wall = new Wall(x, y, shortid.generate());
     wall.zones = getZonesForObject(wall.bounds);
     walls.push(wall);
-    for(zone of wall.zones){
+    for (zone of wall.zones) {
         matrix.walls[zone].push(wall)
     }
 };
