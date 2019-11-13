@@ -26,6 +26,17 @@ server.listen(8080, () =>
 
 worldGenerator.generateWalls().forEach(wall => engine.addWall(wall.x, wall.y));
 
+function wallData() {
+    const wallData = [];
+    walls.forEach(wall => {
+        wallData.push({
+            x: wall.bounds.bounds.min.x,
+            y: wall.bounds.bounds.min.y
+        })
+    });
+    return wallData;
+}
+
 io.on('connection', (socket) => {
     console.log("Player connected");
 
@@ -324,16 +335,6 @@ async function agentDataLoop() {
     }
 }
 
-function wallData() {
-    wallData = [];
-    walls.forEach(wall => {
-        wallData.push({
-            x: wall.bounds.bounds.min.x,
-            y: wall.bounds.bounds.min.y
-        })
-    });
-    return wallData;
-}
 
 function setVelocity(agent) {
     agent.velocity.x = 0;

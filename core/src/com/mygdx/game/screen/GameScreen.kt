@@ -67,7 +67,7 @@ class GameScreen(
     lateinit var player: Player
 
     init {
-        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor,16, 16));
+        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
 
         playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
@@ -128,7 +128,7 @@ class GameScreen(
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
-               // drawCursor(it)
+                // drawCursor(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
@@ -158,7 +158,7 @@ class GameScreen(
 
     private fun checkOpponentsGotShot(batch: Batch) {
         opponents.values.forEach {
-            if (it.gotShot){
+            if (it.gotShot) {
                 val blood = assets.get("images/blood-animation.png", Texture::class.java)
                 batch.draw(blood, it.bounds.x - 10f, it.bounds.y, 65f, 65f);
             }
@@ -166,7 +166,7 @@ class GameScreen(
     }
 
     private fun checkPlayerGotShot(batch: Batch) {
-        if (player.gotShot){
+        if (player.gotShot) {
             val blood = assets.get("images/blood-animation.png", Texture::class.java)
             batch.draw(blood, player.bounds.x - 10f, player.bounds.y, 65f, 65f);
             //println(player.bounds.x.toString() +", " +player.bounds.y)
@@ -221,15 +221,15 @@ class GameScreen(
     }
 
     private fun checkRestart() {
-        if (player.isDead){
-            if (Gdx.input.isButtonPressed((Input.Buttons.LEFT))){
+        if (player.isDead) {
+            if (Gdx.input.isButtonPressed((Input.Buttons.LEFT))) {
                 Server.restart()
             }
         }
     }
 
     private fun drawGameOver(batch: Batch) {
-        if (player.isDead){
+        if (player.isDead) {
             val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
             val c: Color = batch.color;
             batch.setColor(c.r, c.g, c.b, .7f)
@@ -331,7 +331,7 @@ class GameScreen(
         var movementSpeed = PLAYER_MOVEMENT_SPEED
 
         pressedKeys = 0
-        if(!player.isDead) {
+        if (!player.isDead) {
 
             if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
             if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
@@ -438,7 +438,7 @@ class GameScreen(
     }
 
     private fun drawWalls(batch: Batch) {
-        for (i in 0 until walls.size) walls[i].draw(batch)
+        for (i in 0 until walls.size) if (inFrustum(camera, walls[i])) walls[i].draw(batch)
     }
 
     private fun drawPickups(batch: Batch) {
@@ -452,10 +452,10 @@ class GameScreen(
                     WINDOW_HEIGHT - 55f)
             font.getData().setScale(1f, 1f);
         } else {
-            if(!player.isDead)
-            font.draw(batch, "Reloading...",
-                    WINDOW_WIDTH - 150f,
-                    WINDOW_HEIGHT - 55f)
+            if (!player.isDead)
+                font.draw(batch, "Reloading...",
+                        WINDOW_WIDTH - 150f,
+                        WINDOW_HEIGHT - 55f)
             font.getData().setScale(1f, 1f);
         }
     }
