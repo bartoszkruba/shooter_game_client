@@ -131,6 +131,7 @@ class GameScreen(
         if (::player.isInitialized) {
             batch.use {
                 ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
+                drawBloodOnTheFloor(it)
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
@@ -139,10 +140,7 @@ class GameScreen(
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
-                bloodOnTheFloorPlayer()
-                bloodOnTheFloorOpponent()
                 removeUnnecessaryBloodOnTheFloor()
-                drawBloodOnTheFloor(it)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
@@ -177,32 +175,6 @@ class GameScreen(
         }
     }
 
-    private fun bloodOnTheFloorOpponent() {
-        opponents.values.forEach {
-            if(it.gotShot){
-                bloodOnTheFloor.add(
-                        bloodOnTheFloorPool.obtain().apply {
-                            bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
-                            gotShot = true
-                            transparent = 1f
-                        }
-                )
-            }
-        }
-    }
-
-    private fun bloodOnTheFloorPlayer() {
-        if (player.gotShot) {
-            bloodOnTheFloor.add(
-                bloodOnTheFloorPool.obtain().apply {
-                    bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
-                    gotShot = true
-                    transparent = 1f
-                }
-            )
-        }
-    }
-
     private fun drawBloodOnTheFloor(batch: Batch) {
         this.bloodOnTheFloor.forEach {
             if (it.gotShot && it.transparent >= 0f) {
@@ -217,6 +189,14 @@ class GameScreen(
             if (it.gotShot){
                 val blood = assets.get("images/blood-animation.png", Texture::class.java)
                 batch.draw(blood, it.bounds.x - 10f, it.bounds.y, 65f, 65f);
+
+                bloodOnTheFloor.add(
+                    bloodOnTheFloorPool.obtain().apply {
+                        bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                        gotShot = true
+                        transparent = 1f
+                    }
+                )
             }
         }
     }
@@ -225,6 +205,14 @@ class GameScreen(
         if (player.gotShot){
             val blood = assets.get("images/blood-animation.png", Texture::class.java)
             batch.draw(blood, player.bounds.x - 10f, player.bounds.y, 65f, 65f);
+
+            bloodOnTheFloor.add(
+                bloodOnTheFloorPool.obtain().apply {
+                    bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
+                    gotShot = true
+                    transparent = 1f
+                }
+            )
         }
     }
 
