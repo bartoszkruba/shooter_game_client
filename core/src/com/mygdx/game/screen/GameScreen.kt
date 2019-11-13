@@ -14,10 +14,13 @@ import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.generateWallMatrix
+import com.mygdx.game.util.getZonesForCircle
+import com.mygdx.game.util.getZonesForRectangle
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
+import ktx.collections.iterate
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -404,6 +407,22 @@ class GameScreen(
                         else if (entry.value is MachineGunProjectile)
                             machineGunProjectilePool.free(entry.value as MachineGunProjectile)
                         projectiles.remove(entry.key)
+                        removed = true
+                    }
+                }
+                if (!removed) {
+                    for (zone in getZonesForCircle(entry.value.bounds)) {
+                        if (wallMatrix[zone] != null) for (i in 0 until wallMatrix[zone]!!.size) {
+                            if (Intersector.overlaps(entry.value.bounds, wallMatrix[zone]!![i].bounds)) {
+                                if (entry.value is PistolProjectile)
+                                    pistolProjectilePool.free(entry.value as PistolProjectile)
+                                else if (entry.value is MachineGunProjectile)
+                                    machineGunProjectilePool.free(entry.value as MachineGunProjectile)
+                                projectiles.remove(entry.key)
+                                removed = true
+                            }
+                        }
+
                     }
                 }
             }
