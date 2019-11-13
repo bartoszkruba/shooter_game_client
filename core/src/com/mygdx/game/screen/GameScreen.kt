@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
-import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
@@ -18,7 +17,10 @@ import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
 import java.util.concurrent.ConcurrentHashMap
-
+import com.mygdx.game.model.Pickup
+import com.mygdx.game.model.Projectile
+import com.mygdx.game.model.Opponent
+import ktx.assets.pool
 
 class GameScreen(
         val game: Game,
@@ -78,7 +80,9 @@ class GameScreen(
     var bloodOnTheFloorOpponentX = 0f
     var bloodOnTheFloorOpponentY = 0f
 
-    var bloodOnTheFloor = ConcurrentHashMap<String, Blood>()
+    var bloodOnTheFloor = ArrayList<Blood>()
+    val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
+
 
 
     init {
@@ -141,7 +145,7 @@ class GameScreen(
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
-               // drawCursor(it)
+                // drawCursor(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
@@ -149,7 +153,7 @@ class GameScreen(
                 bloodOnTheFloorPlayer(it)
                 bloodOnTheFloorOpponent(it)
 
-                drawBloodOnTheFloorOpponent(it)
+                drawBloodOnTheFloor(it)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
@@ -176,54 +180,43 @@ class GameScreen(
     private fun bloodOnTheFloorOpponent(batch: Batch) {
         opponents.values.forEach {
             if(it.gotShot){
-                bloodOnTheFloorOpponentX = it.bounds.x - 20f
-                bloodOnTheFloorOpponentY = it.bounds.y - 60f
-                //println(bloodOnTheFloorOpponentX.toString() + ", " + bloodOnTheFloorOpponentY)
-                if (bloodOnTheFloor[it.id] == null) bloodOnTheFloor[it.id] = 
-                        Blood(bloodOnTheFloorTexture, bloodOnTheFloorOpponentX, bloodOnTheFloorOpponentY, 1f, true)
-                else {
-                    println(bloodOnTheFloor[it.id]!!.y)
-                    bloodOnTheFloor[it.id]!!.bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 60f)
-                    bloodOnTheFloor[it.id]!!.transparent = 1f
-                    bloodOnTheFloor[it.id]!!.gotShot = true
-                }
-                //opponentTime = TimeUtils.millis()
-                //drawBloodOnTheFloorOpponent(batch)
-                //bloodOnTheFloorOpponentsCounter = 1f
+                bloodOnTheFloor.add(
+                        bloodOnTheFloorPool.obtain().apply {
+                            bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                            gotShot = true
+                            transparent = 1f
+                        }
+                )
             }
         }
     }
 
     private fun bloodOnTheFloorPlayer(batch: Batch) {
         if (player.gotShot) {
-            bloodOnTheFloorX = player.bounds.x - 20f
-            bloodOnTheFloorY = player.bounds.y - 60f
-            if (bloodOnTheFloor[player.id] == null) bloodOnTheFloor[player.id] =
-                    Blood(bloodOnTheFloorTexture, bloodOnTheFloorX, bloodOnTheFloorY, 1f, true)
-            else {
-                bloodOnTheFloor[player.id]!!.bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 60f)
-                bloodOnTheFloor[player.id]!!.transparent = 1f
-                bloodOnTheFloor[player.id]!!.gotShot = true
-            }
+            bloodOnTheFloor.add(
+                bloodOnTheFloorPool.obtain().apply {
+                    bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
+                    gotShot = true
+                    transparent = 1f
+                }
+            )
         }
     }
 
-    private fun drawBloodOnTheFloorPlayer(batch: Batch) {
-        val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
-        batch.draw(bloodOnTheFloor, bloodOnTheFloorX, bloodOnTheFloorY, 150f, 55f);
-    }
+    private fun drawBloodOnTheFloor(batch: Batch) {
+        val iterator = bloodOnTheFloor.iterator()
+        while (iterator.hasNext()) {
+            val value = iterator.next()
+            if (value.transparent < 0) {
+                bloodOnTheFloorPool.free(value)
+                iterator.remove()
+            }
+        }
 
-    private fun drawBloodOnTheFloorOpponent(batch: Batch) {
-        //val bloodOnTheFloor = assets.get("images/blood-onTheFloor.png", Texture::class.java)
-        val c = batch.color;
-        this.bloodOnTheFloor.values.forEach {
+        this.bloodOnTheFloor.forEach {
             if (it.gotShot && it.transparent >= 0f) {
                 it.bloodOnTheFloorSprite.draw(batch, it.transparent)
-                //println(it.x.toString() + ", " + it.y)
-                //batch.draw(bloodOnTheFloor, it.x, it.y, 150f, 55f);
-                //batch.setColor(c.r, c.g, c.b, it.transparent)
                 it.changeTransparent()
-                //if (it.transparent <= 0f) it.gotShot = false
             }
         }
     }
@@ -524,9 +517,9 @@ class GameScreen(
             font.getData().setScale(1f, 1f);
         } else {
             if(!player.isDead)
-            font.draw(batch, "Reloading...",
-                    WINDOW_WIDTH - 150f,
-                    WINDOW_HEIGHT - 55f)
+                font.draw(batch, "Reloading...",
+                        WINDOW_WIDTH - 150f,
+                        WINDOW_HEIGHT - 55f)
             font.getData().setScale(1f, 1f);
         }
     }
