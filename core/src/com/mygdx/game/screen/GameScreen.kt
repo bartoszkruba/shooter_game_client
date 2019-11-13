@@ -15,6 +15,7 @@ import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.generateWallMatrix
 import com.mygdx.game.util.getZonesForCircle
+import com.mygdx.game.util.getZonesForRectangle
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
@@ -342,30 +343,61 @@ class GameScreen(
             if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
             if (Gdx.input.isKeyPressed(Input.Keys.W))
-                movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta)
+                movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta, player.bounds.x, player.bounds.y)
 
             if (Gdx.input.isKeyPressed(Input.Keys.S))
-                movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta)
+                movePlayer(player.bounds.x, player.bounds.y - movementSpeed * delta, player.bounds.x, player.bounds.y)
 
             if (Gdx.input.isKeyPressed(Input.Keys.A))
-                movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y)
+                movePlayer(player.bounds.x - movementSpeed * delta, player.bounds.y, player.bounds.x, player.bounds.y)
 
             if (Gdx.input.isKeyPressed(Input.Keys.D))
-                movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y)
+                movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y, player.bounds.x, player.bounds.y)
         }
     }
 
     private fun moveOpponents(delta: Float) {
         for (opponent in opponents.values) {
+            val oldX = opponent.bounds.x
+            val oldY = opponent.bounds.y
+
             opponent.setPosition(
                     opponent.bounds.x + opponent.velocity.x * delta,
                     opponent.bounds.y + opponent.velocity.y * delta)
+
+            val zones = getZonesForRectangle(player.bounds)
+            var collided = false
+            for (i in 0 until zones.size) {
+                for (j in 0 until wallMatrix[zones[i]]!!.size) {
+                    if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
+                        opponent.setPosition(oldX, oldY)
+                        collided = true
+                        break
+                    }
+                    if (collided) break
+                }
+            }
         }
     }
 
-    private fun movePlayer(x: Float, y: Float) = player.setPosition(
-            MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
-            MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
+    private fun movePlayer(x: Float, y: Float, oldX: Float, oldY: Float) {
+        player.setPosition(
+                MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
+                MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
+
+        val zones = getZonesForRectangle(player.bounds)
+        var collided = false
+        for (i in 0 until zones.size) {
+            for (j in 0 until wallMatrix[zones[i]]!!.size) {
+                if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
+                    player.setPosition(oldX, oldY)
+                    collided = true
+                    break
+                }
+                if (collided) break
+            }
+        }
+    }
 
 
     private fun calculateProjectilePositions(delta: Float) {
