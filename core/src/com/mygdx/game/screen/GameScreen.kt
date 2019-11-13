@@ -3,6 +3,7 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.*
@@ -34,12 +35,12 @@ class GameScreen(
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
-    //private val music = assets.get("music/ingame_music.ogg", Music::class.java)
+    private val music = assets.get("music/ingame_music.ogg", Music::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
-    val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
-    val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+    private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
+    private val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
 
     private var shouldPlayReload = false
     private var opponents = ConcurrentHashMap<String, Opponent>()
@@ -68,20 +69,8 @@ class GameScreen(
     private val ground = Array<Sprite>()
     lateinit var player: Player
 
-    var playerTime: Long = 0
-    var opponentTime: Long = 0
-
-    var bloodOnTheFloorPlayerCounter = 1f
-    var bloodOnTheFloorOpponentsCounter = 1f
-
-    var bloodOnTheFloorX = 0f
-    var bloodOnTheFloorY = 0f
-
-    var bloodOnTheFloorOpponentX = 0f
-    var bloodOnTheFloorOpponentY = 0f
-
     var bloodOnTheFloor = ArrayList<Blood>()
-    val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
+    private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
 
 
 
@@ -93,9 +82,9 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         generateWalls()
-        //music.isLooping = true
-        //music.volume = 0.2f
-        //music.play()
+        music.isLooping = true
+        music.volume = 0.2f
+        music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -150,9 +139,9 @@ class GameScreen(
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
-                bloodOnTheFloorPlayer(it)
-                bloodOnTheFloorOpponent(it)
-
+                bloodOnTheFloorPlayer()
+                bloodOnTheFloorOpponent()
+                removeUnnecessaryBloodOnTheFloor()
                 drawBloodOnTheFloor(it)
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
@@ -177,7 +166,18 @@ class GameScreen(
         }
     }
 
-    private fun bloodOnTheFloorOpponent(batch: Batch) {
+    private fun removeUnnecessaryBloodOnTheFloor() {
+        val iterator = bloodOnTheFloor.iterator()
+        while (iterator.hasNext()) {
+            val value = iterator.next()
+            if (value.transparent < 0) {
+                bloodOnTheFloorPool.free(value)
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun bloodOnTheFloorOpponent() {
         opponents.values.forEach {
             if(it.gotShot){
                 bloodOnTheFloor.add(
@@ -191,7 +191,7 @@ class GameScreen(
         }
     }
 
-    private fun bloodOnTheFloorPlayer(batch: Batch) {
+    private fun bloodOnTheFloorPlayer() {
         if (player.gotShot) {
             bloodOnTheFloor.add(
                 bloodOnTheFloorPool.obtain().apply {
@@ -204,15 +204,6 @@ class GameScreen(
     }
 
     private fun drawBloodOnTheFloor(batch: Batch) {
-        val iterator = bloodOnTheFloor.iterator()
-        while (iterator.hasNext()) {
-            val value = iterator.next()
-            if (value.transparent < 0) {
-                bloodOnTheFloorPool.free(value)
-                iterator.remove()
-            }
-        }
-
         this.bloodOnTheFloor.forEach {
             if (it.gotShot && it.transparent >= 0f) {
                 it.bloodOnTheFloorSprite.draw(batch, it.transparent)
@@ -243,7 +234,6 @@ class GameScreen(
             if (showMiniMap == 2) showMiniMap = 0
             if (showMiniMap != 1) {
                 font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f);
-                //font.getData().setScale(0.5f, 0.5f);
             }
 
             if (showMiniMap == 1) {

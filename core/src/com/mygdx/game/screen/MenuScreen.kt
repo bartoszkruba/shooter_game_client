@@ -53,8 +53,8 @@ class MenuScreen(
 
     private val mainMenuChoices = Array<MenuChoice>()
 
-    //private val rainMusic = assets.get<Music>("music/rain.mp3")
-    //private val backgroundMusic = assets.get<Music>("music/waiting.ogg")
+    private val rainMusic = assets.get<Music>("music/rain.mp3")
+    private val backgroundMusic = assets.get<Music>("music/waiting.ogg")
 
     private val background: Sprite = Sprite(assets.get<Texture>("images/splashscreen/background.png"))
     private val foreground: Sprite = Sprite(assets.get<Texture>("images/splashscreen/foreground.png"))
@@ -182,8 +182,8 @@ class MenuScreen(
             selectSound.play()
             when (currentChoice) {
                 startGameChoice -> {
-                    //rainMusic.stop()
-                    //backgroundMusic.stop()
+                    rainMusic.stop()
+                    backgroundMusic.stop()
                     game.changeToGame()
                 }
                 creditsChoice -> currentWindow = CREDITS
@@ -317,11 +317,11 @@ class MenuScreen(
 
     override fun show() {
         super.show()
-        //rainMusic.isLooping = true
-        //rainMusic.play()
-        //backgroundMusic.isLooping = true
-        //backgroundMusic.volume = 0.3f
-        //backgroundMusic.play()
+        rainMusic.isLooping = true
+        rainMusic.play()
+        backgroundMusic.isLooping = true
+        backgroundMusic.volume = 0.3f
+        backgroundMusic.play()
     }
 
     override fun dispose() {
