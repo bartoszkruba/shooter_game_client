@@ -108,7 +108,7 @@ function removeProjectile(id) {
     }
 }
 
-function moveAgent(agent, x, y) {
+function moveAgent(agent, x, y, oldX, oldY) {
     x = Matter.Common.clamp(x, constants.WALL_SPRITE_WIDTH + constants.PLAYER_SPRITE_WIDTH / 2,
         constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - constants.PLAYER_SPRITE_WIDTH / 2);
 
@@ -120,6 +120,19 @@ function moveAgent(agent, x, y) {
     oldZones = agent.zones;
 
     agent.zones = getZonesForObject(agent.bounds);
+
+    let collided = false;
+
+    agent.zones.forEach(zone => {
+        if (matrix.walls[zone] != null) matrix.walls[zone].forEach(wall => {
+            if (Matter.SAT.collides(wall.bounds, agent.bounds).collided) {
+                Matter.Body.setPosition(agent.bounds, {x: oldX, y: oldY});
+                collided = true
+            }
+        })
+    });
+
+    if (collided) return;
 
     oldZones.filter(zone => !agent.zones.includes(zone)).forEach(zone => {
         matrix.agents[zone].splice(matrix.agents[zone].indexOf(agent), 1)
@@ -251,13 +264,21 @@ function checkControls(agent, delta, broadcastNewProjectile) {
 
         if (pressedKeys > 1) movementSpeed *= 0.7;
 
-        if (agent.isWPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y + movementSpeed * delta);
+        if (agent.isWPressed) moveAgent(
+            agent, agent.bounds.position.x, agent.bounds.position.y + movementSpeed * delta,
+            agent.bounds.position.x, agent.bounds.position.y);
 
-        if (agent.isSPressed) moveAgent(agent, agent.bounds.position.x, agent.bounds.position.y - movementSpeed * delta);
+        if (agent.isSPressed) moveAgent(
+            agent, agent.bounds.position.x, agent.bounds.position.y - movementSpeed * delta,
+            agent.bounds.position.x, agent.bounds.position.y);
 
-        if (agent.isAPressed) moveAgent(agent, agent.bounds.position.x - movementSpeed * delta, agent.bounds.position.y);
+        if (agent.isAPressed) moveAgent(
+            agent, agent.bounds.position.x - movementSpeed * delta, agent.bounds.position.y,
+            agent.bounds.position.x, agent.bounds.position.y);
 
-        if (agent.isDPressed) moveAgent(agent, agent.bounds.position.x + movementSpeed * delta, agent.bounds.position.y)
+        if (agent.isDPressed) moveAgent(
+            agent, agent.bounds.position.x + movementSpeed * delta, agent.bounds.position.y,
+            agent.bounds.position.x, agent.bounds.position.y)
     }
 }
 
@@ -308,7 +329,7 @@ const addAgent = (agent, x, y) => {
     agent.zones.forEach(zone => {
         matrix.agents[zone].push(agent)
     });
-    moveAgent(agent, x, y);
+    moveAgent(agent, x, y, x, y);
 };
 
 const removeAgent = id => {

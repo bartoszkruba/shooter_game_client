@@ -38,7 +38,7 @@ class GameScreen(
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
-    val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
+    private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
     private var shouldPlayReload = false
     private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
@@ -494,7 +494,7 @@ class GameScreen(
         }
     }
 
-    fun generateWalls() {
+    private fun generateWalls() {
         for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
             walls.add(Wall(0f, i.toFloat(), wallTexture))
             walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), wallTexture))
