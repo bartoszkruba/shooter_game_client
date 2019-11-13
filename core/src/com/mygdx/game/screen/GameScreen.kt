@@ -370,63 +370,66 @@ class GameScreen(
             MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
 
 
-    fun calculatePistolProjectilesPosition(delta: Float) {
-
+    private fun calculatePistolProjectilesPosition(delta: Float) {
         var removed = false
-
         for (entry in projectiles.entries) {
-            removed = false;
+            removed = false
             entry.value.setPosition(
                     entry.value.bounds.x + entry.value.velocity.x * delta * entry.value.speed,
                     entry.value.bounds.y + entry.value.velocity.y * delta * entry.value.speed)
 
-            if (entry.value.bounds.x < 0 || entry.value.bounds.x > MAP_WIDTH ||
-                    entry.value.bounds.y < 0 || entry.value.bounds.y > MAP_HEIGHT) {
+            removed = checkOutOfMapCollision(entry.value, entry.key)
+            if (!removed) removed = checkOpponentCollisions(entry.value, entry.key)
+            if (!removed) removed = checkPlayerCollision(entry.value, entry.key)
+            if (!removed) removed = checkWallsCollisions(entry.value, entry.key)
+        }
+    }
 
-                if (entry.value is PistolProjectile)
-                    pistolProjectilePool.free(entry.value as PistolProjectile)
-                else if (entry.value is MachineGunProjectile)
-                    machineGunProjectilePool.free(entry.value as MachineGunProjectile)
+    private fun checkOutOfMapCollision(projectile: Projectile, key: String): Boolean {
+        if (projectile.bounds.x < 0 || projectile.bounds.x > MAP_WIDTH ||
+                projectile.bounds.y < 0 || projectile.bounds.y > MAP_HEIGHT) {
+            removeProjectile(projectile, key)
+            return true
+        }
+        return false
+    }
 
-                projectiles.remove(entry.key)
-            } else {
-                for (opponent in opponents.entries) {
-                    if (Intersector.overlaps(entry.value.bounds, opponent.value.bounds) && !opponent.value.isDead) {
-                        if (entry.value is PistolProjectile)
-                            pistolProjectilePool.free(entry.value as PistolProjectile)
-                        else if (entry.value is MachineGunProjectile)
-                            machineGunProjectilePool.free(entry.value as MachineGunProjectile)
-                        projectiles.remove(entry.key)
-                        removed = true
-                    }
-                }
-                if (!removed) {
-                    if (Intersector.overlaps(entry.value.bounds, player.bounds)) {
-                        if (entry.value is PistolProjectile)
-                            pistolProjectilePool.free(entry.value as PistolProjectile)
-                        else if (entry.value is MachineGunProjectile)
-                            machineGunProjectilePool.free(entry.value as MachineGunProjectile)
-                        projectiles.remove(entry.key)
-                        removed = true
-                    }
-                }
-                if (!removed) {
-                    for (zone in getZonesForCircle(entry.value.bounds)) {
-                        if (wallMatrix[zone] != null) for (i in 0 until wallMatrix[zone]!!.size) {
-                            if (Intersector.overlaps(entry.value.bounds, wallMatrix[zone]!![i].bounds)) {
-                                if (entry.value is PistolProjectile)
-                                    pistolProjectilePool.free(entry.value as PistolProjectile)
-                                else if (entry.value is MachineGunProjectile)
-                                    machineGunProjectilePool.free(entry.value as MachineGunProjectile)
-                                projectiles.remove(entry.key)
-                                removed = true
-                            }
-                        }
+    private fun checkOpponentCollisions(projectile: Projectile, key: String): Boolean {
+        for (opponent in opponents.entries) {
+            if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead) {
+                removeProjectile(projectile, key)
+                return true
+            }
+        }
+        return false
+    }
 
-                    }
+    private fun checkPlayerCollision(projectile: Projectile, key: String): Boolean {
+        if (Intersector.overlaps(projectile.bounds, player.bounds)) {
+            removeProjectile(projectile, key)
+            return true
+        }
+        return false
+    }
+
+    private fun checkWallsCollisions(projectile: Projectile, key: String): Boolean {
+        for (zone in getZonesForCircle(projectile.bounds)) {
+            if (wallMatrix[zone] != null) for (i in 0 until wallMatrix[zone]!!.size) {
+                if (Intersector.overlaps(projectile.bounds, wallMatrix[zone]!![i].bounds)) {
+                    removeProjectile(projectile, key)
+                    return true
                 }
             }
         }
+        return false
+    }
+
+    private fun removeProjectile(projectile: Projectile, key: String) {
+        if (projectile is PistolProjectile)
+            pistolProjectilePool.free(projectile)
+        else if (projectile is MachineGunProjectile)
+            machineGunProjectilePool.free(projectile)
+        projectiles.remove(key)
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {

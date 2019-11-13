@@ -81,7 +81,7 @@ class Server {
                     }
                     .on("newProjectile") { processNewProjectile(it) }
                     .on("agentData") { processAgentData(it) }
-                    .on("projectileData") { processProjectileData(it) }
+//                    .on("projectileData") { processProjectileData(it) }
                     .on("pickupData") { processPickupData(it) }
                     .on("wallData") { processWallData(it) }
         }
