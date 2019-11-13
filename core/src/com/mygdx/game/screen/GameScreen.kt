@@ -21,7 +21,10 @@ import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
 import java.util.concurrent.ConcurrentHashMap
-
+import com.mygdx.game.model.Pickup
+import com.mygdx.game.model.Projectile
+import com.mygdx.game.model.Opponent
+import ktx.assets.pool
 
 class GameScreen(
         val game: Game,
@@ -36,10 +39,12 @@ class GameScreen(
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
+    private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
     private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
+    private val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
     private var shouldPlayReload = false
     private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
@@ -67,6 +72,11 @@ class GameScreen(
 
     private val ground = Array<Sprite>()
     lateinit var player: Player
+
+    var bloodOnTheFloor = ArrayList<Blood>()
+    private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
+    var shouldDeathSoundPlay = false
+
 
     init {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
@@ -127,6 +137,7 @@ class GameScreen(
         if (::player.isInitialized) {
             batch.use {
                 ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
+                drawBloodOnTheFloor(it)
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
@@ -135,6 +146,7 @@ class GameScreen(
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
+                removeUnnecessaryBloodOnTheFloor()
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
@@ -158,21 +170,57 @@ class GameScreen(
         }
     }
 
+    private fun removeUnnecessaryBloodOnTheFloor() {
+        val iterator = bloodOnTheFloor.iterator()
+        while (iterator.hasNext()) {
+            val value = iterator.next()
+            if (value.transparent < 0) {
+                bloodOnTheFloorPool.free(value)
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun drawBloodOnTheFloor(batch: Batch) {
+        this.bloodOnTheFloor.forEach {
+            if (it.gotShot && it.transparent >= 0f) {
+                it.bloodOnTheFloorSprite.draw(batch, it.transparent)
+                it.changeTransparent()
+            }
+        }
+    }
+
     private fun checkOpponentsGotShot(batch: Batch) {
         opponents.values.forEach {
             if (it.gotShot) {
-                val blood = assets.get("images/blood-animation.png", Texture::class.java)
-                batch.draw(blood, it.bounds.x - 10f, it.bounds.y, 65f, 65f);
+                drawBloodOnPlayerBody(batch,it.bounds.x - 10f, it.bounds.y)
+                bloodOnTheFloor.add(
+                    bloodOnTheFloorPool.obtain().apply {
+                        bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                        gotShot = true
+                        transparent = 1f
+                    }
+                )
             }
         }
     }
 
     private fun checkPlayerGotShot(batch: Batch) {
         if (player.gotShot) {
-            val blood = assets.get("images/blood-animation.png", Texture::class.java)
-            batch.draw(blood, player.bounds.x - 10f, player.bounds.y, 65f, 65f);
-            //println(player.bounds.x.toString() +", " +player.bounds.y)
+            drawBloodOnPlayerBody(batch,player.bounds.x - 10f, player.bounds.y)
+            bloodOnTheFloor.add(
+                bloodOnTheFloorPool.obtain().apply {
+                    bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
+                    gotShot = true
+                    transparent = 1f
+                }
+            )
         }
+    }
+
+    private fun drawBloodOnPlayerBody(batch: Batch, x: Float, y: Float) {
+        val blood = assets.get("images/blood-animation.png", Texture::class.java)
+        batch.draw(blood, x, y, 65f, 65f);
     }
 
     private fun checkAllPlayersOnMap(batch: Batch) {
@@ -181,7 +229,6 @@ class GameScreen(
             if (showMiniMap == 2) showMiniMap = 0
             if (showMiniMap != 1) {
                 font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f);
-                //font.getData().setScale(0.5f, 0.5f);
             }
 
             if (showMiniMap == 1) {
@@ -232,10 +279,16 @@ class GameScreen(
 
     private fun drawGameOver(batch: Batch) {
         if (player.isDead) {
+            if(shouldDeathSoundPlay) {
+                deathSound.play()
+                shouldDeathSoundPlay = false
+            }
             val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
             val c: Color = batch.color;
             batch.setColor(c.r, c.g, c.b, .7f)
             batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
+        }else{
+            shouldDeathSoundPlay = true
         }
     }
 

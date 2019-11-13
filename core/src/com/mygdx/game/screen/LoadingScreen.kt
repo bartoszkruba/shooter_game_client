@@ -31,6 +31,7 @@ class LoadingScreen(private val game: Game,
         //TextureAtlasAssets.values().forEach { assets.load(it) }
         assets.load("images/player.png", Texture::class.java)
         assets.load("images/blood-animation.png", Texture::class.java)
+        assets.load("images/blood-onTheFloor.png", Texture::class.java)
         assets.load("images/player/right.png", Texture::class.java)
         assets.load("images/miniMap.png", Texture::class.java)
         assets.load("images/opponentsInMiniMap.png", Texture::class.java)
@@ -60,6 +61,7 @@ class LoadingScreen(private val game: Game,
         assets.load("sounds/menu_select.wav", Sound::class.java)
 
         assets.load("sounds/pistol_shot.wav", Sound::class.java)
+        assets.load("sounds/deathSound.wav", Sound::class.java)
         assets.load("sounds/reload_sound.mp3", Sound::class.java)
 
         assets.load("music/ingame_music.ogg", Music::class.java)
