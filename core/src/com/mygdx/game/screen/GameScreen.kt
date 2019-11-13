@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.Pool
 import com.mygdx.game.Game
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
+import com.mygdx.game.util.generateWallMatrix
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
@@ -50,6 +51,7 @@ class GameScreen(
     val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
     val walls = Array<Wall>()
+    val wallMatrix: HashMap<String, Array<Wall>>
 
     var projectiles = ConcurrentHashMap<String, Projectile>()
 
@@ -71,6 +73,7 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
+        wallMatrix = generateWallMatrix()
         generateWalls()
         music.isLooping = true
         music.volume = 0.2f
@@ -85,7 +88,8 @@ class GameScreen(
             }
         }
         Server.connectionSocket()
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerTextures, healthBarTexture)
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerTextures, healthBarTexture,
+                wallMatrix, wallTexture, walls)
     }
 
     private var pressedKeys = 0
