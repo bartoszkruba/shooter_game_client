@@ -48,7 +48,7 @@ function calculateProjectilePositions(delta) {
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
             removeProjectile(projectile.id);
-            break
+            continue
         }
 
         let removed = false;
