@@ -2,6 +2,7 @@ package frontendServer
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.utils.Array
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.HEALTH_BAR_SPRITE_HEIGHT
@@ -29,7 +30,7 @@ class Server {
         var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
         var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
         val opponents = ConcurrentHashMap<String, Opponent>()
-        private lateinit var playerTextures: Array<Texture>
+        private lateinit var playerTextures: TextureAtlas
         private lateinit var healthBarTexture: Texture
 
         fun connectionSocket() {
@@ -48,7 +49,7 @@ class Server {
         }
 
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
-                               playerTextures: Array<Texture>, healthBarTexture: Texture) {
+                               playerTextures: TextureAtlas, healthBarTexture: Texture) {
 
             this.projectileTexture = projectileTexture
             this.pistolTexture = pistolTexture
@@ -217,7 +218,7 @@ class Server {
         }
 
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
-                                   playerTextures: Array<Texture>,
+                                   playerTextures: TextureAtlas,
                                    healthBarTexture: Texture) {
             opponents[id] = Opponent(x, y, name, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
@@ -229,7 +230,7 @@ class Server {
             opponents.remove(playerId)
         }
 
-        private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: Array<Texture>) {
+        private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
             player = Player(500f, 500f, "Rami", false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
         }

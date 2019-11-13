@@ -27,6 +27,7 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
+    private val playerAtlas = assets.get<TextureAtlas>("images/player/player.atlas")
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
@@ -85,7 +86,7 @@ class GameScreen(
             }
         }
         Server.connectionSocket()
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerTextures, healthBarTexture)
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerAtlas, healthBarTexture)
     }
 
     private var pressedKeys = 0
@@ -109,6 +110,7 @@ class GameScreen(
             updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
+
             calculatePistolProjectilesPosition(delta)
             checkControls(delta)
             setCameraPosition()
@@ -320,19 +322,28 @@ class GameScreen(
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
         if (angle < 0) angle += 360f
+        if (angle > 360) angle = 0f
         player.setAngle(angle)
+        player.animate()
     }
 
     private fun checkControls(delta: Float) {
         var movementSpeed = PLAYER_MOVEMENT_SPEED
-
         pressedKeys = 0
         if(!player.isDead) {
 
-            if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
-            if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
-            if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedKeys++
-            if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+                pressedKeys++
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+                pressedKeys++
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+                pressedKeys++
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+                pressedKeys++
+            }
 
             if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
@@ -358,9 +369,10 @@ class GameScreen(
         }
     }
 
-    private fun movePlayer(x: Float, y: Float) = player.setPosition(
+    private fun movePlayer(x: Float, y: Float){player.setPosition(
             MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
             MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
+    }
 
 
     fun calculatePistolProjectilesPosition(delta: Float) {
@@ -409,6 +421,7 @@ class GameScreen(
     private fun drawPlayer(batch: Batch, agent: Agent) {
         if (!player.isDead && player.currentHealth >= 10) {
             setPlayerRotation()
+            agent.animate()
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
             font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f);
