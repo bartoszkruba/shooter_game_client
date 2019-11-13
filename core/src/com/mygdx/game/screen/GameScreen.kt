@@ -36,6 +36,7 @@ class GameScreen(
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
+    private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
@@ -71,7 +72,7 @@ class GameScreen(
 
     var bloodOnTheFloor = ArrayList<Blood>()
     private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
-
+    var shouldDeathSoundPlay = false
 
 
     init {
@@ -272,10 +273,17 @@ class GameScreen(
 
     private fun drawGameOver(batch: Batch) {
         if (player.isDead){
+            if(shouldDeathSoundPlay) {
+                deathSound.play()
+                shouldDeathSoundPlay = false
+            }
+
             val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
             val c: Color = batch.color;
             batch.setColor(c.r, c.g, c.b, .7f)
             batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
+        }else{
+            shouldDeathSoundPlay = true
         }
     }
 
