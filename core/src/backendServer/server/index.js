@@ -209,26 +209,25 @@ const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 async function projectileDataLoop() {
     while (true) {
         for (agent of agents) {
-            const agentData = [];
             const projectileData = [];
-            const pickupData = [];
 
             ids = [];
             for (zone of agent.viewportZones) {
-                for (projectile of engine.matrix.projectiles[zone]) {
-                    if (ids.includes(projectile.id)) continue;
-                    ids.push(projectile.id);
-                    projectileData.push({
-                        x: projectile.bounds.position.x,
-                        y: projectile.bounds.position.y,
-                        id: projectile.id,
-                        xSpeed: projectile.velocity.x,
-                        ySpeed: projectile.velocity.y,
-                        type: projectile.type
-                    })
-                }
+                if (engine.matrix.projectiles[zone] != null)
+                    for (projectile of engine.matrix.projectiles[zone]) {
+                        if (ids.includes(projectile.id)) continue;
+                        ids.push(projectile.id);
+                        projectileData.push({
+                            x: projectile.bounds.position.x,
+                            y: projectile.bounds.position.y,
+                            id: projectile.id,
+                            xSpeed: projectile.velocity.x,
+                            ySpeed: projectile.velocity.y,
+                            type: projectile.type
+                        })
+                    }
             }
-            io.to(agent.id).emit("gameData", {agentData, projectileData, pickupData});
+            io.to(agent.id).emit("projectileData", {projectileData});
         }
         await sleep(1000 / constants.PROJECTILE_UPDATES_PER_SECOND)
     }
@@ -237,23 +236,22 @@ async function projectileDataLoop() {
 async function pickupDataLoop() {
     while (true) {
         for (agent of agents) {
-            const agentData = [];
-            const projectileData = [];
             const pickupData = [];
             ids = [];
             for (zone of agent.viewportZones) {
-                for (pickup of engine.matrix.pickups[zone]) {
-                    if (ids.includes(pickup.id)) continue;
-                    ids.push(pickup.id);
-                    pickupData.push({
-                        x: pickup.bounds.bounds.min.x,
-                        y: pickup.bounds.bounds.min.y,
-                        type: pickup.type,
-                        id: pickup.id,
-                    })
-                }
+                if (engine.matrix.pickups[zone] != null)
+                    for (pickup of engine.matrix.pickups[zone]) {
+                        if (ids.includes(pickup.id)) continue;
+                        ids.push(pickup.id);
+                        pickupData.push({
+                            x: pickup.bounds.bounds.min.x,
+                            y: pickup.bounds.bounds.min.y,
+                            type: pickup.type,
+                            id: pickup.id,
+                        })
+                    }
             }
-            io.to(agent.id).emit("gameData", {agentData, projectileData, pickupData});
+            io.to(agent.id).emit("pickupData", {pickupData});
         }
         await sleep(1000 / constants.PICKUP_UPDATES_PER_SECOND)
     }
@@ -291,8 +289,6 @@ async function agentDataLoop() {
             });
 
             const agentData = [];
-            const projectileData = [];
-            const pickupData = [];
 
             ids = [];
             for (zone of agent.viewportZones) {
@@ -314,31 +310,9 @@ async function agentDataLoop() {
                             angle: ag.facingDirectionAngle
                         })
                     }
-                // for (projectile of engine.matrix.projectiles[zone]) {
-                //     if (ids.includes(projectile.id)) continue;
-                //     ids.push(projectile.id);
-                //     projectileData.push({
-                //         x: projectile.bounds.position.x,
-                //         y: projectile.bounds.position.y,
-                //         id: projectile.id,
-                //         xSpeed: projectile.velocity.x,
-                //         ySpeed: projectile.velocity.y,
-                //         type: projectile.type
-                //     })
-                // }
-                // for (pickup of engine.matrix.pickups[zone]) {
-                //     if (ids.includes(pickup.id)) continue;
-                //     ids.push(pickup.id);
-                //     pickupData.push({
-                //         x: pickup.bounds.bounds.min.x,
-                //         y: pickup.bounds.bounds.min.y,
-                //         type: pickup.type,
-                //         id: pickup.id,
-                //     })
-                // }
             }
 
-            io.to(agent.id).emit("gameData", {agentData, projectileData, pickupData});
+            io.to(agent.id).emit("agentData", {agentData});
         }
         await sleep(1000 / constants.AGENT_UPDATES_PER_SECOND)
     }
