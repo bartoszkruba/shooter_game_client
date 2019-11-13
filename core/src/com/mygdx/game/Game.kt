@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.mygdx.game.screen.GameScreen
 import com.mygdx.game.screen.LoadingScreen
 import com.mygdx.game.screen.MenuScreen
+import com.mygdx.game.screen.NameInputScreen
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
 import ktx.app.KtxGame
@@ -47,4 +48,11 @@ class Game : KtxGame<KtxScreen>() {
         removeScreen<MenuScreen>()
         setScreen<GameScreen>()
     }
+
+    fun changeToNameInputScreen() {
+        val nameInputScreen = NameInputScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
+
+        addScreen(nameInputScreen)
+        removeScreen<MenuScreen>()
+        setScreen<NameInputScreen>()    }
 }
