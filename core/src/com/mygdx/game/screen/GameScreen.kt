@@ -44,6 +44,7 @@ class GameScreen(
     private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
+    private val machineGunShotSoundEffect = assets.get("sounds/machine_gun_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
     private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
@@ -476,8 +477,11 @@ class GameScreen(
             removed = false
             if (entry.value.justFired) {
                 entry.value.justFired = false
-                if (entry.value is ShotgunProjectile) shotgunShotSoundEffect.play(0.14f)
-                else pistolShotSoundEffect.play()
+                when {
+                    entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.14f)
+                    entry.value is MachineGunProjectile -> machineGunShotSoundEffect.play()
+                    else -> pistolShotSoundEffect.play(1.5f)
+                }
             }
             entry.value.setPosition(
                     entry.value.bounds.x + entry.value.velocity.x * delta * entry.value.speed,

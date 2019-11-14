@@ -62,6 +62,7 @@ class LoadingScreen(private val game: Game,
         assets.load("sounds/shotgun_shot.wav", Sound::class.java)
         assets.load("sounds/deathSound.wav", Sound::class.java)
         assets.load("sounds/reload_sound.mp3", Sound::class.java)
+        assets.load("sounds/machine_gun_shot.wav", Sound::class.java)
 
         assets.load("music/ingame_music.ogg", Music::class.java)
         assets.load("music/music.wav", Music::class.java)
