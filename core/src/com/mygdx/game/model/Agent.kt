@@ -13,8 +13,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
                      var gotShot: Boolean, textureAtlas: TextureAtlas, healthBarTexture: Texture, var weapon: Weapon,
                      var facingDirectionAngle: Float, var id: String) {
 
-    var sprite: Sprite
-    var stateTime = 0f
+
     private val animateRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("right"), PlayMode.LOOP_REVERSED)
     private val animateLeft = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("left"), PlayMode.LOOP_REVERSED)
     private val animateUp = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("up"), PlayMode.LOOP_REVERSED)
@@ -24,15 +23,16 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
     private val animateUpRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("upright"), PlayMode.LOOP_REVERSED)
     private val animateDownRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("downright"), PlayMode.LOOP_REVERSED)
 
-    var currentAnimation: Animation<Sprite>
+    var sprite: Sprite
+    private var stateTime = 0f
+    private var currentAnimation: Animation<Sprite>
     val healthBarSprite = Sprite(healthBarTexture)
-    val bounds: Rectangle
-    var counter = 85f
-    var healthBarSpriteWidth = 182f
+    val bounds: Rectangle = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
+    private var counter = 85f
+    private var healthBarSpriteWidth = 182f
     val velocity = Vector2()
 
     init {
-        bounds = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
         currentAnimation = animateDown
         sprite = currentAnimation.getKeyFrame(0f)
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
@@ -43,7 +43,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
         healthBarSprite.setOrigin(healthBarSprite.width / 2f, healthBarSprite.height / 2f)
     }
 
-    fun animate() {
+    private fun animate() {
         sprite = currentAnimation.getKeyFrame(stateTime)
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
