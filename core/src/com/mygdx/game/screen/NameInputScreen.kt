@@ -12,9 +12,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.ui.Image
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.TimeUtils
-import com.badlogic.gdx.utils.viewport.StretchViewport
+import com.badlogic.gdx.utils.viewport.FitViewport
 import com.mygdx.game.Game
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
@@ -22,7 +25,7 @@ import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
-import java.awt.TextField
+
 
 class NameInputScreen (
         val game: Game,
@@ -51,7 +54,7 @@ class NameInputScreen (
     private val background: Sprite = Sprite(assets.get<Texture>("images/splashscreen/background.png"))
     private val foreground: Sprite = Sprite(assets.get<Texture>("images/splashscreen/foreground.png"))
 
-    private val text = Sprite(assets.get<Texture>("images/logo.png"))
+    private var text = Sprite(assets.get<Texture>("images/logo.png"))
     private val droplets = Array<Droplet>()
 
     private val shape = ShapeRenderer()
@@ -60,7 +63,10 @@ class NameInputScreen (
     val smallFont = BitmapFont()
 
     lateinit var txfUsername: TextField
-    private var stage = Stage()
+    private var stage = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
+    private var stage2 = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
+    var skin: Skin = Skin(Gdx.files.internal("terra-mother/skin/terra-mother-ui.json"))
+
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -98,24 +104,32 @@ class NameInputScreen (
             text.draw(it)
             drawNameInput(it)
         }
-        stage.act()
         stage.draw();
 
-        drawRain()
+        drawRain();
 
     }
+    var te: String? = null
 
     private fun drawNameInput(batch: SpriteBatch) {
         val miniMapexture = assets.get("images/enterYourName.png", Texture::class.java)
         val c = batch.color;
         //batch.setColor(c.r, c.g, c.b, .5f)
-        batch.draw(miniMapexture, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2,WINDOW_WIDTH / 3, 50f);
+        batch.draw(miniMapexture, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2, WINDOW_WIDTH / 3, 50f);
 
-        txfUsername = TextField("")
-        txfUsername.setLocation(300, 250)
-        txfUsername.setSize(300, 40)
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, .8f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 5, WINDOW_HEIGHT / 4, 300f, 200f);
+
+        txfUsername = TextField("helllo", skin)
+        txfUsername.setPosition(WINDOW_WIDTH / 4, WINDOW_HEIGHT / 3)
+        txfUsername.setSize(200f, 100f)
+        stage.addActor(txfUsername)
+        Gdx.input.setInputProcessor(this.stage);
 
     }
+
+
 
     private fun spawnDroplet() {
         repeat(3) {
