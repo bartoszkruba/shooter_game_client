@@ -431,7 +431,6 @@ class GameScreen(
             opponent.setPosition(
                     opponent.bounds.x + opponent.velocity.x * delta,
                     opponent.bounds.y + opponent.velocity.y * delta)
-
             val zones = getZonesForRectangle(player.bounds)
             var collided = false
             for (i in 0 until zones.size) {
@@ -451,7 +450,6 @@ class GameScreen(
         player.setPosition(
                 MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
                 MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
-
         val zones = getZonesForRectangle(player.bounds)
         var collided = false
         for (i in 0 until zones.size) {
