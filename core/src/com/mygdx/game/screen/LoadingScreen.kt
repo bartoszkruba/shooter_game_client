@@ -9,10 +9,6 @@ import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
 import com.mygdx.game.assets.TextureAtlasAssets
 import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.g2d.Batch
-import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.mygdx.game.assets.load
 import ktx.app.KtxScreen
 import ktx.graphics.use
@@ -20,6 +16,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.utils.Json
 import com.badlogic.gdx.utils.JsonReader
 import com.badlogic.gdx.utils.JsonValue
+import com.badlogic.gdx.graphics.g2d.*
 import ktx.assets.load
 import com.badlogic.gdx.net.HttpRequestBuilder.json
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
@@ -33,7 +30,7 @@ class LoadingScreen(private val game: Game,
 
 
     override fun show() {
-        //TextureAtlasAssets.values().forEach { assets.load(it) }
+        assets.load<TextureAtlas>("images/player/player.atlas")
         assets.load("images/player.png", Texture::class.java)
         assets.load("images/blood-animation.png", Texture::class.java)
         assets.load("images/blood-onTheFloor.png", Texture::class.java)

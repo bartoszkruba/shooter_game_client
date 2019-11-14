@@ -2,13 +2,17 @@ package frontendServer
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.HEALTH_BAR_SPRITE_HEIGHT
 import com.mygdx.game.settings.PLAYER_MAX_HEALTH
+import com.mygdx.game.util.getZonesForRectangle
 import io.socket.client.IO
 import io.socket.client.Socket
 import ktx.assets.pool
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 
@@ -29,8 +33,11 @@ class Server {
         var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
         var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
         val opponents = ConcurrentHashMap<String, Opponent>()
-        private lateinit var playerTextures: Array<Texture>
+        private lateinit var playerTextures: TextureAtlas
         private lateinit var healthBarTexture: Texture
+        private lateinit var wallMatrix: HashMap<String, Array<Wall>>
+        private lateinit var wallTexture: Texture
+        private lateinit var walls: Array<Wall>
 
         fun connectionSocket() {
             try {
@@ -48,13 +55,17 @@ class Server {
         }
 
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
-                               playerTextures: Array<Texture>, healthBarTexture: Texture) {
+                               playerTextures: TextureAtlas, healthBarTexture: Texture,
+                               wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture, walls: Array<Wall>) {
 
             this.projectileTexture = projectileTexture
             this.pistolTexture = pistolTexture
             this.machineGunTexture = machineGunTexture
             this.playerTextures = playerTextures
             this.healthBarTexture = healthBarTexture
+            this.wallMatrix = wallMatrix
+            this.wallTexture = wallTexture
+            this.walls = walls
 
             socket.on(Socket.EVENT_CONNECT) {
                 Gdx.app.log("SocketIO", "Connected")
@@ -74,6 +85,21 @@ class Server {
                     .on("agentData") { processAgentData(it) }
                     .on("projectileData") { processProjectileData(it) }
                     .on("pickupData") { processPickupData(it) }
+                    .on("wallData") { processWallData(it) }
+        }
+
+        private fun processWallData(data: kotlin.Array<Any>) {
+            val walls = data[0] as JSONArray
+            for (i in 0 until walls.length()) {
+                val obj = walls[i] as JSONObject
+                val x = obj.getDouble("x").toFloat()
+                val y = obj.getDouble("y").toFloat()
+                val wall = Wall(x, y, wallTexture)
+                for (zone in getZonesForRectangle(wall.bounds)) {
+                    wallMatrix[zone]?.add(wall)
+                }
+                this.walls.add(wall)
+            }
         }
 
         private fun processPickupData(data: kotlin.Array<Any>) {
@@ -173,6 +199,7 @@ class Server {
                         opponents[id]?.velocity?.x = xVelocity
                         opponents[id]?.setAngle(angle)
                         opponents[id]?.velocity?.y = yVelocity
+                        opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
                         opponents[id]?.name = name
                         opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
@@ -184,6 +211,7 @@ class Server {
                         opponents[id]?.isDead = isDead
                         opponents[id]?.currentHealth = currentHealth
                         opponents[id]?.healthBarSprite!!.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
+                        opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     }
                 }
             }
@@ -225,7 +253,7 @@ class Server {
         }
 
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
-                                   playerTextures: Array<Texture>,
+                                   playerTextures: TextureAtlas,
                                    healthBarTexture: Texture) {
             opponents[id] = Opponent(x, y, name, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
@@ -237,7 +265,8 @@ class Server {
             opponents.remove(playerId)
         }
 
-        private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: Array<Texture>) {
+        private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
+            println("Creating player")
             player = Player(500f, 500f, "", false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
         }

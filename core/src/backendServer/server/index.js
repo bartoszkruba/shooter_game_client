@@ -13,6 +13,9 @@ const constants = require('../settings/constants');
 const projectiles = engine.projectiles;
 const agents = engine.agents;
 const pickups = engine.pickups;
+const walls = engine.walls;
+
+const worldGenerator = require('../util/worldGenerator');
 
 const getZonesForObject = require('../util/util').getZonesForObject
 
@@ -21,10 +24,24 @@ let loopAlreadyRunning = false;
 server.listen(8080, () =>
     console.log("Server is running.."));
 
+worldGenerator.generateWalls().forEach(wall => engine.addWall(wall.x, wall.y));
+
+function wallData() {
+    const wallData = [];
+    walls.forEach(wall => {
+        wallData.push({
+            x: wall.bounds.bounds.min.x,
+            y: wall.bounds.bounds.min.y
+        })
+    });
+    return wallData;
+}
+
 io.on('connection', (socket) => {
     console.log("Player connected");
 
     socket.emit('socketID', {id: socket.id});
+    socket.emit("wallData", wallData());
 
     socket.on('startKey', (data) => {
         switch (Object.keys(data)[0]) {
@@ -122,8 +139,8 @@ io.on('connection', (socket) => {
             if (agents[i].id === socket.id) {
                 agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
                 agents[i].isDead = false;
-                engine.moveAgent(agents[i], 500, 500);
-                //console.log(agents[i].isDead)
+                agents[i] = new Pistol();
+                engine.moveAgentToRandomPlace(agents[i]);
                 break;
             }
         }
@@ -179,8 +196,9 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    engine.addAgent(new Agent(500, 500, "", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id),
-        500, 500);
+    const ag = new Agent(500, 500, "", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id)
+    engine.addAgent(ag, 500, 500);
+    engine.moveAgentToRandomPlace(ag);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
@@ -192,19 +210,27 @@ io.on('connection', (socket) => {
             zones = getZonesForObject(projectile.bounds);
 
             for (agent of agents) {
-                for (zone of zones) {
-                    if (agent.viewportZones.includes(zone)) {
-                        io.to(agent.id).emit("newProjectile", {
-                            x: projectile.bounds.position.x,
-                            y: projectile.bounds.position.y,
-                            id: projectile.id,
-                            xSpeed: projectile.velocity.x,
-                            ySpeed: projectile.velocity.y,
-                            type: projectile.type
-                        });
-                        break
-                    }
+
+                if (projectile.bounds.position.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
+                    projectile.bounds.position.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
+                    projectile.bounds.position.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
+                    projectile.bounds.position.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
+                    io.to(agent.id).emit("newProjectile", {
+                        x: projectile.bounds.position.x,
+                        y: projectile.bounds.position.y,
+                        id: projectile.id,
+                        xSpeed: projectile.velocity.x,
+                        ySpeed: projectile.velocity.y,
+                        type: projectile.type
+                    });
                 }
+
+                // for (zone of zones) {
+                //     if (agent.viewportZones.includes(zone)) {
+                //
+                //         break
+                //     }
+                // }
             }
         });
         agentDataLoop();

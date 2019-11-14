@@ -39,4 +39,8 @@ getZonesForObject = object => {
     return getZonesForCoordinates(object.bounds.min, object.bounds.max)
 };
 
-module.exports = {getZonesForObject, getZonesMatrix};
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+module.exports = {getZonesForObject, getZonesMatrix, getRandomArbitrary};
