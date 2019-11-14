@@ -116,8 +116,8 @@ class NameInputScreen (
 
     private fun checkNameInput() {
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
-            frontendServer.Server.playerName = username
             game.changeToGame()
+            frontendServer.Server.setName(username)
         }
     }
 

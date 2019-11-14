@@ -17,8 +17,6 @@ class Server {
         private lateinit var socket: Socket
         val pickups = ConcurrentHashMap<String, Pickup>()
 
-        lateinit var playerName: String
-
         lateinit var projectileTexture: Texture
         lateinit var pistolTexture: Texture
         lateinit var machineGunTexture: Texture
@@ -152,6 +150,7 @@ class Server {
                 val angle = agent.getDouble("angle").toFloat()
                 if (id == player.id) {
                     if (!isDead) {
+                        player.name = name
                         player.isDead = isDead
                         player.setPosition(x, y)
                         if (player.weapon.type != weapon) {
@@ -175,6 +174,7 @@ class Server {
                         opponents[id]?.setAngle(angle)
                         opponents[id]?.velocity?.y = yVelocity
                     } else {
+                        opponents[id]?.name = name
                         opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
                         opponents[id]?.setPosition(x, y)
                         opponents[id]?.setAngle(angle)
@@ -218,6 +218,12 @@ class Server {
             }
         }
 
+        fun setName(name: String) {
+            val data = JSONObject()
+            data.put("name", name)
+            socket.emit("playerName", data)
+        }
+
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
                                    playerTextures: Array<Texture>,
                                    healthBarTexture: Texture) {
@@ -232,7 +238,7 @@ class Server {
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: Array<Texture>) {
-            player = Player(500f, 500f, playerName, false,
+            player = Player(500f, 500f, "", false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
         }
 
