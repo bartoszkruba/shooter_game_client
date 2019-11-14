@@ -122,7 +122,7 @@ class NameInputScreen (
 
     private fun nameInputFiled(batch: SpriteBatch) {
         val c = batch.color;
-        val txfUsernameBackground = assets.get("images/txfUsernameBackground7.png", Texture::class.java)
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
         batch.setColor(c.r, c.g, c.b, .5f)
         batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.4f, WINDOW_HEIGHT / 2.68f, 210f, 110f);
 
