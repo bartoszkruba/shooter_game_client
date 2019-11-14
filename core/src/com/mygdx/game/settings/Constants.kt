@@ -1,5 +1,7 @@
 package com.mygdx.game.settings
 
+const val ZONE_SIZE = 100
+
 const val WINDOW_WIDTH = 1280f
 const val WINDOW_HEIGHT = 720f
 
