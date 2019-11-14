@@ -33,6 +33,7 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
+    private val playerAtlas = assets.get<TextureAtlas>("images/player/player.atlas")
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
@@ -100,7 +101,7 @@ class GameScreen(
             }
         }
         Server.connectionSocket()
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerTextures, healthBarTexture,
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerAtlas, healthBarTexture,
                 wallMatrix, wallTexture, walls)
     }
 
@@ -125,6 +126,7 @@ class GameScreen(
             updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
+
             calculateProjectilePositions(delta)
             checkControls(delta)
             setCameraPosition()
@@ -379,19 +381,27 @@ class GameScreen(
         val originY = player.sprite.originY + player.sprite.y
         var angle = MathUtils.atan2(mousePosition.y - originY, mousePosition.x - originX) * MathUtils.radDeg
         if (angle < 0) angle += 360f
+        if (angle > 360) angle = 0f
         player.setAngle(angle)
     }
 
     private fun checkControls(delta: Float) {
         var movementSpeed = PLAYER_MOVEMENT_SPEED
-
         pressedKeys = 0
         if (!player.isDead) {
 
-            if (Gdx.input.isKeyPressed(Input.Keys.W)) pressedKeys++
-            if (Gdx.input.isKeyPressed(Input.Keys.S)) pressedKeys++
-            if (Gdx.input.isKeyPressed(Input.Keys.A)) pressedKeys++
-            if (Gdx.input.isKeyPressed(Input.Keys.D)) pressedKeys++
+            if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+                pressedKeys++
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+                pressedKeys++
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+                pressedKeys++
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+                pressedKeys++
+            }
 
             if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 

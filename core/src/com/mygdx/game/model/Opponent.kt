@@ -1,6 +1,7 @@
 package com.mygdx.game.model
 
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Array
 
@@ -13,11 +14,11 @@ class Opponent(
         gotShot: Boolean,
         xSpeed: Float = 0f,
         ySpeed: Float = 0f,
-        texture: Array<Texture>,
+        textureAtlas: TextureAtlas,
         id: String,
         healthBarTexture: Texture,
         weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, name, isDead, currentHealth, gotShot, texture, healthBarTexture, weapon, facingDirectionAngle, id) {
+        facingDirectionAngle: Float = 0f) : Agent(x, y, name, isDead, currentHealth, gotShot, textureAtlas, healthBarTexture, weapon, facingDirectionAngle, id) {
 
     val speed: Vector2
 
