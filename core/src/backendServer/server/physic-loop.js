@@ -341,7 +341,6 @@ const moveAgentToRandomPlace = (agent) => {
     const maxY = constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - 0.5 * constants.PLAYER_SPRITE_HEIGHT;
 
     while (true) {
-        console.log("moving")
         collided = false;
         const x = util.getRandomArbitrary(minX, maxX);
         const y = util.getRandomArbitrary(minY, maxY);

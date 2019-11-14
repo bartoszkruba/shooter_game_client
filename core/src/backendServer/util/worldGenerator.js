@@ -17,7 +17,7 @@ const occupiedPlaces = [];
 const generateWalls = () => {
     let walls = [];
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 15; i++) {
         walls = [...walls, ...generateRandomVerticalWall()];
         walls = [...walls, ...generateRandomHorizontalWall()];
         walls = [...walls, ...generateRandomHouse()]
@@ -117,8 +117,8 @@ const generateVerticalWall = (x, y) => {
     occupiedPlaces.push(Matter.Bodies.rectangle(
         x + constants.WALL_SPRITE_WIDTH / 2,
         y + ((10 * constants.WALL_SPRITE_HEIGHT) / 2),
-        constants.WALL_SPRITE_WIDTH,
-        10 * constants.WALL_SPRITE_HEIGHT
+        constants.WALL_SPRITE_WIDTH + 2 * constants.PLAYER_SPRITE_WIDTH,
+        10 * constants.WALL_SPRITE_HEIGHT + 2 * constants.PLAYER_SPRITE_HEIGHT
     ));
 
     return wall;
@@ -136,8 +136,8 @@ const generateHorizontalWall = (x, y) => {
     occupiedPlaces.push(Matter.Bodies.rectangle(
         x + ((10 * constants.WALL_SPRITE_WIDTH) / 2),
         y + constants.WALL_SPRITE_HEIGHT / 2,
-        10 * constants.WALL_SPRITE_WIDTH,
-        constants.WALL_SPRITE_HEIGHT
+        10 * constants.WALL_SPRITE_WIDTH + 2 * constants.PLAYER_SPRITE_WIDTH,
+        constants.WALL_SPRITE_HEIGHT + 2 * constants.PLAYER_SPRITE_HEIGHT
     ));
 
     return wall;
@@ -161,8 +161,8 @@ const generateHouse = (x, y) => {
     occupiedPlaces.push(Matter.Bodies.rectangle(
         x + ((10 * constants.WALL_SPRITE_WIDTH) / 2),
         y + ((11 * constants.WALL_SPRITE_HEIGHT) / 2),
-        10 * constants.WALL_SPRITE_WIDTH,
-        11 * constants.WALL_SPRITE_HEIGHT));
+        10 * constants.WALL_SPRITE_WIDTH + 2 * constants.PLAYER_SPRITE_WIDTH,
+        11 * constants.WALL_SPRITE_HEIGHT + 2 * constants.PLAYER_SPRITE_HEIGHT));
 
     return house;
 };
