@@ -5,6 +5,10 @@ module.exports = {
 
     MAP_OBJECTS_COUNT: 45,
 
+    WEAPON_RESPAWN_RATE: 360, // seconds
+    MACHINE_GUNS_ON_MAP: 5,
+    PISTOLS_ON_MAP: 5,
+
     MAP_WIDTH: 6400,
     MAP_HEIGHT: 3600,
 

@@ -467,6 +467,10 @@ class GameScreen(
         var removed = false
         for (entry in projectiles.entries) {
             removed = false
+            if (entry.value.justFired) {
+                entry.value.justFired = false
+                pistolShotSoundEffect.play()
+            }
             entry.value.setPosition(
                     entry.value.bounds.x + entry.value.velocity.x * delta * entry.value.speed,
                     entry.value.bounds.y + entry.value.velocity.y * delta * entry.value.speed)
@@ -550,10 +554,6 @@ class GameScreen(
 
     private fun drawProjectiles(batch: Batch) = projectiles.values.forEach {
         it.sprite.draw(batch)
-        if (it.justFired) {
-            it.justFired = false
-            pistolShotSoundEffect.play()
-        }
     }
 
     private fun drawOpponents(batch: Batch) {
