@@ -1,6 +1,7 @@
 package com.mygdx.game.model
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.Rectangle
@@ -11,7 +12,7 @@ import com.badlogic.gdx.graphics.g2d.Animation.PlayMode
 
 abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, var currentHealth: Float,
                      var gotShot: Boolean, textureAtlas: TextureAtlas, healthBarTexture: Texture, var weapon: Weapon,
-                     var facingDirectionAngle: Float, var id: String) {
+                     var facingDirectionAngle: Float, var id: String, spritecolor: Color) {
 
 
     private val animateRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("right"), PlayMode.LOOP_REVERSED)
@@ -24,6 +25,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
     private val animateDownRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("downright"), PlayMode.LOOP_REVERSED)
 
     var sprite: Sprite
+    val spritecolor = spritecolor
     private var stateTime = 0f
     private var currentAnimation: Animation<Sprite>
     val healthBarSprite = Sprite(healthBarTexture)
@@ -39,6 +41,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
         sprite.setPosition(x, y)
+        sprite.color = spritecolor
         healthBarSprite.setSize(healthBarSpriteWidth, HEALTH_BAR_SPRITE_HEIGHT)
         healthBarSprite.setPosition((sprite.x - ((200 - 32) / 2)), y)
         healthBarSprite.setOrigin(healthBarSprite.width / 2f, healthBarSprite.height / 2f)
@@ -46,6 +49,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
 
     private fun animate() {
         sprite = currentAnimation.getKeyFrame(stateTime)
+        sprite.color = spritecolor
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
         sprite.setPosition(bounds.x, bounds.y)

@@ -185,6 +185,7 @@ class Server {
                 val angle = agent.getDouble("angle").toFloat()
                 if (id == player.id) {
                     if (!isDead) {
+                        player.name = name
                         player.isDead = isDead
                         player.setPosition(x, y)
                         if (player.weapon.type != weapon) {
@@ -210,6 +211,7 @@ class Server {
                         opponents[id]?.velocity?.y = yVelocity
                         opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
+                        opponents[id]?.name = name
                         opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
                         opponents[id]?.setPosition(x, y)
                         opponents[id]?.setAngle(angle)
@@ -257,6 +259,12 @@ class Server {
             }
         }
 
+        fun setName(name: String) {
+            val data = JSONObject()
+            data.put("name", name)
+            socket.emit("playerName", data)
+        }
+
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
                                    playerTextures: TextureAtlas,
                                    healthBarTexture: Texture) {
@@ -272,7 +280,7 @@ class Server {
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
             println("Creating player")
-            player = Player(500f, 500f, "Rami", false,
+            player = Player(500f, 500f, "", false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
         }
 

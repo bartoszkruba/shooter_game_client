@@ -1,15 +1,10 @@
 package com.mygdx.game.screen
 
 import com.mygdx.game.Game
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.AssetManager
-import com.badlogic.gdx.assets.loaders.FileHandleResolver
-import com.badlogic.gdx.assets.loaders.MusicLoader
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.audio.Sound
-import com.mygdx.game.assets.TextureAtlasAssets
 import com.badlogic.gdx.graphics.OrthographicCamera
-import com.mygdx.game.assets.load
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.badlogic.gdx.graphics.Texture
@@ -54,6 +49,8 @@ class LoadingScreen(private val game: Game,
         assets.load("images/menu/start.png", Texture::class.java)
         assets.load("images/menu/start_selected.png", Texture::class.java)
         assets.load("images/logo.png", Texture::class.java)
+        assets.load("images/enterYourName.png", Texture::class.java)
+        assets.load("images/txfUsernameBackground.png", Texture::class.java)
 
         assets.load("sounds/menu_hover.wav", Sound::class.java)
         assets.load("sounds/menu_select.wav", Sound::class.java)

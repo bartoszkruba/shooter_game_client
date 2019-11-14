@@ -146,6 +146,15 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('playerName', (data) => {
+        let name = Object.values(data)[0];
+        for (let i = 0; i < agents.length; i++) {
+            if (agents[i].id === socket.id) {
+                agents[i].name = name;
+            }
+        }
+    });
+
     socket.on('mouseStart', (data) => {
         // console.log(Object.keys(data)[0] + " just pressed");
         for (let i = 0; i < agents.length; i++) {
@@ -187,7 +196,7 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const ag = new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id)
+    const ag = new Agent(500, 500, "", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id)
     engine.addAgent(ag, 500, 500);
     engine.moveAgentToRandomPlace(ag);
 
@@ -333,7 +342,8 @@ async function agentDataLoop() {
                             currentHealth: ag.currentHealth,
                             id: ag.id,
                             weapon: ag.weapon.projectileType,
-                            angle: ag.facingDirectionAngle
+                            angle: ag.facingDirectionAngle,
+                            name: ag.name
                         })
                     }
             }
@@ -343,7 +353,6 @@ async function agentDataLoop() {
         await sleep(1000 / constants.AGENT_UPDATES_PER_SECOND)
     }
 }
-
 
 function setVelocity(agent) {
     agent.velocity.x = 0;

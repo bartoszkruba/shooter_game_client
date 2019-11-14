@@ -29,7 +29,7 @@ import ktx.graphics.use
 import kotlin.system.exitProcess
 
 
-private class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
+class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
 
 private enum class Menu {
     MAIN, CREDITS, START_GAME, OPTIONS, SPLASH_SCREEN
@@ -184,7 +184,8 @@ class MenuScreen(
                 startGameChoice -> {
                     rainMusic.stop()
                     backgroundMusic.stop()
-                    game.changeToGame()
+                    game.changeToNameInputScreen()
+                    //game.changeToGame()
                 }
                 creditsChoice -> currentWindow = CREDITS
                 quitChoice -> exitProcess(0)
