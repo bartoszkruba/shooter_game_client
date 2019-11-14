@@ -17,6 +17,8 @@ class Server {
         private lateinit var socket: Socket
         val pickups = ConcurrentHashMap<String, Pickup>()
 
+        lateinit var playerName: String
+
         lateinit var projectileTexture: Texture
         lateinit var pistolTexture: Texture
         lateinit var machineGunTexture: Texture
@@ -230,7 +232,7 @@ class Server {
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: Array<Texture>) {
-            player = Player(500f, 500f, "Rami", false,
+            player = Player(500f, 500f, playerName, false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
         }
 

@@ -13,7 +13,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.scenes.scene2d.ui.Image
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.utils.Array
@@ -26,11 +25,6 @@ import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
-import com.badlogic.gdx.scenes.scene2d.Actor
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
-import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldListener
-
-
 
 
 class NameInputScreen (
@@ -121,8 +115,10 @@ class NameInputScreen (
     }
 
     private fun checkNameInput() {
-
-        if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) println("name is $username")
+        if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
+            frontendServer.Server.playerName = username
+            game.changeToGame()
+        }
     }
 
     private fun nameInputFiled(batch: SpriteBatch) {
