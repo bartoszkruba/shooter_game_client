@@ -3,7 +3,6 @@ package com.mygdx.game.model
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.*
-import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.mygdx.game.settings.*
@@ -56,13 +55,14 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
         healthBarSprite.setPosition((x - ((currentHealth - 45) / 2)), y)
     }
 
-    fun setPosition(x: Float, y: Float) {
-        stateTime += Gdx.graphics.deltaTime
-        sprite.setPosition(x, y)
-        bounds.setPosition(x, y)
-        healthBarSprite.setPosition((x - ((currentHealth - 45) / 2)), y)
+    fun setPosition(newX: Float, newY: Float) {
+        if ( newX != sprite.x || newY !=  sprite.y  ){
+            stateTime += Gdx.graphics.deltaTime
+        }
         animate()
-
+        sprite.setPosition(newX, newY)
+        bounds.setPosition(newX, newY)
+        healthBarSprite.setPosition((newX - ((currentHealth - 45) / 2)), newY)
     }
 
     fun reduceHealthBarWidth() {
@@ -90,14 +90,12 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
                     }
                      facingDirectionAngle >= 157.5 && facingDirectionAngle < 202.5 -> {
                          currentAnimation = animateLeft
-
                      }
                     facingDirectionAngle >= 202.5 && facingDirectionAngle < 247.5 -> {
                         currentAnimation = animateDownLeft
                     }
                      facingDirectionAngle >= 247.5 && facingDirectionAngle < 292.5 -> {
                          currentAnimation = animateDown
-                         sprite = currentAnimation.getKeyFrame(stateTime)
                      }
                      facingDirectionAngle >= 292.5 && facingDirectionAngle < 337.5 -> {
                          currentAnimation = animateDownRight

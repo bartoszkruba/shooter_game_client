@@ -324,7 +324,6 @@ class GameScreen(
         if (angle < 0) angle += 360f
         if (angle > 360) angle = 0f
         player.setAngle(angle)
-        player.animate()
     }
 
     private fun checkControls(delta: Float) {
@@ -421,7 +420,6 @@ class GameScreen(
     private fun drawPlayer(batch: Batch, agent: Agent) {
         if (!player.isDead && player.currentHealth >= 10) {
             setPlayerRotation()
-            agent.animate()
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
             font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f);
