@@ -255,6 +255,7 @@ class Server {
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
+            println("Creating player")
             player = Player(500f, 500f, "Rami", false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
         }

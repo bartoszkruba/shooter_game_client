@@ -139,7 +139,8 @@ io.on('connection', (socket) => {
             if (agents[i].id === socket.id) {
                 agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
                 agents[i].isDead = false;
-                engine.moveAgent(agents[i], 500, 500);
+                engine.moveAgentToRandomPlace(agents[i]);
+                // engine.moveAgent(agents[i], 500, 500);
                 //console.log(agents[i].isDead)
                 break;
             }
@@ -187,8 +188,9 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    engine.addAgent(new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id),
-        500, 500);
+    const ag = new Agent(500, 500, "Rami", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id)
+    engine.addAgent(ag, 500, 500);
+    engine.moveAgentToRandomPlace(ag);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
