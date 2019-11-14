@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.model.*
 import com.mygdx.game.settings.HEALTH_BAR_SPRITE_HEIGHT
 import com.mygdx.game.settings.PLAYER_MAX_HEALTH

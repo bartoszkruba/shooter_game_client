@@ -28,6 +28,7 @@ let lastLoop;
 const matrix = getZonesMatrix();
 
 async function physicLoop(broadcastNewProjectile) {
+    weaponRespawnLoop();
     while (true) {
         const currentTime = new Date().getTime();
         delta = (currentTime - lastLoop) / 1000;
@@ -41,6 +42,104 @@ async function physicLoop(broadcastNewProjectile) {
         await sleep(1000 / 60)
     }
 }
+
+const weaponRespawnLoop = async () => {
+    while (true) {
+        console.log("Spawning weapons")
+        clearAllWeaponPickups();
+
+        for (let i = 0; i < constants.MACHINE_GUNS_ON_MAP; i++) {
+            spawnMachineGunPickupAtRandomPlace();
+        }
+        for (let i = 0; i < constants.PISTOLS_ON_MAP; i++) {
+            spawnPistolPickupAtRandomPlace()
+        }
+        await sleep(constants.WEAPON_RESPAWN_RATE * 1000)
+    }
+};
+
+const clearAllWeaponPickups = () => {
+    pickups.forEach(pickup => {
+        pickup.zones.forEach(zone => matrix.pickups[zone] = [])
+    });
+    pickups.splice(0, pickups.length)
+};
+
+const spawnMachineGunPickupAtRandomPlace = () => {
+    const minX = constants.WALL_SPRITE_WIDTH + 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const maxX = constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const minY = constants.WALL_SPRITE_HEIGHT + 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+    const maxY = constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+
+    const weapon = new MachineGunPickup(50, 50, shortid.generate());
+
+    weapon.zones = getZonesForObject(weapon.bounds);
+
+    while (true) {
+        collided = false;
+        const x = util.getRandomArbitrary(minX, maxX);
+        const y = util.getRandomArbitrary(minY, maxY);
+
+        const oldZones = weapon.zones;
+        Matter.Body.setPosition(weapon.bounds, {x, y});
+        weapon.zones = getZonesForObject(weapon.bounds);
+
+        weapon.zones.forEach(zone => {
+            matrix.walls[zone].forEach(wall => {
+                if (Matter.SAT.collides(wall.bounds, weapon.bounds).collided) collided = true
+            })
+        });
+
+        oldZones.filter(zone => !weapon.zones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(weapon), 1)
+        });
+        weapon.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].push(weapon)
+        });
+
+        if (!collided) break
+    }
+
+    pickups.push(weapon)
+};
+
+const spawnPistolPickupAtRandomPlace = () => {
+    const minX = constants.WALL_SPRITE_WIDTH + 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const maxX = constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const minY = constants.WALL_SPRITE_HEIGHT + 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+    const maxY = constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+
+    const weapon = new PistolPickup(50, 50, shortid.generate());
+
+    weapon.zones = getZonesForObject(weapon.bounds);
+
+    while (true) {
+        collided = false;
+        const x = util.getRandomArbitrary(minX, maxX);
+        const y = util.getRandomArbitrary(minY, maxY);
+
+        const oldZones = weapon.zones;
+        Matter.Body.setPosition(weapon.bounds, {x, y});
+        weapon.zones = getZonesForObject(weapon.bounds);
+
+        weapon.zones.forEach(zone => {
+            matrix.walls[zone].forEach(wall => {
+                if (Matter.SAT.collides(wall.bounds, weapon.bounds).collided) collided = true
+            })
+        });
+
+        oldZones.filter(zone => !weapon.zones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(weapon), 1)
+        });
+        weapon.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].push(weapon)
+        });
+
+        if (!collided) break
+    }
+
+    pickups.push(weapon)
+};
 
 function calculateProjectilePositions(delta) {
     for (projectile of projectiles) {
