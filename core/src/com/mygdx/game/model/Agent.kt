@@ -30,6 +30,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
     val bounds: Rectangle = Rectangle(x, y, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
     private var counter = 85f
     private var healthBarSpriteWidth = 182f
+    var isMoving = false
     val velocity = Vector2()
 
     init {
@@ -56,9 +57,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, 
     }
 
     fun setPosition(newX: Float, newY: Float) {
-        if ( newX != sprite.x || newY !=  sprite.y  ){
-            stateTime += Gdx.graphics.deltaTime
-        }
+        if ( isMoving ) stateTime += Gdx.graphics.deltaTime else stateTime = currentAnimation.animationDuration
         animate()
         sprite.setPosition(newX, newY)
         bounds.setPosition(newX, newY)

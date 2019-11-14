@@ -197,6 +197,7 @@ class Server {
                         opponents[id]?.velocity?.x = xVelocity
                         opponents[id]?.setAngle(angle)
                         opponents[id]?.velocity?.y = yVelocity
+                        opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
                         opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
                         opponents[id]?.setPosition(x, y)
@@ -207,6 +208,7 @@ class Server {
                         opponents[id]?.isDead = isDead
                         opponents[id]?.currentHealth = currentHealth
                         opponents[id]?.healthBarSprite!!.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
+                        opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     }
                 }
             }

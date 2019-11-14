@@ -225,6 +225,7 @@ class GameScreen(
         batch.draw(blood, x, y, 65f, 65f);
     }
 
+
     private fun checkAllPlayersOnMap(batch: Batch) {
         if (!player.isDead) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
@@ -405,6 +406,8 @@ class GameScreen(
 
             if (pressedKeys > 1) movementSpeed = (movementSpeed.toDouble() * 0.7).toInt()
 
+            player.isMoving = pressedKeys > 0
+
             if (Gdx.input.isKeyPressed(Input.Keys.W))
                 movePlayer(player.bounds.x, player.bounds.y + movementSpeed * delta, player.bounds.x, player.bounds.y)
 
@@ -417,6 +420,7 @@ class GameScreen(
             if (Gdx.input.isKeyPressed(Input.Keys.D))
                 movePlayer(player.bounds.x + movementSpeed * delta, player.bounds.y, player.bounds.x, player.bounds.y)
         }
+
     }
 
     private fun moveOpponents(delta: Float) {
