@@ -427,11 +427,12 @@ class GameScreen(
         for (opponent in opponents.values) {
             val oldX = opponent.bounds.x
             val oldY = opponent.bounds.y
-
+            opponent.isMoving = opponent.velocity.x != 0.0f || opponent.velocity.y != 0.0f
             opponent.setPosition(
                     opponent.bounds.x + opponent.velocity.x * delta,
                     opponent.bounds.y + opponent.velocity.y * delta)
             val zones = getZonesForRectangle(player.bounds)
+
             var collided = false
             for (i in 0 until zones.size) {
                 for (j in 0 until wallMatrix[zones[i]]!!.size) {
