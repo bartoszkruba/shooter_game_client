@@ -193,13 +193,13 @@ class GameScreen(
     private fun checkOpponentsGotShot(batch: Batch) {
         opponents.values.forEach {
             if (it.gotShot) {
-                drawBloodOnPlayerBody(batch,it.bounds.x - 10f, it.bounds.y)
+                drawBloodOnPlayerBody(batch, it.bounds.x - 10f, it.bounds.y)
                 bloodOnTheFloor.add(
-                    bloodOnTheFloorPool.obtain().apply {
-                        bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
-                        gotShot = true
-                        transparent = 1f
-                    }
+                        bloodOnTheFloorPool.obtain().apply {
+                            bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                            gotShot = true
+                            transparent = 1f
+                        }
                 )
             }
         }
@@ -207,13 +207,13 @@ class GameScreen(
 
     private fun checkPlayerGotShot(batch: Batch) {
         if (player.gotShot) {
-            drawBloodOnPlayerBody(batch,player.bounds.x - 10f, player.bounds.y)
+            drawBloodOnPlayerBody(batch, player.bounds.x - 10f, player.bounds.y)
             bloodOnTheFloor.add(
-                bloodOnTheFloorPool.obtain().apply {
-                    bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
-                    gotShot = true
-                    transparent = 1f
-                }
+                    bloodOnTheFloorPool.obtain().apply {
+                        bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
+                        gotShot = true
+                        transparent = 1f
+                    }
             )
         }
     }
@@ -279,7 +279,7 @@ class GameScreen(
 
     private fun drawGameOver(batch: Batch) {
         if (player.isDead) {
-            if(shouldDeathSoundPlay) {
+            if (shouldDeathSoundPlay) {
                 deathSound.play()
                 shouldDeathSoundPlay = false
             }
@@ -287,7 +287,7 @@ class GameScreen(
             val c: Color = batch.color;
             batch.setColor(c.r, c.g, c.b, .7f)
             batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
-        }else{
+        } else {
             shouldDeathSoundPlay = true
         }
     }
@@ -591,10 +591,7 @@ class GameScreen(
     }
 
     private fun setCameraPosition() {
-        if (player.bounds.x > WINDOW_WIDTH / 2f && player.bounds.x < MAP_WIDTH - WINDOW_WIDTH / 2f)
-            camera.position.x = player.bounds.x
-
-        if (player.bounds.y > WINDOW_HEIGHT / 2f && player.bounds.y < MAP_HEIGHT - WINDOW_HEIGHT / 2f)
-            camera.position.y = player.bounds.y
+        camera.position.x = MathUtils.clamp(player.bounds.x, WINDOW_WIDTH / 2f, MAP_WIDTH - WINDOW_WIDTH / 2f)
+        camera.position.y = MathUtils.clamp(player.bounds.y, WINDOW_HEIGHT / 2f, MAP_HEIGHT - WINDOW_HEIGHT / 2f)
     }
 }

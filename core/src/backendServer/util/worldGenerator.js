@@ -17,7 +17,7 @@ const occupiedPlaces = [];
 const generateWalls = () => {
     let walls = [];
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < constants.MAP_OBJECTS_COUNT / 3; i++) {
         walls = [...walls, ...generateRandomVerticalWall()];
         walls = [...walls, ...generateRandomHorizontalWall()];
         walls = [...walls, ...generateRandomHouse()]
@@ -77,11 +77,11 @@ const generateRandomHorizontalWall = () => {
 };
 
 const generateRandomHouse = () => {
-    const minX = constants.WALL_SPRITE_WIDTH;
-    const maxX = constants.MAP_WIDTH - 12 * constants.WALL_SPRITE_WIDTH;
+    const minX = constants.WALL_SPRITE_WIDTH + constants.PLAYER_SPRITE_WIDTH;
+    const maxX = constants.MAP_WIDTH - 12 * constants.WALL_SPRITE_WIDTH - constants.PLAYER_SPRITE_WIDTH;
 
-    const minY = constants.WALL_SPRITE_HEIGHT;
-    const maxY = constants.MAP_HEIGHT - 12 * constants.WALL_SPRITE_HEIGHT;
+    const minY = constants.WALL_SPRITE_HEIGHT + constants.PLAYER_SPRITE_HEIGHT;
+    const maxY = constants.MAP_HEIGHT - 12 * constants.WALL_SPRITE_HEIGHT - constants.PLAYER_SPRITE_HEIGHT;
 
     let x, y;
 
@@ -93,7 +93,7 @@ const generateRandomHouse = () => {
             x + ((10 * constants.WALL_SPRITE_WIDTH) / 2),
             y + ((11 * constants.WALL_SPRITE_HEIGHT) / 2),
             10 * constants.WALL_SPRITE_WIDTH,
-            11 * constants.WALL_SPRITE_HEIGHT)
+            11 * constants.WALL_SPRITE_HEIGHT);
 
         occupiedPlaces.forEach(place => {
             if (Matter.SAT.collides(place, rect).collided) free = false

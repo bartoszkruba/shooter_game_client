@@ -340,13 +340,22 @@ const moveAgentToRandomPlace = (agent) => {
     const minY = constants.WALL_SPRITE_HEIGHT + 0.5 * constants.PLAYER_SPRITE_HEIGHT;
     const maxY = constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - 0.5 * constants.PLAYER_SPRITE_HEIGHT;
 
+    agent.zones = getZonesForObject(agent.bounds);
+
     while (true) {
         collided = false;
         const x = util.getRandomArbitrary(minX, maxX);
         const y = util.getRandomArbitrary(minY, maxY);
 
+        const oldZones = agent.zones;
         Matter.Body.setPosition(agent.bounds, {x, y});
-        const oldZones = util.getZonesForObject(agent.bounds);
+        agent.zones = getZonesForObject(agent.bounds);
+
+        agent.zones.forEach(zone => {
+            matrix.walls[zone].forEach(wall => {
+                if (Matter.SAT.collides(wall.bounds, agent.bounds).collided) collided = true
+            })
+        });
 
         oldZones.filter(zone => !agent.zones.includes(zone)).forEach(zone => {
             matrix.agents[zone].splice(matrix.agents[zone].indexOf(agent), 1)
@@ -355,13 +364,9 @@ const moveAgentToRandomPlace = (agent) => {
             matrix.agents[zone].push(agent)
         });
 
-        agent.zones.forEach(zone => {
-            matrix.walls[zone].forEach(wall => {
-                if (Matter.SAT.collides(wall.bounds, agent.bounds).collided) collided = true
-            })
-        });
         if (!collided) break
     }
+
 };
 
 const removeAgent = id => {
