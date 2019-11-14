@@ -130,8 +130,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('playerName', (data) => {
-        let name = Object.values(data)[0]
-        //console.log(" player name: " + Object.values(data)[0]);
+        let name = Object.values(data)[0];
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].name = name;

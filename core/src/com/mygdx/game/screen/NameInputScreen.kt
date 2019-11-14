@@ -107,7 +107,6 @@ class NameInputScreen (
             nameInputFiled(it)
         }
         stage.draw();
-
         checkNameInput()
 
         drawRain();
@@ -127,13 +126,18 @@ class NameInputScreen (
         batch.setColor(c.r, c.g, c.b, .5f)
         batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.4f, WINDOW_HEIGHT / 2.68f, 210f, 110f);
 
+        font.draw(batch, "OBS! max 8 characters", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.18f);
         txfUsername = TextField("", skin)
+        txfUsername.maxLength = 8
         txfUsername.setPosition(WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 2.6f)
         txfUsername.setSize(130f, 100f)
         stage.addActor(txfUsername)
-        Gdx.input.setInputProcessor(this.stage);
+        Gdx.input.inputProcessor = this.stage;
 
         txfUsername.setTextFieldListener { textField, key -> username = textField.text }
+
+        font.draw(batch, "Press ENTER to start the game!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 2.4f);
+
     }
 
     private fun drawNameSign(batch: SpriteBatch) {
