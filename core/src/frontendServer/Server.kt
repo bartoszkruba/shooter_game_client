@@ -24,14 +24,19 @@ class Server {
         lateinit var projectileTexture: Texture
         lateinit var pistolTexture: Texture
         lateinit var machineGunTexture: Texture
+        lateinit var shotgunTexture: Texture
         var shouldPlayReload = false
 
         private lateinit var player: Player
         val projectiles = ConcurrentHashMap<String, Projectile>()
         val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
         var machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
-        var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
-        var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
+        val shotgunProjectilePool = pool { ShotgunProjectile(texture = projectileTexture) }
+
+        private var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
+        private var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
+        private var shotgunPickupPool = pool { ShotgunPickup(texture = shotgunTexture) }
+
         val opponents = ConcurrentHashMap<String, Opponent>()
         private lateinit var playerTextures: TextureAtlas
         private lateinit var healthBarTexture: Texture
@@ -55,12 +60,13 @@ class Server {
         }
 
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
-                               playerTextures: TextureAtlas, healthBarTexture: Texture,
+                               shotgunTexture: Texture, playerTextures: TextureAtlas, healthBarTexture: Texture,
                                wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture, walls: Array<Wall>) {
 
             this.projectileTexture = projectileTexture
             this.pistolTexture = pistolTexture
             this.machineGunTexture = machineGunTexture
+            this.shotgunTexture = shotgunTexture
             this.playerTextures = playerTextures
             this.healthBarTexture = healthBarTexture
             this.wallMatrix = wallMatrix
@@ -121,9 +127,10 @@ class Server {
                 val type = pickup.getString("type")
 
                 pickups[id] = when (type) {
-                    ProjectileType.PISTOL -> pistolPickupPool.obtain().apply { setPosition(x, y) }
-                    else -> machineGunPickupPool.obtain().apply { setPosition(x, y) }
-                }
+                    ProjectileType.PISTOL -> pistolPickupPool.obtain()
+                    ProjectileType.SHOTGUN -> shotgunPickupPool.obtain()
+                    else -> machineGunPickupPool.obtain()
+                }.apply { setPosition(x, y) }
             }
         }
 
@@ -143,6 +150,7 @@ class Server {
                 if (projectiles[id] == null) {
                     projectiles[id] = when (type) {
                         ProjectileType.PISTOL -> pistolProjectilePool.obtain()
+                        ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
                         else -> machineGunProjectilePool.obtain()
                     }.apply {
                         setPosition(x, y)
@@ -182,6 +190,7 @@ class Server {
                             when (weapon) {
                                 ProjectileType.PISTOL -> player.weapon = Pistol()
                                 ProjectileType.MACHINE_GUN -> player.weapon = MachineGun()
+                                ProjectileType.SHOTGUN -> player.weapon = Shotgun()
                             }
                         }
                         val bulletsLeft = agent.getInt("bulletsLeft")
@@ -227,6 +236,7 @@ class Server {
             if (projectiles[id] == null) {
                 projectiles[id] = when (type) {
                     ProjectileType.PISTOL -> pistolProjectilePool.obtain()
+                    ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
                     else -> machineGunProjectilePool.obtain()
                 }.apply {
                     setPosition(x, y)

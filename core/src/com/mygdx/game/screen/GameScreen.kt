@@ -39,6 +39,7 @@ class GameScreen(
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
+    private val shotgunTexture = assets.get("images/shotgun.png", Texture::class.java)
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
     private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
@@ -101,8 +102,8 @@ class GameScreen(
             }
         }
         Server.connectionSocket()
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerAtlas, healthBarTexture,
-                wallMatrix, wallTexture, walls)
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, playerAtlas,
+                healthBarTexture, wallMatrix, wallTexture, walls)
     }
 
     private var pressedKeys = 0

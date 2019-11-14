@@ -4,10 +4,13 @@ const shortid = require('shortid');
 const Agent = require('../models/Agent');
 const Pistol = require('../models/Pistol');
 const MachineGun = require('../models/MachineGun');
+const Shotgun = require('../models/Shotgun');
 const PistolProjectile = require('../models/PistolProjectile');
 const MachineGunProjectile = require('../models/MachineGunProjectile');
+const ShotgunProjectile = require('../models/ShotgunProjectile');
 const PistolPickup = require('../models/PistolPickup');
 const MachineGunPickup = require('../models/MachineGunPickup');
+const ShotgunPickup = require('../models/ShotgunPickup');
 const ProjectileType = require('../models/ProjectileType');
 const constants = require('../settings/constants');
 const Wall = require('../models/Wall');
@@ -45,7 +48,7 @@ async function physicLoop(broadcastNewProjectile) {
 
 const weaponRespawnLoop = async () => {
     while (true) {
-        console.log("Spawning weapons")
+        console.log("Spawning weapons");
         clearAllWeaponPickups();
 
         for (let i = 0; i < constants.MACHINE_GUNS_ON_MAP; i++) {
@@ -53,6 +56,9 @@ const weaponRespawnLoop = async () => {
         }
         for (let i = 0; i < constants.PISTOLS_ON_MAP; i++) {
             spawnPistolPickupAtRandomPlace()
+        }
+        for (let i = 0; i < constants.SHOTGUNS_ON_MAP; i++) {
+            spawnShotgunPickupAtRandomPlace()
         }
         await sleep(constants.WEAPON_RESPAWN_RATE * 1000)
     }
@@ -63,6 +69,44 @@ const clearAllWeaponPickups = () => {
         pickup.zones.forEach(zone => matrix.pickups[zone] = [])
     });
     pickups.splice(0, pickups.length)
+};
+
+const spawnShotgunPickupAtRandomPlace = () => {
+    const minX = constants.WALL_SPRITE_WIDTH + 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const maxX = constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const minY = constants.WALL_SPRITE_HEIGHT + 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+    const maxY = constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+
+    const weapon = new ShotgunPickup(50, 50, shortid.generate());
+
+    weapon.zones = getZonesForObject(weapon.bounds);
+
+    while (true) {
+        collided = false;
+        const x = util.getRandomArbitrary(minX, maxX);
+        const y = util.getRandomArbitrary(minY, maxY);
+
+        const oldZones = weapon.zones;
+        Matter.Body.setPosition(weapon.bounds, {x, y});
+        weapon.zones = getZonesForObject(weapon.bounds);
+
+        weapon.zones.forEach(zone => {
+            matrix.walls[zone].forEach(wall => {
+                if (Matter.SAT.collides(wall.bounds, weapon.bounds).collided) collided = true
+            })
+        });
+
+        oldZones.filter(zone => !weapon.zones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(weapon), 1)
+        });
+        weapon.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].push(weapon)
+        });
+
+        if (!collided) break
+    }
+
+    pickups.push(weapon)
 };
 
 const spawnMachineGunPickupAtRandomPlace = () => {
@@ -269,6 +313,16 @@ function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile)
     broadcastNewProjectile(projectile)
 }
 
+function spawnShotgunProjectiles(x, y, broadcastNewProjectile) {
+    for (let i = 0; i < 15; i++) {
+        const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-10, 10);
+        const xSpeed = Math.cos(Math.PI / 180 * angle);
+        const ySpeed = Math.sin(Math.PI / 180 * angle);
+        const projectile = new ShotgunProjectile(x,y, xSpeed, ySpeed, shortid.generate());
+        broadcastNewProjectile(projectile)
+    }
+}
+
 function addProjectileToMatrix(projectile) {
     projectile.zones = getZonesForObject(projectile.bounds);
     projectiles.push(projectile);
@@ -292,6 +346,10 @@ function pickWeapon(agent) {
                         addPickup(new MachineGunPickup(0, 0, shortid.generate(),
                             agent.weapon.bulletsInChamber), pickup.bounds.position.x, pickup.bounds.position.y);
                         break;
+                    case ProjectileType.SHOTGUN:
+                        addPickup(new ShotgunPickup(0, 0, shortid.generate(),
+                            agent.weapon.bulletsInChamber), pickup.bounds.position.x, pickup.bounds.position.y);
+                        break;
                 }
 
                 switch (pickup.type) {
@@ -300,6 +358,9 @@ function pickWeapon(agent) {
                         break;
                     case ProjectileType.MACHINE_GUN:
                         agent.weapon = new MachineGun();
+                        break;
+                    case ProjectileType.SHOTGUN:
+                        agent.weapon = new Shotgun();
                         break;
                 }
 
@@ -341,15 +402,19 @@ function checkControls(agent, delta, broadcastNewProjectile) {
         edgePoint.x += xCentre - constants.PLAYER_SPRITE_WIDTH / 2;
         edgePoint.y += yCentre - constants.PLAYER_SPRITE_HEIGHT / 2;
 
-        xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
-        ySpeed = Math.sin(Math.PI / 180 * agent.facingDirectionAngle);
-
         switch (agent.weapon.projectileType) {
             case ProjectileType.PISTOL:
+                xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
+                ySpeed = Math.sin(Math.PI / 180 * agent.facingDirectionAngle);
                 spawnPistolProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile);
                 break;
             case ProjectileType.MACHINE_GUN:
+                xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
+                ySpeed = Math.sin(Math.PI / 180 * agent.facingDirectionAngle);
                 spawnMachineGunProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile);
+                break;
+            case ProjectileType.SHOTGUN:
+                spawnShotgunProjectiles(edgePoint.x, edgePoint.y, broadcastNewProjectile);
                 break;
         }
     }
