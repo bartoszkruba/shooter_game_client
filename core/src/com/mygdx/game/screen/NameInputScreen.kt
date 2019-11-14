@@ -1,6 +1,7 @@
 package com.mygdx.game.screen
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.graphics.Color
@@ -25,6 +26,11 @@ import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
+import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
+import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldListener
+
+
 
 
 class NameInputScreen (
@@ -67,6 +73,7 @@ class NameInputScreen (
     private var stage2 = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
     var skin: Skin = Skin(Gdx.files.internal("terra-mother/skin/terra-mother-ui.json"))
 
+    lateinit var username: String
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -102,31 +109,42 @@ class NameInputScreen (
             background.draw(it)
             foreground.draw(it)
             text.draw(it)
-            drawNameInput(it)
+            drawNameSign(it)
+            nameInputFiled(it)
         }
         stage.draw();
+
+        checkNameInput()
 
         drawRain();
 
     }
-    var te: String? = null
 
-    private fun drawNameInput(batch: SpriteBatch) {
-        val miniMapexture = assets.get("images/enterYourName.png", Texture::class.java)
+    private fun checkNameInput() {
+
+        if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) println("name is $username")
+    }
+
+    private fun nameInputFiled(batch: SpriteBatch) {
         val c = batch.color;
-        //batch.setColor(c.r, c.g, c.b, .5f)
-        batch.draw(miniMapexture, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2, WINDOW_WIDTH / 3, 50f);
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground7.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, .5f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.4f, WINDOW_HEIGHT / 2.68f, 210f, 110f);
 
-        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
-        batch.setColor(c.r, c.g, c.b, .8f)
-        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 5, WINDOW_HEIGHT / 4, 300f, 200f);
-
-        txfUsername = TextField("helllo", skin)
-        txfUsername.setPosition(WINDOW_WIDTH / 4, WINDOW_HEIGHT / 3)
-        txfUsername.setSize(200f, 100f)
+        txfUsername = TextField("", skin)
+        txfUsername.setPosition(WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 2.6f)
+        txfUsername.setSize(130f, 100f)
         stage.addActor(txfUsername)
         Gdx.input.setInputProcessor(this.stage);
 
+        txfUsername.setTextFieldListener { textField, key -> username = textField.text }
+    }
+
+    private fun drawNameSign(batch: SpriteBatch) {
+        val c = batch.color;
+        val miniMapexture = assets.get("images/enterYourName.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, 1f)
+        batch.draw(miniMapexture, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2, WINDOW_WIDTH / 3, 50f);
     }
 
 
