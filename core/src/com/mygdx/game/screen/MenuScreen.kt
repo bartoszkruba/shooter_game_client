@@ -182,9 +182,7 @@ class MenuScreen(
             selectSound.play()
             when (currentChoice) {
                 startGameChoice -> {
-                    rainMusic.stop()
-                    backgroundMusic.stop()
-                    game.changeToNameInputScreen()
+                    game.changeToNameInputScreen(text.x)
                     //game.changeToGame()
                 }
                 creditsChoice -> currentWindow = CREDITS
