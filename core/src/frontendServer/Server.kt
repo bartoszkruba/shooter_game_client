@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.utils.Array
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Player
+import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.pickup.MachineGunPickup
 import com.mygdx.game.model.pickup.Pickup
@@ -37,10 +38,15 @@ class Server {
         var shouldPlayReload = false
 
         private lateinit var player: Player
+
         val projectiles = ConcurrentHashMap<String, Projectile>()
         val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
-        var machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
+        val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
         val shotgunProjectilePool = pool { ShotgunProjectile(texture = projectileTexture) }
+
+        lateinit var bazookaExplosionTextureAtlas: TextureAtlas
+        val bazookaExplosionPool = pool { BazookaExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
+        val explosions = Array<BazookaExplosion>()
 
         private var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
         private var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
@@ -55,8 +61,8 @@ class Server {
 
         fun connectionSocket() {
             try {
-                socket = IO.socket("http://localhost:8080");
-                socket.connect();
+                socket = IO.socket("http://localhost:8080")
+                socket.connect()
             } catch (e: Exception) {
             }
         }
@@ -70,6 +76,7 @@ class Server {
 
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
                                shotgunTexture: Texture, playerTextures: TextureAtlas, healthBarTexture: Texture,
+                               bazookaExplosionTextureAtlas: TextureAtlas,
                                wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture, walls: Array<Wall>) {
 
             this.projectileTexture = projectileTexture
@@ -78,6 +85,7 @@ class Server {
             this.shotgunTexture = shotgunTexture
             this.playerTextures = playerTextures
             this.healthBarTexture = healthBarTexture
+            this.bazookaExplosionTextureAtlas = bazookaExplosionTextureAtlas
             this.wallMatrix = wallMatrix
             this.wallTexture = wallTexture
             this.walls = walls
@@ -248,7 +256,7 @@ class Server {
                 projectiles[id] = when (type) {
                     ProjectileType.PISTOL -> pistolProjectilePool.obtain()
                     ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
-                    else ->{
+                    else -> {
                         machineGunProjectilePool.obtain()
                     }
                 }.apply {
