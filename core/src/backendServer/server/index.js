@@ -139,7 +139,7 @@ io.on('connection', (socket) => {
             if (agents[i].id === socket.id) {
                 agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
                 agents[i].isDead = false;
-                agents[i] = new Pistol();
+                agents[i].weapon = new Pistol();
                 engine.moveAgentToRandomPlace(agents[i]);
                 break;
             }
