@@ -14,6 +14,7 @@ class BazookaExplosion(var x: Float = 0f, var y: Float = 0f, textureAtlas: Textu
     private var animationTimer = 0L
     private val animation = Animation<Sprite>(BAZOOKA_EXPLOSION_FRAME_DURATION, textureAtlas.createSprites())
     var sprite: Sprite
+    var justSpawned = true
 
     init {
         sprite = animation.getKeyFrame(0f)

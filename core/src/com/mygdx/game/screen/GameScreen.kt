@@ -52,9 +52,14 @@ class GameScreen(
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
 
     private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
+
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
     private val machineGunShotSoundEffect = assets.get("sounds/machine_gun_shot.wav", Sound::class.java)
+    private val bazookaShotSoundEffect = assets.get("sounds/bazooka_shot.mp3", Sound::class.java)
+
+    private val bazookaExplosionSoundEffect = assets.get("sounds/bazooka_explosion.mp3", Sound::class.java)
+
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
 
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
@@ -505,6 +510,7 @@ class GameScreen(
                 when {
                     entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.14f)
                     entry.value is MachineGunProjectile -> machineGunShotSoundEffect.play()
+                    entry.value is BazookaProjectile -> bazookaShotSoundEffect.play()
                     else -> pistolShotSoundEffect.play(1.5f)
                 }
             }
@@ -597,6 +603,10 @@ class GameScreen(
 
     private fun drawExplosions(batch: Batch) {
         explosions.iterate { explosion, iterator ->
+            if (explosion.justSpawned) {
+                bazookaExplosionSoundEffect.play()
+                explosion.justSpawned = false
+            }
             explosion.animate()
             if (explosion.isFinished()) {
                 bazookaExplosionPool.free(explosion)

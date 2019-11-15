@@ -2,6 +2,7 @@ const Matter = require('matter-js');
 const shortid = require('shortid');
 
 const Agent = require('../models/Agent');
+const Projectile = require("../models/Projectile")
 const Pistol = require('../models/Pistol');
 const MachineGun = require('../models/MachineGun');
 const Shotgun = require('../models/Shotgun');
@@ -35,7 +36,7 @@ let lastLoop;
 
 const matrix = getZonesMatrix();
 
-async function physicLoop(broadcastNewProjectile) {
+async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
     weaponRespawnLoop();
     while (true) {
         const currentTime = new Date().getTime();
@@ -45,7 +46,7 @@ async function physicLoop(broadcastNewProjectile) {
         for (agent of agents) {
             checkControls(agent, delta, broadcastNewProjectile)
         }
-        calculateProjectilePositions(delta);
+        calculateProjectilePositions(delta, broadcastNewExplosion);
 
         await sleep(1000 / 60)
     }
@@ -224,7 +225,7 @@ const spawnPistolPickupAtRandomPlace = () => {
     pickups.push(weapon)
 };
 
-function calculateProjectilePositions(delta) {
+function calculateProjectilePositions(delta, broadcastNewExplosion) {
     for (projectile of projectiles) {
         const x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
         const y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
@@ -246,6 +247,10 @@ function calculateProjectilePositions(delta) {
                     if (projectile.type !== ProjectileType.BAZOOKA) {
                         agent.takeDamage();
                     }
+                    if (projectile.type === ProjectileType.BAZOOKA) {
+                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
+                    }
+
                     removeProjectile(projectile.id);
                     removed = true;
                     break;
@@ -253,6 +258,11 @@ function calculateProjectilePositions(delta) {
             }
             if (matrix.walls[zone] != null) for (wall of matrix.walls[zone]) {
                 if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
+
+                    if (projectile.type === ProjectileType.BAZOOKA) {
+                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
+                    }
+
                     removeProjectile(projectile.id);
                     removed = true;
                     break;

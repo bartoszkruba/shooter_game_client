@@ -104,14 +104,13 @@ class Server {
 
                         Gdx.app.log("SocketIO", "My ID: $playerId")
                     }
-                    .on("playerDisconnected") { data ->
-                        removeOpponent(data)
-                    }
+                    .on("playerDisconnected") { data -> removeOpponent(data) }
                     .on("newProjectile") { processNewProjectile(it) }
                     .on("agentData") { processAgentData(it) }
                     .on("projectileData") { processProjectileData(it) }
                     .on("pickupData") { processPickupData(it) }
                     .on("wallData") { processWallData(it) }
+                    .on("newExplosion") { processNewExplosion(it) }
         }
 
         private fun processWallData(data: kotlin.Array<Any>) {
@@ -250,6 +249,18 @@ class Server {
                     }
                 }
             }
+        }
+
+        private fun processNewExplosion(data: kotlin.Array<Any>) {
+            val explosion = data[0] as JSONObject
+            val x = explosion.getDouble("x").toFloat()
+            val y = explosion.getDouble("y").toFloat()
+            explosions.add(bazookaExplosionPool.obtain().apply {
+                this.justSpawned = true
+                this.x = x
+                this.y = y
+                resetTimer()
+            })
         }
 
         private fun processNewProjectile(data: kotlin.Array<Any>) {
