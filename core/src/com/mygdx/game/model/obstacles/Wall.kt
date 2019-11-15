@@ -1,4 +1,4 @@
-package com.mygdx.game.model
+package com.mygdx.game.model.obstacles
 
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite

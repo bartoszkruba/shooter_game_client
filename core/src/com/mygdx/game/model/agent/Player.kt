@@ -1,9 +1,10 @@
-package com.mygdx.game.model
+package com.mygdx.game.model.agent
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
-import com.badlogic.gdx.utils.Array
+import com.mygdx.game.model.weapon.Pistol
+import com.mygdx.game.model.weapon.Weapon
 
 val PLAYER_SPRITE_COLOR = Color(0f, 0.9f, 0.0f, 1f)
 

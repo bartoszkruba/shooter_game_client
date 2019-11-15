@@ -1,5 +1,6 @@
-package com.mygdx.game.model
+package com.mygdx.game.model.weapon
 
+import com.mygdx.game.model.projectile.ProjectileType
 import com.mygdx.game.settings.SHOTGUN_BULLETS_IN_CHAMBER
 import com.mygdx.game.settings.SHOTGUN_RELOAD_TIME
 

@@ -1,6 +1,7 @@
-package com.mygdx.game.model
+package com.mygdx.game.model.pickup
 
 import com.badlogic.gdx.graphics.Texture
+import com.mygdx.game.model.pickup.Pickup
 import com.mygdx.game.settings.SHOTGUN_SPRITE_HEIGHT
 import com.mygdx.game.settings.SHOTGUN_SPRITE_WIDTH
 

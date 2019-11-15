@@ -1,4 +1,4 @@
-package com.mygdx.game.model
+package com.mygdx.game.model.projectile
 
 class ProjectileType {
     companion object {

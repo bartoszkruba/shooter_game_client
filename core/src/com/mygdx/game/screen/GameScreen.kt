@@ -11,7 +11,6 @@ import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
 import com.mygdx.game.Game
-import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.generateWallMatrix
 import com.mygdx.game.util.getZonesForCircle
@@ -21,9 +20,15 @@ import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
 import java.util.concurrent.ConcurrentHashMap
-import com.mygdx.game.model.Pickup
-import com.mygdx.game.model.Projectile
-import com.mygdx.game.model.Opponent
+import com.mygdx.game.model.pickup.Pickup
+import com.mygdx.game.model.projectile.Projectile
+import com.mygdx.game.model.agent.Opponent
+import com.mygdx.game.model.agent.Agent
+import com.mygdx.game.model.agent.Player
+import com.mygdx.game.model.obstacles.Wall
+import com.mygdx.game.model.projectile.MachineGunProjectile
+import com.mygdx.game.model.projectile.PistolProjectile
+import com.mygdx.game.model.projectile.ShotgunProjectile
 import ktx.assets.pool
 
 class GameScreen(
