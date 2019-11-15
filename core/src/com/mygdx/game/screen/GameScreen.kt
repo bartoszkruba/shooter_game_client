@@ -55,7 +55,8 @@ class GameScreen(
     private var rWasPressed = false
     private var mouseWasPressed = false
     private var forIf = true
-    private var scoreboardFornt = BitmapFont()
+    private var scoreboardFont = BitmapFont()
+    private var playersOnScoreboardFont = BitmapFont()
 
     val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
@@ -173,12 +174,26 @@ class GameScreen(
                 drawMagazineInfo(it)
                 checkAllPlayersOnMap(it)
                 scoreboard(it)
+                drawScoresOnBoard(it)
+            }
+        }
+    }
+
+    private fun drawScoresOnBoard(batch: SpriteBatch) {
+        if (Gdx.input.isKeyPressed(Input.Keys.TAB)) {
+            var t = 1.14f
+            playerOnScoreboardTable.values.forEach {
+                if (it.id == player.id) playersOnScoreboardFont.color = Color.GREEN else playersOnScoreboardFont.color = Color.RED;
+                t += 0.05f
+                playersOnScoreboardFont.draw(batch, "team name", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
+                playersOnScoreboardFont.draw(batch, it.name, WINDOW_WIDTH / 2.4f, WINDOW_HEIGHT / t)
+                playersOnScoreboardFont.draw(batch, "1", WINDOW_WIDTH / 1.73f, WINDOW_HEIGHT / t)
+                playersOnScoreboardFont.draw(batch, "1", WINDOW_WIDTH / 1.43f, WINDOW_HEIGHT / t)
             }
         }
     }
 
     private fun scoreboard(batch: SpriteBatch) {
-        var t = 1.14f
         if (Gdx.input.isKeyPressed(Input.Keys.TAB)){
             val scoreboard = assets.get("scoreboard/scoreboardBackground.png", Texture::class.java)
             val c = batch.color;
@@ -192,20 +207,8 @@ class GameScreen(
             batch.setColor(c.r, c.g, c.b, .8f)
             batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f , WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.15f);
 
-            scoreboardFornt.draw(batch, "TEAM       PLAYER         KILLED        DEAD ",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
-            scoreboardFornt.data.setScale(2f)
-
-            //font.draw(batch, "team name                     ${player.name}",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.17f)
-
-            //playerOnScoreboardTable.add(player)
-
-                playerOnScoreboardTable.values.forEach {
-                    t += 0.05f
-                    font.draw(batch, "team name                     ${it.name}", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
-                }
-
-
-
+            scoreboardFont.draw(batch, "TEAM           PLAYER              KILLS            DEAD ",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
+            scoreboardFont.data.setScale(1.7f)
         }
     }
 
