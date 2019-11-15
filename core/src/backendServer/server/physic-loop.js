@@ -372,7 +372,7 @@ function spawnBazookaProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, ag
     broadcastNewProjectile(projectile);
 }
 
-function spawnShotgunProjectiles(x, y, broadcastNewProjectile, agentId) {
+function spawnShotgunProjectiles(agent, x, y, broadcastNewProjectile, agentId) {
     for (let i = 0; i < 15; i++) {
         const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-10, 10);
         const xSpeed = Math.cos(Math.PI / 180 * angle);
@@ -483,7 +483,7 @@ function checkControls(agent, delta, broadcastNewProjectile) {
                 spawnBazookaProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile, agent.id);
                 break;
             case ProjectileType.SHOTGUN:
-                spawnShotgunProjectiles(edgePoint.x, edgePoint.y, broadcastNewProjectile);
+                spawnShotgunProjectiles(agent, edgePoint.x, edgePoint.y, broadcastNewProjectile);
                 break;
         }
     }
