@@ -46,9 +46,11 @@ class GameScreen(
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
+
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val shotgunTexture = assets.get("images/shotgun.png", Texture::class.java)
+    private val bazookaTexture = assets.get("images/bazooka.png", Texture::class.java)
 
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
 
@@ -123,8 +125,8 @@ class GameScreen(
             }
         }
         Server.connectionSocket()
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, playerAtlas,
-                healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, walls)
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
+                playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, walls)
 
         projectiles = Server.projectiles
         opponents = Server.opponents
@@ -604,7 +606,7 @@ class GameScreen(
     private fun drawExplosions(batch: Batch) {
         explosions.iterate { explosion, iterator ->
             explosion.animate()
-            if(explosion.isFinished()){
+            if (explosion.isFinished()) {
                 bazookaExplosionPool.free(explosion)
                 iterator.remove()
             }

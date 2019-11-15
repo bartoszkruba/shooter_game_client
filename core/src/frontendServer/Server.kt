@@ -8,10 +8,7 @@ import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Player
 import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.obstacles.Wall
-import com.mygdx.game.model.pickup.MachineGunPickup
-import com.mygdx.game.model.pickup.Pickup
-import com.mygdx.game.model.pickup.PistolPickup
-import com.mygdx.game.model.pickup.ShotgunPickup
+import com.mygdx.game.model.pickup.*
 import com.mygdx.game.model.projectile.*
 import com.mygdx.game.model.weapon.MachineGun
 import com.mygdx.game.model.weapon.Pistol
@@ -35,6 +32,7 @@ class Server {
         lateinit var pistolTexture: Texture
         lateinit var machineGunTexture: Texture
         lateinit var shotgunTexture: Texture
+        lateinit var bazookaTexture: Texture
         var shouldPlayReload = false
 
         private lateinit var player: Player
@@ -51,6 +49,7 @@ class Server {
         private var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
         private var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
         private var shotgunPickupPool = pool { ShotgunPickup(texture = shotgunTexture) }
+        private var bazookaPickupPool = pool { BazookaPickup(texture = bazookaTexture) }
 
         val opponents = ConcurrentHashMap<String, Opponent>()
         private lateinit var playerTextures: TextureAtlas
@@ -75,14 +74,16 @@ class Server {
         }
 
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
-                               shotgunTexture: Texture, playerTextures: TextureAtlas, healthBarTexture: Texture,
-                               bazookaExplosionTextureAtlas: TextureAtlas,
+                               shotgunTexture: Texture, bazookaTexture: Texture, playerTextures: TextureAtlas,
+                               healthBarTexture: Texture, bazookaExplosionTextureAtlas: TextureAtlas,
                                wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture, walls: Array<Wall>) {
 
             this.projectileTexture = projectileTexture
             this.pistolTexture = pistolTexture
             this.machineGunTexture = machineGunTexture
             this.shotgunTexture = shotgunTexture
+            this.bazookaTexture = bazookaTexture
+
             this.playerTextures = playerTextures
             this.healthBarTexture = healthBarTexture
             this.bazookaExplosionTextureAtlas = bazookaExplosionTextureAtlas
@@ -130,8 +131,12 @@ class Server {
             val picks = obj.getJSONArray("pickupData")
 
             for (pickup in pickups.values) {
-                if (pickup is PistolPickup) pistolPickupPool.free(pickup)
-                if (pickup is MachineGunPickup) machineGunPickupPool.free(pickup)
+                when (pickup) {
+                    is PistolPickup -> pistolPickupPool.free(pickup)
+                    is MachineGunPickup -> machineGunPickupPool.free(pickup)
+                    is ShotgunPickup -> shotgunPickupPool.free(pickup)
+                    is BazookaPickup -> bazookaPickupPool.free(pickup)
+                }
             }
 
             pickups.clear()
@@ -146,6 +151,7 @@ class Server {
                 pickups[id] = when (type) {
                     ProjectileType.PISTOL -> pistolPickupPool.obtain()
                     ProjectileType.SHOTGUN -> shotgunPickupPool.obtain()
+                    ProjectileType.BAZOOKA -> bazookaPickupPool.obtain()
                     else -> machineGunPickupPool.obtain()
                 }.apply { setPosition(x, y) }
             }
