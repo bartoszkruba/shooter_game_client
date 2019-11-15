@@ -65,7 +65,6 @@ class GameScreen(
 
     private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
 
-
     private var shouldPlayReload = false
     private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
@@ -131,7 +130,6 @@ class GameScreen(
         projectiles = Server.projectiles
         opponents = Server.opponents
         pistolProjectilePool = Server.pistolProjectilePool
-        shouldPlayReload = Server.shouldPlayReload
         machineGunProjectilePool = Server.machineGunProjectilePool
         shotgunProjectilePool = Server.shotgunProjectilePool
 
@@ -143,6 +141,7 @@ class GameScreen(
 
     private var pressedKeys = 0
     override fun render(delta: Float) {
+        shouldPlayReload = Server.shouldPlayReload
         if (Server.getPlayer() != null) {
             player = Server.getPlayer()!!
         }
@@ -421,14 +420,6 @@ class GameScreen(
         var movementSpeed = PLAYER_MOVEMENT_SPEED
         pressedKeys = 0
         if (!player.isDead) {
-
-            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-                explosions.add(bazookaExplosionPool.obtain().apply {
-                    x = mousePosition.x
-                    y = mousePosition.y
-                    resetTimer()
-                })
-            }
 
             if (Gdx.input.isKeyPressed(Input.Keys.W)) {
                 pressedKeys++

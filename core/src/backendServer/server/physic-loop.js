@@ -11,6 +11,7 @@ const ShotgunProjectile = require('../models/ShotgunProjectile');
 const PistolPickup = require('../models/PistolPickup');
 const MachineGunPickup = require('../models/MachineGunPickup');
 const ShotgunPickup = require('../models/ShotgunPickup');
+const BazookaPickup = require("../models/BazookaPickup");
 const ProjectileType = require('../models/ProjectileType');
 const constants = require('../settings/constants');
 const Wall = require('../models/Wall');
@@ -51,15 +52,11 @@ const weaponRespawnLoop = async () => {
         console.log("Spawning weapons");
         clearAllWeaponPickups();
 
-        for (let i = 0; i < constants.MACHINE_GUNS_ON_MAP; i++) {
-            spawnMachineGunPickupAtRandomPlace();
-        }
-        for (let i = 0; i < constants.PISTOLS_ON_MAP; i++) {
-            spawnPistolPickupAtRandomPlace()
-        }
-        for (let i = 0; i < constants.SHOTGUNS_ON_MAP; i++) {
-            spawnShotgunPickupAtRandomPlace()
-        }
+        for (let i = 0; i < constants.MACHINE_GUNS_ON_MAP; i++) spawnMachineGunPickupAtRandomPlace();
+        for (let i = 0; i < constants.PISTOLS_ON_MAP; i++) spawnPistolPickupAtRandomPlace();
+        for (let i = 0; i < constants.SHOTGUNS_ON_MAP; i++) spawnShotgunPickupAtRandomPlace();
+        for (let i = 0; i < constants.BAZOOKAS_ON_MAP; i++) spawnBazookaAtRandomPlace();
+
         await sleep(constants.WEAPON_RESPAWN_RATE * 1000)
     }
 };
@@ -69,6 +66,44 @@ const clearAllWeaponPickups = () => {
         pickup.zones.forEach(zone => matrix.pickups[zone] = [])
     });
     pickups.splice(0, pickups.length)
+};
+
+const spawnBazookaAtRandomPlace = () => {
+    const minX = constants.WALL_SPRITE_WIDTH + 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const maxX = constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH - 0.5 * constants.PLAYER_SPRITE_WIDTH;
+    const minY = constants.WALL_SPRITE_HEIGHT + 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+    const maxY = constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT - 0.5 * constants.PLAYER_SPRITE_HEIGHT;
+
+    const weapon = new BazookaPickup(50, 50, shortid.generate());
+
+    weapon.zones = getZonesForObject(weapon.bounds);
+
+    while (true) {
+        collided = false;
+        const x = util.getRandomArbitrary(minX, maxX);
+        const y = util.getRandomArbitrary(minY, maxY);
+
+        const oldZones = weapon.zones;
+        Matter.Body.setPosition(weapon.bounds, {x, y});
+        weapon.zones = getZonesForObject(weapon.bounds);
+
+        weapon.zones.forEach(zone => {
+            matrix.walls[zone].forEach(wall => {
+                if (Matter.SAT.collides(wall.bounds, weapon.bounds).collided) collided = true
+            })
+        });
+
+        oldZones.filter(zone => !weapon.zones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(weapon), 1)
+        });
+        weapon.zones.filter(zone => !oldZones.includes(zone)).forEach(zone => {
+            matrix.pickups[zone].push(weapon)
+        });
+
+        if (!collided) break
+    }
+
+    pickups.push(weapon)
 };
 
 const spawnShotgunPickupAtRandomPlace = () => {
@@ -318,7 +353,7 @@ function spawnShotgunProjectiles(x, y, broadcastNewProjectile) {
         const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-10, 10);
         const xSpeed = Math.cos(Math.PI / 180 * angle);
         const ySpeed = Math.sin(Math.PI / 180 * angle);
-        const projectile = new ShotgunProjectile(x,y, xSpeed, ySpeed, shortid.generate());
+        const projectile = new ShotgunProjectile(x, y, xSpeed, ySpeed, shortid.generate());
         broadcastNewProjectile(projectile)
     }
 }
