@@ -11,7 +11,6 @@ import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
 import com.mygdx.game.Game
-import com.mygdx.game.model.*
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.generateWallMatrix
 import com.mygdx.game.util.getZonesForCircle
@@ -21,10 +20,15 @@ import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import frontendServer.Server
 import java.util.concurrent.ConcurrentHashMap
-import com.mygdx.game.model.Pickup
-import com.mygdx.game.model.Projectile
-import com.mygdx.game.model.Opponent
+import com.mygdx.game.model.pickup.Pickup
+import com.mygdx.game.model.agent.Opponent
+import com.mygdx.game.model.agent.Agent
+import com.mygdx.game.model.agent.Player
+import com.mygdx.game.model.explosion.BazookaExplosion
+import com.mygdx.game.model.obstacles.Wall
+import com.mygdx.game.model.projectile.*
 import ktx.assets.pool
+import ktx.collections.iterate
 
 class GameScreen(
         val game: Game,
@@ -34,21 +38,35 @@ class GameScreen(
         private val font: BitmapFont) : KtxScreen {
 
     private val playerAtlas = assets.get<TextureAtlas>("images/player/player.atlas")
+    private val bazookaExplosionAtlas = assets.get<TextureAtlas>("images/bazooka/bazooka_explosion.atlas")
+
     private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
     private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
+
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
     private val shotgunTexture = assets.get("images/shotgun.png", Texture::class.java)
+    private val bazookaTexture = assets.get("images/bazooka.png", Texture::class.java)
+
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
+
     private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
+
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
     private val machineGunShotSoundEffect = assets.get("sounds/machine_gun_shot.wav", Sound::class.java)
+    private val bazookaShotSoundEffect = assets.get("sounds/bazooka_shot.mp3", Sound::class.java)
+
+    private val bazookaExplosionSoundEffect = assets.get("sounds/bazooka_explosion.mp3", Sound::class.java)
+
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
+
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
-    private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
     private val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+
+    private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
+
     private var shouldPlayReload = false
     private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
@@ -60,16 +78,21 @@ class GameScreen(
     private var forIf = true
 
     val playerTextures: Array<Texture> = Array<Texture>()
-    val mousePosition = Vector2()
-    val walls = Array<Wall>()
-    val wallMatrix: HashMap<String, Array<Wall>>
+    private val mousePosition = Vector2()
+    private val walls = Array<Wall>()
+    private val wallMatrix: HashMap<String, Array<Wall>>
 
-    var projectiles = ConcurrentHashMap<String, Projectile>()
+    private val projectiles: ConcurrentHashMap<String, Projectile>
 
-    lateinit var pistolProjectilePool: Pool<PistolProjectile>
-    lateinit var machineGunProjectilePool: Pool<MachineGunProjectile>
+    private val pistolProjectilePool: Pool<PistolProjectile>
+    private val machineGunProjectilePool: Pool<MachineGunProjectile>
+    private val shotgunProjectilePool: Pool<ShotgunProjectile>
+    private val bazookaProjectilePool: Pool<BazookaProjectile>
 
-    var pickups = ConcurrentHashMap<String, Pickup>()
+    private val bazookaExplosionPool: Pool<BazookaExplosion>
+    private val explosions: Array<BazookaExplosion>
+
+    private val pickups: ConcurrentHashMap<String, Pickup>
     var imgpos = 0.0
     var imgposdir = 0.1
     var showMiniMap = 0
@@ -80,7 +103,6 @@ class GameScreen(
     var bloodOnTheFloor = ArrayList<Blood>()
     private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
     var shouldDeathSoundPlay = false
-
 
     init {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
@@ -105,21 +127,29 @@ class GameScreen(
             }
         }
         Server.connectionSocket()
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, playerAtlas,
-                healthBarTexture, wallMatrix, wallTexture, walls)
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
+                playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, walls)
+
+        projectiles = Server.projectiles
+        opponents = Server.opponents
+
+        pistolProjectilePool = Server.pistolProjectilePool
+        machineGunProjectilePool = Server.machineGunProjectilePool
+        shotgunProjectilePool = Server.shotgunProjectilePool
+        bazookaProjectilePool = Server.bazookaProjectilePool
+
+        bazookaExplosionPool = Server.bazookaExplosionPool
+        explosions = Server.explosions
+
+        pickups = Server.pickups
     }
 
     private var pressedKeys = 0
     override fun render(delta: Float) {
+        shouldPlayReload = Server.shouldPlayReload
         if (Server.getPlayer() != null) {
             player = Server.getPlayer()!!
         }
-        projectiles = Server.projectiles
-        opponents = Server.opponents
-        pistolProjectilePool = Server.pistolProjectilePool
-        shouldPlayReload = Server.shouldPlayReload
-        machineGunProjectilePool = Server.machineGunProjectilePool
-        pickups = Server.pickups
 
         Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -159,6 +189,7 @@ class GameScreen(
                     Server.shouldPlayReload = false
                 }
                 drawWalls(it)
+                drawExplosions(it)
             }
         }
 
@@ -479,6 +510,7 @@ class GameScreen(
                 when {
                     entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.14f)
                     entry.value is MachineGunProjectile -> machineGunShotSoundEffect.play()
+                    entry.value is BazookaProjectile -> bazookaShotSoundEffect.play()
                     else -> pistolShotSoundEffect.play(1.5f)
                 }
             }
@@ -547,10 +579,12 @@ class GameScreen(
     }
 
     private fun removeProjectile(projectile: Projectile, key: String) {
-        if (projectile is PistolProjectile)
-            pistolProjectilePool.free(projectile)
-        else if (projectile is MachineGunProjectile)
-            machineGunProjectilePool.free(projectile)
+        when (projectile) {
+            is PistolProjectile -> pistolProjectilePool.free(projectile)
+            is MachineGunProjectile -> machineGunProjectilePool.free(projectile)
+            is ShotgunProjectile -> shotgunProjectilePool.free(projectile)
+            is BazookaProjectile -> bazookaProjectilePool.free(projectile)
+        }
         projectiles.remove(key)
     }
 
@@ -565,6 +599,21 @@ class GameScreen(
 
     private fun drawProjectiles(batch: Batch) = projectiles.values.forEach {
         it.sprite.draw(batch)
+    }
+
+    private fun drawExplosions(batch: Batch) {
+        explosions.iterate { explosion, iterator ->
+            if (explosion.justSpawned) {
+                bazookaExplosionSoundEffect.play()
+                explosion.justSpawned = false
+            }
+            explosion.animate()
+            if (explosion.isFinished()) {
+                bazookaExplosionPool.free(explosion)
+                iterator.remove()
+            }
+            explosion.sprite.draw(batch)
+        }
     }
 
     private fun drawOpponents(batch: Batch) {

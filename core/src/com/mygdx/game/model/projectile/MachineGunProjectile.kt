@@ -1,10 +1,10 @@
-package com.mygdx.game.model
+package com.mygdx.game.model.projectile
 
 import com.badlogic.gdx.graphics.Texture
-import com.mygdx.game.settings.SHOTGUN_BULLET_SPEED
+import com.mygdx.game.settings.MACHINE_GUN_BULLET_SPEED
 import com.mygdx.game.settings.STANDARD_PROJECTILE_WIDTH
 
-class ShotgunProjectile(
+class MachineGunProjectile(
         x: Float = 0f,
         y: Float = 0f,
         xSpeed: Float = 0f,
@@ -16,5 +16,4 @@ class ShotgunProjectile(
         ySpeed,
         texture,
         STANDARD_PROJECTILE_WIDTH / 2,
-        SHOTGUN_BULLET_SPEED
-)
+        MACHINE_GUN_BULLET_SPEED)

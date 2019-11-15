@@ -3,7 +3,7 @@ const BaseObject = require('./BaseObject');
 
 
 class Projectile extends BaseObject {
-    constructor(x = 0, y = 0, xSpeed = 0, ySpeed = 0, radius, type, speed, id) {
+    constructor(x = 0, y = 0, xSpeed = 0, ySpeed = 0, radius, type, speed, id, agentId) {
         super(id);
         this.bounds = Matter.Bodies.circle(x, y, radius);
         this.velocity = {};
@@ -11,6 +11,7 @@ class Projectile extends BaseObject {
         this.velocity.y = ySpeed;
         this.speed = speed;
         this.type = type;
+        this.agentId = agentId
     }
 }
 
