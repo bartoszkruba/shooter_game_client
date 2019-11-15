@@ -79,7 +79,7 @@ class GameScreen(
     private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
     var shouldDeathSoundPlay = false
 
-    private var playerOnScoreboardTable: Array<Agent> = Array<Agent>()
+    private var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
 
 
     init {
@@ -199,7 +199,7 @@ class GameScreen(
 
             //playerOnScoreboardTable.add(player)
 
-                playerOnScoreboardTable.forEach {
+                playerOnScoreboardTable.values.forEach {
                     t += 0.05f
                     font.draw(batch, "team name                     ${it.name}", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
                 }

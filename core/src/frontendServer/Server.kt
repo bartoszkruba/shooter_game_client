@@ -38,7 +38,7 @@ class Server {
         private lateinit var wallMatrix: HashMap<String, Array<Wall>>
         private lateinit var wallTexture: Texture
         private lateinit var walls: Array<Wall>
-        var playerOnScoreboardTable: Array<Agent> = Array<Agent>()
+        var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
 
         fun connectionSocket() {
             try {
@@ -80,6 +80,7 @@ class Server {
                         Gdx.app.log("SocketIO", "My ID: $playerId")
                     }
                     .on("playerDisconnected") { data ->
+                        println()
                         removeOpponent(data)
                     }
                     .on("newProjectile") { processNewProjectile(it) }
@@ -256,21 +257,25 @@ class Server {
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
                                    playerTextures: TextureAtlas,
                                    healthBarTexture: Texture) {
-            opponents[id] = Opponent(x, y, name, false, currentHealth, false, 0f, 0f,
+            val opponent = Opponent(x, y, name, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
-            playerOnScoreboardTable.add(opponents[id])
+            opponents[id] = opponent
+            playerOnScoreboardTable[id] = opponent
+
         }
 
         private fun removeOpponent(data: kotlin.Array<Any>) {
             val obj: JSONObject = data[0] as JSONObject
             val playerId = obj.getString("id")
             opponents.remove(playerId)
+            playerOnScoreboardTable.remove(playerId)
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
-            player = Player(500f, 500f, "", false,
+            val player = Player(500f, 500f, "", false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
-            playerOnScoreboardTable.add(player)
+            this.player = player
+            playerOnScoreboardTable[playerId] = player
         }
 
         fun startKey(keyLetter: String, b: Boolean) {
