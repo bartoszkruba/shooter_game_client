@@ -10,6 +10,7 @@ import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.pickup.*
 import com.mygdx.game.model.projectile.*
+import com.mygdx.game.model.weapon.Bazooka
 import com.mygdx.game.model.weapon.MachineGun
 import com.mygdx.game.model.weapon.Pistol
 import com.mygdx.game.model.weapon.Shotgun
@@ -41,6 +42,7 @@ class Server {
         val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
         val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
         val shotgunProjectilePool = pool { ShotgunProjectile(texture = projectileTexture) }
+        val bazookaProjectilePool = pool { BazookaProjectile(texture = projectileTexture) }
 
         lateinit var bazookaExplosionTextureAtlas: TextureAtlas
         val bazookaExplosionPool = pool { BazookaExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
@@ -215,6 +217,7 @@ class Server {
                                 ProjectileType.PISTOL -> player.weapon = Pistol()
                                 ProjectileType.MACHINE_GUN -> player.weapon = MachineGun()
                                 ProjectileType.SHOTGUN -> player.weapon = Shotgun()
+                                ProjectileType.BAZOOKA -> player.weapon = Bazooka()
                             }
                         }
                         val bulletsLeft = agent.getInt("bulletsLeft")
@@ -262,9 +265,8 @@ class Server {
                 projectiles[id] = when (type) {
                     ProjectileType.PISTOL -> pistolProjectilePool.obtain()
                     ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
-                    else -> {
-                        machineGunProjectilePool.obtain()
-                    }
+                    ProjectileType.BAZOOKA -> bazookaProjectilePool.obtain()
+                    else -> machineGunProjectilePool.obtain()
                 }.apply {
                     setPosition(x, y)
                     velocity.x = xSpeed

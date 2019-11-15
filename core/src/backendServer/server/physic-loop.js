@@ -5,9 +5,13 @@ const Agent = require('../models/Agent');
 const Pistol = require('../models/Pistol');
 const MachineGun = require('../models/MachineGun');
 const Shotgun = require('../models/Shotgun');
+const Bazooka = require('../models/Bazooka');
+
 const PistolProjectile = require('../models/PistolProjectile');
 const MachineGunProjectile = require('../models/MachineGunProjectile');
 const ShotgunProjectile = require('../models/ShotgunProjectile');
+const BazookaProjectile = require('../models/BazookaProjectile');
+
 const PistolPickup = require('../models/PistolPickup');
 const MachineGunPickup = require('../models/MachineGunPickup');
 const ShotgunPickup = require('../models/ShotgunPickup');
@@ -236,8 +240,12 @@ function calculateProjectilePositions(delta) {
         let removed = false;
         for (zone of projectile.zones) {
             if (matrix.agents[zone] != null) for (agent of matrix.agents[zone]) {
-                if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead) {
-                    agent.takeDamage();
+                if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead &&
+                    projectile.agentId !== agent.id) {
+
+                    if (projectile.type !== ProjectileType.BAZOOKA) {
+                        agent.takeDamage();
+                    }
                     removeProjectile(projectile.id);
                     removed = true;
                     break;
@@ -336,24 +344,30 @@ function movePickup(pickup, x, y) {
     });
 }
 
-function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
-    const projectile = new PistolProjectile(x, y, xSpeed, ySpeed, shortid.generate());
+function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, agentId) {
+    const projectile = new PistolProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
     addProjectileToMatrix(projectile);
     broadcastNewProjectile(projectile)
 }
 
-function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile) {
-    const projectile = new MachineGunProjectile(x, y, xSpeed, ySpeed, shortid.generate());
+function spawnMachineGunProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, agentId) {
+    const projectile = new MachineGunProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
     addProjectileToMatrix(projectile);
     broadcastNewProjectile(projectile)
 }
 
-function spawnShotgunProjectiles(x, y, broadcastNewProjectile) {
+function spawnBazookaProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, agentId) {
+    const projectile = new BazookaProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
+    addProjectileToMatrix(projectile);
+    broadcastNewProjectile(projectile);
+}
+
+function spawnShotgunProjectiles(x, y, broadcastNewProjectile, agentId) {
     for (let i = 0; i < 15; i++) {
         const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-10, 10);
         const xSpeed = Math.cos(Math.PI / 180 * angle);
         const ySpeed = Math.sin(Math.PI / 180 * angle);
-        const projectile = new ShotgunProjectile(x, y, xSpeed, ySpeed, shortid.generate());
+        const projectile = new ShotgunProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
         broadcastNewProjectile(projectile)
     }
 }
@@ -385,6 +399,9 @@ function pickWeapon(agent) {
                         addPickup(new ShotgunPickup(0, 0, shortid.generate(),
                             agent.weapon.bulletsInChamber), pickup.bounds.position.x, pickup.bounds.position.y);
                         break;
+                    case ProjectileType.BAZOOKA:
+                        addPickup(new BazookaPickup(0, 0, shortid.generate(),
+                            agent.weapon.bulletsInChamber), pickup.bounds.position.x, pickup.bounds.position.y)
                 }
 
                 switch (pickup.type) {
@@ -397,6 +414,8 @@ function pickWeapon(agent) {
                     case ProjectileType.SHOTGUN:
                         agent.weapon = new Shotgun();
                         break;
+                    case ProjectileType.BAZOOKA:
+                        agent.weapon = new Bazooka();
                 }
 
                 agent.weapon.bulletsInChamber = pickup.ammunition;
@@ -441,12 +460,17 @@ function checkControls(agent, delta, broadcastNewProjectile) {
             case ProjectileType.PISTOL:
                 xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
                 ySpeed = Math.sin(Math.PI / 180 * agent.facingDirectionAngle);
-                spawnPistolProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile);
+                spawnPistolProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile, agent.id);
                 break;
             case ProjectileType.MACHINE_GUN:
                 xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
                 ySpeed = Math.sin(Math.PI / 180 * agent.facingDirectionAngle);
-                spawnMachineGunProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile);
+                spawnMachineGunProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile, agent.id);
+                break;
+            case ProjectileType.BAZOOKA:
+                xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
+                ySpeed = Math.sin(Math.PI / 180 * agent.facingDirectionAngle);
+                spawnBazookaProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile, agent.id);
                 break;
             case ProjectileType.SHOTGUN:
                 spawnShotgunProjectiles(edgePoint.x, edgePoint.y, broadcastNewProjectile);

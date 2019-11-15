@@ -21,15 +21,12 @@ import com.mygdx.game.util.inFrustum
 import frontendServer.Server
 import java.util.concurrent.ConcurrentHashMap
 import com.mygdx.game.model.pickup.Pickup
-import com.mygdx.game.model.projectile.Projectile
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Player
 import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.obstacles.Wall
-import com.mygdx.game.model.projectile.MachineGunProjectile
-import com.mygdx.game.model.projectile.PistolProjectile
-import com.mygdx.game.model.projectile.ShotgunProjectile
+import com.mygdx.game.model.projectile.*
 import ktx.assets.pool
 import ktx.collections.iterate
 
@@ -85,6 +82,7 @@ class GameScreen(
     private val pistolProjectilePool: Pool<PistolProjectile>
     private val machineGunProjectilePool: Pool<MachineGunProjectile>
     private val shotgunProjectilePool: Pool<ShotgunProjectile>
+    private val bazookaProjectilePool: Pool<BazookaProjectile>
 
     private val bazookaExplosionPool: Pool<BazookaExplosion>
     private val explosions: Array<BazookaExplosion>
@@ -129,9 +127,11 @@ class GameScreen(
 
         projectiles = Server.projectiles
         opponents = Server.opponents
+
         pistolProjectilePool = Server.pistolProjectilePool
         machineGunProjectilePool = Server.machineGunProjectilePool
         shotgunProjectilePool = Server.shotgunProjectilePool
+        bazookaProjectilePool = Server.bazookaProjectilePool
 
         bazookaExplosionPool = Server.bazookaExplosionPool
         explosions = Server.explosions
@@ -577,6 +577,7 @@ class GameScreen(
             is PistolProjectile -> pistolProjectilePool.free(projectile)
             is MachineGunProjectile -> machineGunProjectilePool.free(projectile)
             is ShotgunProjectile -> shotgunProjectilePool.free(projectile)
+            is BazookaProjectile -> bazookaProjectilePool.free(projectile)
         }
         projectiles.remove(key)
     }
