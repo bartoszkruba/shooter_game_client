@@ -38,6 +38,7 @@ class Server {
         private lateinit var wallMatrix: HashMap<String, Array<Wall>>
         private lateinit var wallTexture: Texture
         private lateinit var walls: Array<Wall>
+        var playerOnScoreboardTable: Array<Agent> = Array<Agent>()
 
         fun connectionSocket() {
             try {
@@ -257,6 +258,7 @@ class Server {
                                    healthBarTexture: Texture) {
             opponents[id] = Opponent(x, y, name, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
+            playerOnScoreboardTable.add(opponents[id])
         }
 
         private fun removeOpponent(data: kotlin.Array<Any>) {
@@ -266,9 +268,9 @@ class Server {
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
-            println("Creating player")
             player = Player(500f, 500f, "", false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
+            playerOnScoreboardTable.add(player)
         }
 
         fun startKey(keyLetter: String, b: Boolean) {

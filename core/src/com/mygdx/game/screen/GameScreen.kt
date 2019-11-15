@@ -79,6 +79,8 @@ class GameScreen(
     private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
     var shouldDeathSoundPlay = false
 
+    private var playerOnScoreboardTable: Array<Agent> = Array<Agent>()
+
 
     init {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
@@ -110,6 +112,7 @@ class GameScreen(
     override fun render(delta: Float) {
         if (Server.getPlayer() != null) {
             player = Server.getPlayer()!!
+            playerOnScoreboardTable = Server.playerOnScoreboardTable
         }
         projectiles = Server.projectiles
         opponents = Server.opponents
@@ -175,6 +178,7 @@ class GameScreen(
     }
 
     private fun scoreboard(batch: SpriteBatch) {
+        var t = 1.14f
         if (Gdx.input.isKeyPressed(Input.Keys.TAB)){
             val scoreboard = assets.get("scoreboard/scoreboardBackground.png", Texture::class.java)
             val c = batch.color;
@@ -191,7 +195,16 @@ class GameScreen(
             scoreboardFornt.draw(batch, "TEAM       PLAYER         KILLED        DEAD ",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
             scoreboardFornt.data.setScale(2f)
 
-            font.draw(batch, "team name                     ${player.name}",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.17f)
+            //font.draw(batch, "team name                     ${player.name}",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.17f)
+
+            //playerOnScoreboardTable.add(player)
+
+                playerOnScoreboardTable.forEach {
+                    t += 0.05f
+                    font.draw(batch, "team name                     ${it.name}", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
+                }
+
+
 
         }
     }
