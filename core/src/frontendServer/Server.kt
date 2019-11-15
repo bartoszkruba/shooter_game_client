@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.utils.Array
+import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Player
 import com.mygdx.game.model.explosion.BazookaExplosion
@@ -213,6 +214,7 @@ class Server {
                 if (id == player.id) {
                     if (!isDead) {
                         player.name = name
+                        playerOnScoreboardTable[id]!!.name = name
                         player.isDead = isDead
                         player.setPosition(x, y)
                         if (player.weapon.type != weapon) {
@@ -239,6 +241,7 @@ class Server {
                         opponents[id]?.velocity?.y = yVelocity
                         opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
+                        playerOnScoreboardTable[id]!!.name = name
                         opponents[id]?.name = name
                         opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
                         opponents[id]?.setPosition(x, y)

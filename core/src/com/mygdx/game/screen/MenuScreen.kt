@@ -183,9 +183,7 @@ class MenuScreen(
             selectSound.play()
             when (currentChoice) {
                 startGameChoice -> {
-                    //game.changeToNameInputScreen(text.x)
-                    game.changeToGame()
-                    Server.setName("kkk")
+                    game.changeToNameInputScreen(text.x)
                 }
                 creditsChoice -> currentWindow = CREDITS
                 quitChoice -> exitProcess(0)
