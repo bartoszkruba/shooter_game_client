@@ -21,6 +21,8 @@ class LoadingScreen(private val game: Game,
 
     override fun show() {
         assets.load<TextureAtlas>("images/player/player.atlas")
+        assets.load<TextureAtlas>("images/bazooka/bazooka_explosion.atlas")
+
         assets.load("images/player.png", Texture::class.java)
         assets.load("images/blood-animation.png", Texture::class.java)
         assets.load("images/blood-onTheFloor.png", Texture::class.java)
@@ -54,7 +56,6 @@ class LoadingScreen(private val game: Game,
 
         assets.load("sounds/menu_hover.wav", Sound::class.java)
         assets.load("sounds/menu_select.wav", Sound::class.java)
-
         assets.load("sounds/pistol_shot.wav", Sound::class.java)
         assets.load("sounds/shotgun_shot.wav", Sound::class.java)
         assets.load("sounds/deathSound.wav", Sound::class.java)
@@ -65,6 +66,7 @@ class LoadingScreen(private val game: Game,
         assets.load("music/music.wav", Music::class.java)
         assets.load("music/rain.mp3", Music::class.java)
         assets.load("music/waiting.ogg", Music::class.java)
+
         assets.load<Texture>("images/splashscreen/foreground.png")
         assets.load<Texture>("images/splashscreen/background.png")
         assets.load<Texture>("images/splashscreen/splashtext.png")

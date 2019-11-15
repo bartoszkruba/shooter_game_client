@@ -9,7 +9,6 @@ import com.mygdx.game.model.*
 import com.mygdx.game.settings.HEALTH_BAR_SPRITE_HEIGHT
 import com.mygdx.game.settings.PLAYER_MAX_HEALTH
 import com.mygdx.game.util.getZonesForRectangle
-import com.sun.awt.SecurityWarning.setPosition
 import io.socket.client.IO
 import io.socket.client.Socket
 import ktx.assets.pool
