@@ -37,6 +37,7 @@ class LoadingScreen(private val game: Game,
         assets.load("images/healthBar3.png", Texture::class.java)
         assets.load("images/pistol.png", Texture::class.java)
         assets.load("images/machine_gun.png", Texture::class.java)
+        assets.load("images/shotgun.png", Texture::class.java)
         assets.load("images/ground.jpg", Texture::class.java)
         assets.load("images/crosshair.png", Texture::class.java)
         assets.load("images/menu/credits.png", Texture::class.java)
@@ -55,8 +56,10 @@ class LoadingScreen(private val game: Game,
         assets.load("sounds/menu_select.wav", Sound::class.java)
 
         assets.load("sounds/pistol_shot.wav", Sound::class.java)
+        assets.load("sounds/shotgun_shot.wav", Sound::class.java)
         assets.load("sounds/deathSound.wav", Sound::class.java)
         assets.load("sounds/reload_sound.mp3", Sound::class.java)
+        assets.load("sounds/machine_gun_shot.wav", Sound::class.java)
 
         assets.load("music/ingame_music.ogg", Music::class.java)
         assets.load("music/music.wav", Music::class.java)

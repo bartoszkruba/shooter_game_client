@@ -39,9 +39,12 @@ class GameScreen(
     private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
     private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
     private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
+    private val shotgunTexture = assets.get("images/shotgun.png", Texture::class.java)
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
     private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
+    private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
+    private val machineGunShotSoundEffect = assets.get("sounds/machine_gun_shot.wav", Sound::class.java)
     private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
     private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
@@ -88,6 +91,7 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         wallMatrix = generateWallMatrix()
         generateWalls()
+
         music.isLooping = true
         music.volume = 0.2f
         music.play()
@@ -101,8 +105,8 @@ class GameScreen(
             }
         }
         Server.connectionSocket()
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, playerAtlas, healthBarTexture,
-                wallMatrix, wallTexture, walls)
+        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, playerAtlas,
+                healthBarTexture, wallMatrix, wallTexture, walls)
     }
 
     private var pressedKeys = 0
@@ -472,7 +476,11 @@ class GameScreen(
             removed = false
             if (entry.value.justFired) {
                 entry.value.justFired = false
-                pistolShotSoundEffect.play()
+                when {
+                    entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.14f)
+                    entry.value is MachineGunProjectile -> machineGunShotSoundEffect.play()
+                    else -> pistolShotSoundEffect.play(1.5f)
+                }
             }
             entry.value.setPosition(
                     entry.value.bounds.x + entry.value.velocity.x * delta * entry.value.speed,
