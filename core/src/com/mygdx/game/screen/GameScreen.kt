@@ -55,6 +55,7 @@ class GameScreen(
     private var rWasPressed = false
     private var mouseWasPressed = false
     private var forIf = true
+    private var scoreboardFornt = BitmapFont()
 
     val playerTextures: Array<Texture> = Array<Texture>()
     val mousePosition = Vector2()
@@ -155,7 +156,6 @@ class GameScreen(
                     Server.shouldPlayReload = false
                 }
                 drawWalls(it)
-                scoreboard(it)
             }
         }
 
@@ -169,6 +169,7 @@ class GameScreen(
                 drawGameOver(it)
                 drawMagazineInfo(it)
                 checkAllPlayersOnMap(it)
+                scoreboard(it)
             }
         }
     }
@@ -178,10 +179,20 @@ class GameScreen(
             val scoreboard = assets.get("scoreboard/scoreboardBackground.png", Texture::class.java)
             val c = batch.color;
             batch.setColor(c.r, c.g, c.b, .3f)
-            batch.draw(scoreboard, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT + 500f);
+            batch.draw(scoreboard, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
 
             batch.setColor(c.r, c.g, c.b, .6f)
-            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 4.3f , WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.2f);
+            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f , WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.1f);
+
+            val table = assets.get("scoreboard/scoreboardTable3.png", Texture::class.java)
+            batch.setColor(c.r, c.g, c.b, .8f)
+            batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f , WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.15f);
+
+            scoreboardFornt.draw(batch, "TEAM       PLAYER         KILLED        DEAD ",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
+            scoreboardFornt.data.setScale(2f)
+
+            font.draw(batch, "team name                     ${player.name}",WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.17f)
+
         }
     }
 

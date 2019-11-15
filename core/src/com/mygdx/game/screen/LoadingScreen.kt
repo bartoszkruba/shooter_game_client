@@ -52,6 +52,7 @@ class LoadingScreen(private val game: Game,
         assets.load("images/enterYourName.png", Texture::class.java)
         assets.load("images/txfUsernameBackground.png", Texture::class.java)
         assets.load("scoreboard/scoreboardBackground.png", Texture::class.java)
+        assets.load("scoreboard/scoreboardTable3.png", Texture::class.java)
 
         assets.load("sounds/menu_hover.wav", Sound::class.java)
         assets.load("sounds/menu_select.wav", Sound::class.java)
