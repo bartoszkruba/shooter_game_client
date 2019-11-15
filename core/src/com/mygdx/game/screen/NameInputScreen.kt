@@ -28,6 +28,7 @@ import ktx.graphics.use
 
 
 class NameInputScreen (
+        val x: Float,
         val game: Game,
         private val batch: SpriteBatch,
         private val assets: AssetManager,
@@ -72,7 +73,7 @@ class NameInputScreen (
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
         background.setBounds(0f, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
-        text.setBounds(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH / 3, WINDOW_HEIGHT / 3)
+        text.setBounds(x, WINDOW_HEIGHT, WINDOW_WIDTH / 3, WINDOW_HEIGHT / 3)
         text.y = WINDOW_HEIGHT - 280f
 
         bigFont.data.setScale(4f)
@@ -87,12 +88,8 @@ class NameInputScreen (
     }
 
     override fun render(delta: Float) {
-        foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
-        background.setPosition(background.x - 0.03f * 60 * delta, background.y)
-
-        if (text.x > 60 && text.y > 100) {
-            text.x -= WINDOW_WIDTH / 1000 * text.width * delta
-        }
+        setBackground(delta)
+        setLogo(delta)
         moveDroplets(delta)
         if (TimeUtils.millis() - lastSpawn > spawnRate) spawnDroplet()
 
@@ -108,13 +105,24 @@ class NameInputScreen (
         }
         stage.draw();
         checkNameInput()
-
         drawRain();
+    }
 
+    private fun setBackground(delta: Float) {
+        foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
+        background.setPosition(background.x - 0.03f * 60 * delta, background.y)
+    }
+
+    private fun setLogo(delta: Float) {
+        if (text.x > 60 && text.y > 100) {
+            text.x -= WINDOW_WIDTH / 1000 * text.width * delta
+        }
     }
 
     private fun checkNameInput() {
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
+            rainMusic.stop()
+            backgroundMusic.stop()
             game.changeToGame()
             frontendServer.Server.setName(username)
         }
@@ -170,17 +178,7 @@ class NameInputScreen (
         }
     }
 
-    override fun show() {
-        super.show()
-        rainMusic.isLooping = true
-        rainMusic.play()
-        backgroundMusic.isLooping = true
-        backgroundMusic.volume = 0.3f
-        backgroundMusic.play()
-    }
-
     private fun drawRain() {
-
         shape.projectionMatrix = camera.combined
         droplets.forEach {
             shape.begin(ShapeRenderer.ShapeType.Filled)

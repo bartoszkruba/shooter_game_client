@@ -49,8 +49,8 @@ class Game : KtxGame<KtxScreen>() {
         setScreen<GameScreen>()
     }
 
-    fun changeToNameInputScreen() {
-        val nameInputScreen = NameInputScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
+    fun changeToNameInputScreen(x: Float) {
+        val nameInputScreen = NameInputScreen(x,this, context.inject(), context.inject(), context.inject(), context.inject())
 
         addScreen(nameInputScreen)
         removeScreen<MenuScreen>()
