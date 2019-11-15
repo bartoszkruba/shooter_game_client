@@ -196,9 +196,9 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const ag = new Agent(500, 500, "", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id)
+    const ag = new Agent(200, 200, "", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id)
     engine.addAgent(ag, 500, 500);
-    engine.moveAgentToRandomPlace(ag);
+    //engine.moveAgentToRandomPlace(ag);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;

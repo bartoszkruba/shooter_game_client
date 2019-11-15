@@ -90,7 +90,7 @@ class GameScreen(
         generateWalls()
         music.isLooping = true
         music.volume = 0.2f
-        music.play()
+        //music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -155,6 +155,7 @@ class GameScreen(
                     Server.shouldPlayReload = false
                 }
                 drawWalls(it)
+                scoreboard(it)
             }
         }
 
@@ -169,6 +170,18 @@ class GameScreen(
                 drawMagazineInfo(it)
                 checkAllPlayersOnMap(it)
             }
+        }
+    }
+
+    private fun scoreboard(batch: SpriteBatch) {
+        if (Gdx.input.isKeyPressed(Input.Keys.TAB)){
+            val scoreboard = assets.get("scoreboard/scoreboardBackground.png", Texture::class.java)
+            val c = batch.color;
+            batch.setColor(c.r, c.g, c.b, .3f)
+            batch.draw(scoreboard, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT + 500f);
+
+            batch.setColor(c.r, c.g, c.b, .6f)
+            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 4.3f , WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.2f);
         }
     }
 
