@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Circle
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.utils.Array
-import com.mygdx.game.model.Wall
+import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.settings.*
 
 var x = 0f

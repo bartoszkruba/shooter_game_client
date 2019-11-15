@@ -139,7 +139,7 @@ io.on('connection', (socket) => {
             if (agents[i].id === socket.id) {
                 agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
                 agents[i].isDead = false;
-                agents[i] = new Pistol();
+                agents[i].weapon = new Pistol();
                 engine.moveAgentToRandomPlace(agents[i]);
                 break;
             }
@@ -207,32 +207,39 @@ io.on('connection', (socket) => {
         engine.lastLoop = new Date().getTime();
         engine.physicLoop(projectile => {
 
-            zones = getZonesForObject(projectile.bounds);
+                zones = getZonesForObject(projectile.bounds);
 
-            for (agent of agents) {
+                for (agent of agents) {
 
-                if (projectile.bounds.position.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
-                    projectile.bounds.position.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
-                    projectile.bounds.position.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
-                    projectile.bounds.position.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
-                    io.to(agent.id).emit("newProjectile", {
-                        x: projectile.bounds.position.x,
-                        y: projectile.bounds.position.y,
-                        id: projectile.id,
-                        xSpeed: projectile.velocity.x,
-                        ySpeed: projectile.velocity.y,
-                        type: projectile.type
-                    });
+                    if (projectile.bounds.position.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
+                        projectile.bounds.position.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
+                        projectile.bounds.position.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
+                        projectile.bounds.position.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
+                        io.to(agent.id).emit("newProjectile", {
+                            x: projectile.bounds.position.x,
+                            y: projectile.bounds.position.y,
+                            id: projectile.id,
+                            xSpeed: projectile.velocity.x,
+                            ySpeed: projectile.velocity.y,
+                            type: projectile.type
+                        });
+                    }
                 }
-
-                // for (zone of zones) {
-                //     if (agent.viewportZones.includes(zone)) {
-                //
-                //         break
-                //     }
-                // }
-            }
-        });
+            },
+            explosion => {
+                console.log("Broadcasting new explosion")
+                for (agent of agents) {
+                    if (explosion.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
+                        explosion.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
+                        explosion.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
+                        explosion.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
+                        io.to(agent.id).emit("newExplosion", {
+                            x: explosion.x,
+                            y: explosion.y,
+                        });
+                    }
+                }
+            });
         agentDataLoop();
         projectileDataLoop();
         pickupDataLoop()

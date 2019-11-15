@@ -1,4 +1,4 @@
-package com.mygdx.game.model
+package com.mygdx.game.model.agent
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.mygdx.game.settings.*
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode
+import com.mygdx.game.model.weapon.Weapon
 
 
 abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, var currentHealth: Float,
