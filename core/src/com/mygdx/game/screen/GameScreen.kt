@@ -121,7 +121,7 @@ class GameScreen(
 
         music.isLooping = true
         music.volume = 0.2f
-        music.play()
+//        music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -338,15 +338,16 @@ class GameScreen(
                     val playersInMiniMapexture = assets.get("images/opponentsInMiniMap.png", Texture::class.java)
                     batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
                     opponents.values.forEach {
+                        if (!it.isDead)
                         batch.draw(playersInMiniMapexture,
                                 ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
                                 ((it.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize) - playerSize / 2f,
                                 playerSize,
                                 playerSize);
-                    }
                 }
             }
         }
+    }
 
         private fun checkRestart() {
             if (player.isDead) {
@@ -500,20 +501,23 @@ class GameScreen(
         }
 
         private fun moveOpponents(delta: Float) {
-            for (opponent in opponents.values) {
-                val oldX = opponent.bounds.x
-                val oldY = opponent.bounds.y
-                opponent.isMoving = opponent.velocity.x != 0.0f || opponent.velocity.y != 0.0f
-                opponent.setPosition(
-                        opponent.bounds.x + opponent.velocity.x * delta,
-                        opponent.bounds.y + opponent.velocity.y * delta)
+            for (entry in opponents.entries) {
+
+            if (agentOutSideViewport(entry.value)) opponents.remove(entry.key)
+
+            val oldX = entry.value.bounds.x
+                val oldY = entry.value.bounds.y
+                entry.value.isMoving = entry.value.velocity.x != 0.0f || entry.value.velocity.y != 0.0f
+                entry.value.setPosition(
+                        entry.value.bounds.x + entry.value.velocity.x * delta,
+                        entry.value.bounds.y + entry.value.velocity.y * delta)
                 val zones = getZonesForRectangle(player.bounds)
 
                 var collided = false
                 for (i in 0 until zones.size) {
                     for (j in 0 until wallMatrix[zones[i]]!!.size) {
                         if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
-                            opponent.setPosition(oldX, oldY)
+                            entry.value.setPosition(oldX, oldY)
                             collided = true
                             break
                         }
@@ -523,23 +527,30 @@ class GameScreen(
             }
         }
 
-        private fun movePlayer(x: Float, y: Float, oldX: Float, oldY: Float) {
-            player.setPosition(
-                    MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
-                    MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
-            val zones = getZonesForRectangle(player.bounds)
-            var collided = false
-            for (i in 0 until zones.size) {
-                for (j in 0 until wallMatrix[zones[i]]!!.size) {
-                    if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
-                        player.setPosition(oldX, oldY)
-                        collided = true
-                        break
-                    }
-                    if (collided) break
+        private fun agentOutSideViewport(agent: Agent) =
+            agent.bounds.x + 0.5 * PLAYER_SPRITE_WIDTH < camera.position.x - WINDOW_WIDTH ||
+                    agent.bounds.x + 0.5 * PLAYER_SPRITE_WIDTH > camera.position.x + WINDOW_WIDTH ||
+                    agent.bounds.y + 0.5 * PLAYER_SPRITE_HEIGHT < camera.position.y - WINDOW_HEIGHT ||
+                    agent.bounds.y + 0.5 * PLAYER_SPRITE_HEIGHT > camera.position.y + WINDOW_HEIGHT
+
+
+    private fun movePlayer(x: Float, y: Float, oldX: Float, oldY: Float) {
+        player.setPosition(
+                MathUtils.clamp(x, WALL_SPRITE_WIDTH, MAP_WIDTH - WALL_SPRITE_WIDTH - PLAYER_SPRITE_WIDTH),
+                MathUtils.clamp(y, WALL_SPRITE_HEIGHT, MAP_HEIGHT - WALL_SPRITE_HEIGHT - PLAYER_SPRITE_HEIGHT))
+        val zones = getZonesForRectangle(player.bounds)
+        var collided = false
+        for (i in 0 until zones.size) {
+            for (j in 0 until wallMatrix[zones[i]]!!.size) {
+                if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
+                    player.setPosition(oldX, oldY)
+                    collided = true
+                    break
                 }
+                if (collided) break
             }
         }
+    }
 
 
         private fun calculateProjectilePositions(delta: Float) {
