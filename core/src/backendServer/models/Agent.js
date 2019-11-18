@@ -24,6 +24,8 @@ class Agent extends BaseObject {
         this.isLMPressed = false;
 
         this.pickWeapon = false;
+        this.lastRespawn = 0;
+        this.invinsible = false;
 
         this.velocity = {x: 0, y: 0};
 

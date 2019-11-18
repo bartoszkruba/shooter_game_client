@@ -234,6 +234,7 @@ class Server {
                 val xVelocity = agent.getLong("xVelocity").toFloat()
                 val yVelocity = agent.getLong("yVelocity").toFloat()
                 val angle = agent.getDouble("angle").toFloat()
+                val invisible = agent.getBoolean("inv")
                 if (id == player.id) {
                     if (!isDead) {
                         if (player.weapon.type != weapon) {
@@ -248,6 +249,7 @@ class Server {
                         if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
                         playerOnScoreboardTable[id]!!.name = name
                         player.apply {
+                            this.invisible = invisible
                             this.name = name
                             this.isDead = isDead
                             setPosition(x, y)
@@ -260,17 +262,13 @@ class Server {
                     } else player.isDead = true
                 } else {
                     if (opponents[id] == null) {
-                        createOpponent(id, x, y, name, currentHealth, playerTextures, healthBarTexture)
-                        opponents[id]?.apply {
+                        createOpponent(id, x, y, name, currentHealth, playerTextures, healthBarTexture).apply {
                             velocity.x = xVelocity
                             setAngle(angle)
                             velocity.y = yVelocity
                             isMoving = xVelocity == 0f && yVelocity == 0f
+                            this.invisible = invisible
                         }
-                        opponents[id]?.velocity?.x = xVelocity
-                        opponents[id]?.setAngle(angle)
-                        opponents[id]?.velocity?.y = yVelocity
-                        opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
                         playerOnScoreboardTable[id]!!.name = name
                         opponents[id]?.apply {
@@ -285,6 +283,7 @@ class Server {
                             this.currentHealth = currentHealth
                             healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
                             isMoving = xVelocity == 0f && yVelocity == 0f
+                            this.invisible = invisible
                         }
                     }
                 }
@@ -347,12 +346,12 @@ class Server {
 
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
                                    playerTextures: TextureAtlas,
-                                   healthBarTexture: Texture) {
+                                   healthBarTexture: Texture): Opponent {
             val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
             opponents[id] = opponent
             playerOnScoreboardTable[id] = opponent
-
+            return opponent
         }
 
         private fun removeOpponent(data: kotlin.Array<Any>) {
