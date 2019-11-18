@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
+import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.generateWallMatrix
@@ -29,6 +30,8 @@ import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.projectile.*
 import ktx.assets.pool
 import ktx.collections.iterate
+
+private enum class SHAKE_DIRECTION { RIGHT, LEFT }
 
 class GameScreen(
         val game: Game,
@@ -108,6 +111,8 @@ class GameScreen(
 
     private var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
 
+    private var shakeDirection = SHAKE_DIRECTION.RIGHT
+    private var lastExplosion = 0L
 
     init {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
@@ -119,7 +124,7 @@ class GameScreen(
         wallMatrix = generateWallMatrix()
 
         music.isLooping = true
-        music.volume = 0.2f
+        music.volume = 0.4f
         music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
@@ -169,6 +174,7 @@ class GameScreen(
             calculateProjectilePositions(delta)
             checkControls(delta)
             setCameraPosition()
+            if (TimeUtils.millis() - lastExplosion < 1000) shakeCamera()
             checkRestart()
         }
 
@@ -655,6 +661,7 @@ class GameScreen(
     private fun drawExplosions(batch: Batch) {
         explosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
+                lastExplosion = TimeUtils.millis()
                 bazookaExplosionSoundEffect.play()
                 explosion.justSpawned = false
             }
@@ -700,7 +707,29 @@ class GameScreen(
         }
     }
 
+    private var shake = 1
+    private var shakeLoop = TimeUtils.millis()
+
+    private fun shakeCamera() {
+        if (TimeUtils.millis() - shakeLoop > 50f) {
+            shakeLoop = TimeUtils.millis()
+            shake = 1
+            shakeDirection = if (shakeDirection == SHAKE_DIRECTION.LEFT) SHAKE_DIRECTION.RIGHT
+            else SHAKE_DIRECTION.LEFT
+        }
+
+        when (shakeDirection) {
+            SHAKE_DIRECTION.RIGHT -> {
+                camera.position.x += shake++
+            }
+            SHAKE_DIRECTION.LEFT -> {
+                camera.position.x -= shake++
+            }
+        }
+    }
+
     private fun setCameraPosition() {
+
         camera.position.x = MathUtils.clamp(player.bounds.x, WINDOW_WIDTH / 2f, MAP_WIDTH - WINDOW_WIDTH / 2f)
         camera.position.y = MathUtils.clamp(player.bounds.y, WINDOW_HEIGHT / 2f, MAP_HEIGHT - WINDOW_HEIGHT / 2f)
     }
