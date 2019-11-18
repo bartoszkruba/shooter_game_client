@@ -36,6 +36,12 @@ abstract class Agent(x: Float, y: Float, var name: String, var kills: Int, var d
     private var healthBarSpriteWidth = 182f
     var isMoving = false
     val velocity = Vector2()
+    var invisible = false
+        set(value) {
+            field = value
+            if (value) sprite.setAlpha(0.5f)
+            else sprite.setAlpha(1f)
+        }
 
     init {
         currentAnimation = animateDown
@@ -55,6 +61,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var kills: Int, var d
         sprite.setSize(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT)
         sprite.setOrigin(sprite.width / 2f, sprite.height / 2f)
         sprite.setPosition(bounds.x, bounds.y)
+        sprite.setAlpha(if (invisible) 0.5f else 1f)
     }
 
     fun setHealthBar(currentHealth: Float, x: Float, y: Float) {
@@ -63,7 +70,7 @@ abstract class Agent(x: Float, y: Float, var name: String, var kills: Int, var d
     }
 
     fun setPosition(newX: Float, newY: Float) {
-        if ( isMoving ) stateTime += Gdx.graphics.deltaTime else stateTime = currentAnimation.animationDuration
+        if (isMoving) stateTime += Gdx.graphics.deltaTime else stateTime = currentAnimation.animationDuration
         animate()
         sprite.setPosition(newX, newY)
         bounds.setPosition(newX, newY)
@@ -81,31 +88,31 @@ abstract class Agent(x: Float, y: Float, var name: String, var kills: Int, var d
         if (newAngle != facingDirectionAngle) {
             facingDirectionAngle = newAngle
             when {
-                     facingDirectionAngle >= 337.5 || facingDirectionAngle < 22.5 -> {
-                         currentAnimation = animateRight
-                     }
-                     facingDirectionAngle >= 22.5 && facingDirectionAngle < 67.5 -> {
-                         currentAnimation = animateUpRight
-                     }
-                     facingDirectionAngle >= 67.5 && facingDirectionAngle < 112.5 -> {
-                         currentAnimation = animateUp
-                     }
-                    facingDirectionAngle >= 112.5 && facingDirectionAngle < 157.5 -> {
-                        currentAnimation = animateUpLeft
-                    }
-                     facingDirectionAngle >= 157.5 && facingDirectionAngle < 202.5 -> {
-                         currentAnimation = animateLeft
-                     }
-                    facingDirectionAngle >= 202.5 && facingDirectionAngle < 247.5 -> {
-                        currentAnimation = animateDownLeft
-                    }
-                     facingDirectionAngle >= 247.5 && facingDirectionAngle < 292.5 -> {
-                         currentAnimation = animateDown
-                     }
-                     facingDirectionAngle >= 292.5 && facingDirectionAngle < 337.5 -> {
-                         currentAnimation = animateDownRight
-                        }
-                     }
+                facingDirectionAngle >= 337.5 || facingDirectionAngle < 22.5 -> {
+                    currentAnimation = animateRight
+                }
+                facingDirectionAngle >= 22.5 && facingDirectionAngle < 67.5 -> {
+                    currentAnimation = animateUpRight
+                }
+                facingDirectionAngle >= 67.5 && facingDirectionAngle < 112.5 -> {
+                    currentAnimation = animateUp
+                }
+                facingDirectionAngle >= 112.5 && facingDirectionAngle < 157.5 -> {
+                    currentAnimation = animateUpLeft
+                }
+                facingDirectionAngle >= 157.5 && facingDirectionAngle < 202.5 -> {
+                    currentAnimation = animateLeft
+                }
+                facingDirectionAngle >= 202.5 && facingDirectionAngle < 247.5 -> {
+                    currentAnimation = animateDownLeft
+                }
+                facingDirectionAngle >= 247.5 && facingDirectionAngle < 292.5 -> {
+                    currentAnimation = animateDown
+                }
+                facingDirectionAngle >= 292.5 && facingDirectionAngle < 337.5 -> {
+                    currentAnimation = animateDownRight
+                }
+            }
         }
     }
 }

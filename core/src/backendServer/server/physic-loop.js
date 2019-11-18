@@ -44,6 +44,8 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
         lastLoop = currentTime;
 
         for (let agent of agents) {
+            if (agent.invisible && agent.lastRespawn < new Date().getTime() - constants.INVISIBILITY_DURATION * 1000)
+                agent.invisible = false;
             checkControls(agent, delta, broadcastNewProjectile)
         }
         calculateProjectilePositions(delta, broadcastNewExplosion);
@@ -246,8 +248,8 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
         let removed = false;
         for (let zone of projectile.zones) {
             if (matrix.agents[zone] != null) for (let agent of matrix.agents[zone]) {
-                if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead &&
-                    projectile.agentId !== agent.id) {
+                if (!agent.isDead && !agent.invisible && projectile.agentId !== agent.id &&
+                    Matter.SAT.collides(agent.bounds, projectile.bounds).collided) {
 
                     agent.takeDamage(projectile.damage);
                     if (agent.isDead) {
@@ -370,7 +372,7 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion) {
     for (let zone of zones) {
         if (matrix.agents[zone] != null)
             matrix.agents[zone].forEach(agent => {
-                if (Matter.SAT.collides(agent.bounds, explosion).collided) {
+                if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible) {
                     agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
                 }
             })
@@ -627,6 +629,8 @@ const moveAgentToRandomPlace = (agent) => {
         if (!collided) break
     }
 
+    agent.invisible = true;
+    agent.lastRespawn = new Date().getTime();
 };
 
 const removeAgent = id => {

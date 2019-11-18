@@ -375,6 +375,7 @@ async function agentDataLoop() {
                             id: ag.id,
                             weapon: ag.weapon.projectileType,
                             angle: ag.facingDirectionAngle,
+                            inv: ag.invisible
                         })
                     }
             }
