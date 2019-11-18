@@ -378,6 +378,7 @@ function spawnShotgunProjectiles(agent, x, y, broadcastNewProjectile, agentId) {
         const xSpeed = Math.cos(Math.PI / 180 * angle);
         const ySpeed = Math.sin(Math.PI / 180 * angle);
         const projectile = new ShotgunProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
+        addProjectileToMatrix(projectile);
         broadcastNewProjectile(projectile)
     }
 }
