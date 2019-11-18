@@ -1,8 +1,6 @@
 const Matter = require('matter-js');
 const shortid = require('shortid');
 
-const Agent = require('../models/Agent');
-const Projectile = require("../models/Projectile")
 const Pistol = require('../models/Pistol');
 const MachineGun = require('../models/MachineGun');
 const Shotgun = require('../models/Shotgun');
@@ -34,16 +32,18 @@ const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
 let lastLoop;
 
+let continueLooping = true;
+
 const matrix = getZonesMatrix();
 
 async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
-    weaponRespawnLoop();
-    while (true) {
+    weaponRespawnLoop().catch(e => console.log(e));
+    while (continueLooping) {
         const currentTime = new Date().getTime();
-        delta = (currentTime - lastLoop) / 1000;
+        let delta = (currentTime - lastLoop) / 1000;
         lastLoop = currentTime;
 
-        for (agent of agents) {
+        for (let agent of agents) {
             checkControls(agent, delta, broadcastNewProjectile)
         }
         calculateProjectilePositions(delta, broadcastNewExplosion);
@@ -53,7 +53,7 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
 }
 
 const weaponRespawnLoop = async () => {
-    while (true) {
+    while (continueLooping) {
         console.log("Spawning weapons");
         clearAllWeaponPickups();
 
@@ -84,7 +84,7 @@ const spawnBazookaAtRandomPlace = () => {
     weapon.zones = getZonesForObject(weapon.bounds);
 
     while (true) {
-        collided = false;
+        let collided = false;
         const x = util.getRandomArbitrary(minX, maxX);
         const y = util.getRandomArbitrary(minY, maxY);
 
@@ -122,7 +122,7 @@ const spawnShotgunPickupAtRandomPlace = () => {
     weapon.zones = getZonesForObject(weapon.bounds);
 
     while (true) {
-        collided = false;
+        let collided = false;
         const x = util.getRandomArbitrary(minX, maxX);
         const y = util.getRandomArbitrary(minY, maxY);
 
@@ -160,7 +160,7 @@ const spawnMachineGunPickupAtRandomPlace = () => {
     weapon.zones = getZonesForObject(weapon.bounds);
 
     while (true) {
-        collided = false;
+        let collided = false;
         const x = util.getRandomArbitrary(minX, maxX);
         const y = util.getRandomArbitrary(minY, maxY);
 
@@ -198,7 +198,7 @@ const spawnPistolPickupAtRandomPlace = () => {
     weapon.zones = getZonesForObject(weapon.bounds);
 
     while (true) {
-        collided = false;
+        let collided = false;
         const x = util.getRandomArbitrary(minX, maxX);
         const y = util.getRandomArbitrary(minY, maxY);
 
@@ -226,7 +226,7 @@ const spawnPistolPickupAtRandomPlace = () => {
 };
 
 function calculateProjectilePositions(delta, broadcastNewExplosion) {
-    for (projectile of projectiles) {
+    for (let projectile of projectiles) {
         const x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
         const y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
 
@@ -235,18 +235,19 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
             removeProjectile(projectile.id);
+            if (projectile.type === ProjectileType.BAZOOKA)
+                broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y});
             continue
         }
 
         let removed = false;
-        for (zone of projectile.zones) {
-            if (matrix.agents[zone] != null) for (agent of matrix.agents[zone]) {
+        for (let zone of projectile.zones) {
+            if (matrix.agents[zone] != null) for (let agent of matrix.agents[zone]) {
                 if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead &&
                     projectile.agentId !== agent.id) {
 
-                    if (projectile.type !== ProjectileType.BAZOOKA) {
-                        agent.takeDamage();
-                    }
+                    agent.takeDamage(projectile.damage);
+
                     if (projectile.type === ProjectileType.BAZOOKA) {
                         broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
                     }
@@ -256,12 +257,11 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
                     break;
                 }
             }
-            if (matrix.walls[zone] != null) for (wall of matrix.walls[zone]) {
+            if (matrix.walls[zone] != null) for (let wall of matrix.walls[zone]) {
                 if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
 
-                    if (projectile.type === ProjectileType.BAZOOKA) {
-                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
-                    }
+                    if (projectile.type === ProjectileType.BAZOOKA)
+                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y});
 
                     removeProjectile(projectile.id);
                     removed = true;
@@ -279,7 +279,7 @@ function moveProjectile(projectile, x, y) {
 
     if (x < 0 || x > constants.MAP_WIDTH || y < 0 || y > constants.MAP_HEIGHT) return;
 
-    oldZones = projectile.zones;
+    let oldZones = projectile.zones;
 
     projectile.zones = getZonesForObject(projectile.bounds);
 
@@ -295,7 +295,7 @@ function moveProjectile(projectile, x, y) {
 function removeProjectile(id) {
     for (let i = 0; i < projectiles.length; i++) {
         if (projectiles[i].id === id) {
-            zones = projectiles[i].zones;
+            let zones = projectiles[i].zones;
             zones.forEach(zone => {
                 if (matrix.projectiles[zone] != null)
                     matrix.projectiles[zone].splice(matrix.projectiles[zone].indexOf(projectiles[i]), 1)
@@ -315,7 +315,7 @@ function moveAgent(agent, x, y, oldX, oldY) {
 
     Matter.Body.setPosition(agent.bounds, {x, y});
 
-    oldZones = agent.zones;
+    let oldZones = agent.zones;
 
     agent.zones = getZonesForObject(agent.bounds);
 
@@ -343,7 +343,7 @@ function moveAgent(agent, x, y, oldX, oldY) {
 function movePickup(pickup, x, y) {
     Matter.Body.setPosition(pickup.bounds, {x, y});
 
-    oldZones = pickup.zones;
+    let oldZones = pickup.zones;
     pickup.zones = getZonesForObject(pickup.bounds);
 
     oldZones.filter(zone => !pickup.zones.includes(zone)).forEach(zone => {
@@ -378,6 +378,7 @@ function spawnShotgunProjectiles(agent, x, y, broadcastNewProjectile, agentId) {
         const xSpeed = Math.cos(Math.PI / 180 * angle);
         const ySpeed = Math.sin(Math.PI / 180 * angle);
         const projectile = new ShotgunProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
+        addProjectileToMatrix(projectile);
         broadcastNewProjectile(projectile)
     }
 }
@@ -392,9 +393,9 @@ function addProjectileToMatrix(projectile) {
 
 function pickWeapon(agent) {
     let shouldBreak = false;
-    for (zone of agent.zones) {
+    for (let zone of agent.zones) {
         if (shouldBreak) break;
-        for (pickup of matrix.pickups[zone]) {
+        for (let pickup of matrix.pickups[zone]) {
             if (Matter.SAT.collides(agent.bounds, pickup.bounds).collided) {
                 switch (agent.weapon.projectileType) {
                     case ProjectileType.PISTOL:
@@ -466,6 +467,8 @@ function checkControls(agent, delta, broadcastNewProjectile) {
         edgePoint.x += xCentre - constants.PLAYER_SPRITE_WIDTH / 2;
         edgePoint.y += yCentre - constants.PLAYER_SPRITE_HEIGHT / 2;
 
+        let xSpeed;
+        let ySpeed;
         switch (agent.weapon.projectileType) {
             case ProjectileType.PISTOL:
                 xSpeed = Math.cos(Math.PI / 180 * agent.facingDirectionAngle);
@@ -517,7 +520,7 @@ function checkControls(agent, delta, broadcastNewProjectile) {
     }
 }
 
-function projectToRectEdge(angle, agent) {
+function projectToRectEdge(angle) {
     const twoPI = Math.PI * 2;
     let theta = angle * Math.PI / 180;
 
@@ -576,7 +579,7 @@ const moveAgentToRandomPlace = (agent) => {
     agent.zones = getZonesForObject(agent.bounds);
 
     while (true) {
-        collided = false;
+        let collided = false;
         const x = util.getRandomArbitrary(minX, maxX);
         const y = util.getRandomArbitrary(minY, maxY);
 
@@ -605,7 +608,7 @@ const moveAgentToRandomPlace = (agent) => {
 const removeAgent = id => {
     for (let i = 0; i < agents.length; i++) {
         if (agents[i].id === id) {
-            zones = agents[i].zones;
+            let zones = agents[i].zones;
             zones.forEach(zone => matrix.agents[zone].splice(matrix.agents[zone].indexOf(agents[i]), 1));
             agents.splice(i, 1);
             break;
@@ -616,7 +619,7 @@ const removeAgent = id => {
 const removePickup = id => {
     for (let i = 0; i < pickups.length; i++) {
         if (pickups[i].id === id) {
-            zones = pickups[i].zones;
+            let zones = pickups[i].zones;
             zones.forEach(zone => matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(pickups[i]), 1));
             pickups.splice(i, 1);
             break;
@@ -633,7 +636,7 @@ const addWall = (x, y) => {
     const wall = new Wall(x, y, shortid.generate());
     wall.zones = getZonesForObject(wall.bounds);
     walls.push(wall);
-    for (zone of wall.zones) {
+    for (let zone of wall.zones) {
         matrix.walls[zone].push(wall)
     }
 };
@@ -642,8 +645,7 @@ module.exports = {
     physicLoop,
     agents,
     projectiles,
-    moveAgent,
-    lastLoop,
+    continueLooping,
     pickups,
     matrix,
     addAgent,
