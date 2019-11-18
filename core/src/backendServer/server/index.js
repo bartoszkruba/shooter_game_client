@@ -188,11 +188,10 @@ io.on('connection', (socket) => {
     console.log("Adding new player, id " + socket.id);
     const ag = new Agent(200, 200, "", 0, 0, false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
     engine.addAgent(ag, 500, 500);
-    //engine.moveAgentToRandomPlace(ag);
+    engine.moveAgentToRandomPlace(ag);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
-        // engine.lastLoop = new Date().getTime();
         engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion).catch(e => console.log(e));
         agentDataLoop().catch(e => console.log(e));
         projectileDataLoop().catch(e => console.log(e));
@@ -204,7 +203,7 @@ io.on('connection', (socket) => {
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
 async function agentDataOnScoreboard() {
-    while (true) {
+    while (engine.continueLooping) {
         for (let agent of agents) {
             let scoreboardData = [];
             for (let agent of agents) {

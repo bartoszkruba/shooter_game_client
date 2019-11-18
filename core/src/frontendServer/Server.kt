@@ -15,8 +15,7 @@ import com.mygdx.game.model.weapon.Bazooka
 import com.mygdx.game.model.weapon.MachineGun
 import com.mygdx.game.model.weapon.Pistol
 import com.mygdx.game.model.weapon.Shotgun
-import com.mygdx.game.settings.HEALTH_BAR_SPRITE_HEIGHT
-import com.mygdx.game.settings.PLAYER_MAX_HEALTH
+import com.mygdx.game.settings.*
 import com.mygdx.game.util.getZonesForRectangle
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -107,7 +106,6 @@ class Server {
                         Gdx.app.log("SocketIO", "My ID: $playerId")
                     }
                     .on("playerDisconnected") { data ->
-                        println()
                         removeOpponent(data)
                     }
                     .on("newProjectile") { processNewProjectile(it) }
@@ -138,6 +136,8 @@ class Server {
         }
 
         private fun processWallData(data: kotlin.Array<Any>) {
+            this.walls.clear()
+            generateEdgeWalls()
             val walls = data[0] as JSONArray
             for (i in 0 until walls.length()) {
                 val obj = walls[i] as JSONObject
@@ -199,6 +199,7 @@ class Server {
                     projectiles[id] = when (type) {
                         ProjectileType.PISTOL -> pistolProjectilePool.obtain()
                         ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
+                        ProjectileType.BAZOOKA -> bazookaProjectilePool.obtain()
                         else -> machineGunProjectilePool.obtain()
                     }.apply {
                         setPosition(x, y)
@@ -312,7 +313,9 @@ class Server {
                 projectiles[id] = when (type) {
                     ProjectileType.PISTOL -> pistolProjectilePool.obtain()
                     ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
-                    ProjectileType.BAZOOKA -> bazookaProjectilePool.obtain()
+                    ProjectileType.BAZOOKA -> {
+                        bazookaProjectilePool.obtain()
+                    }
                     else -> machineGunProjectilePool.obtain()
                 }.apply {
                     setPosition(x, y)
@@ -396,6 +399,17 @@ class Server {
 
         fun pickWeapon() {
             socket.emit("pickWeapon")
+        }
+
+        private fun generateEdgeWalls() {
+            for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
+                walls.add(Wall(0f, i.toFloat(), wallTexture))
+                walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), wallTexture))
+            }
+            for (i in WALL_SPRITE_WIDTH.toInt() until MAP_WIDTH - WALL_SPRITE_WIDTH.toInt() step WALL_SPRITE_WIDTH.toInt()) {
+                walls.add(Wall(i.toFloat(), 0f, wallTexture))
+                walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT, wallTexture))
+            }
         }
     }
 }

@@ -117,11 +117,10 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         wallMatrix = generateWallMatrix()
-        generateWalls()
 
         music.isLooping = true
         music.volume = 0.2f
-//        music.play()
+        music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -199,7 +198,7 @@ class GameScreen(
                 }
             }
 
-            val uiMatrix = camera.combined.cpy();
+            val uiMatrix = camera.combined.cpy()
             uiMatrix.setToOrtho2D(0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
 
             batch.projectionMatrix = uiMatrix
@@ -698,17 +697,6 @@ class GameScreen(
                             WINDOW_WIDTH - 150f,
                             WINDOW_HEIGHT - 55f)
                 font.getData().setScale(1f, 1f);
-            }
-        }
-
-        private fun generateWalls() {
-            for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
-                walls.add(Wall(0f, i.toFloat(), wallTexture))
-                walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), wallTexture))
-            }
-            for (i in WALL_SPRITE_WIDTH.toInt() until MAP_WIDTH - WALL_SPRITE_WIDTH.toInt() step WALL_SPRITE_WIDTH.toInt()) {
-                walls.add(Wall(i.toFloat(), 0f, wallTexture))
-                walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT, wallTexture))
             }
         }
 
