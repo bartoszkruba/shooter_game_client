@@ -35,6 +35,7 @@ class NameInputScreen (
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
+    private val ipFont = BitmapFont()
     private val lastSpawn = 0L
 
     private val spawnRate = 100f
@@ -64,11 +65,13 @@ class NameInputScreen (
     val smallFont = BitmapFont()
 
     lateinit var txfUsername: TextField
+    lateinit var txfIP: TextField
     private var stage = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
     private var stage2 = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
     var skin: Skin = Skin(Gdx.files.internal("terra-mother/skin/terra-mother-ui.json"))
 
     lateinit var username: String
+    lateinit var ip: String
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -102,10 +105,31 @@ class NameInputScreen (
             text.draw(it)
             drawNameSign(it)
             nameInputFiled(it)
+            ipInputField(it)
         }
         stage.draw();
         checkNameInput()
         drawRain();
+    }
+
+    private fun ipInputField(batch: SpriteBatch) {
+        val c = batch.color;
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, .5f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.4f, WINDOW_HEIGHT / 3.5f, 210f, 110f);
+
+        ipFont.draw(batch, "For example: 92.254.180.153", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
+        ipFont.color = Color.GRAY;
+        txfIP = TextField("", skin)
+        txfIP.maxLength = 14
+        txfIP.setPosition(WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.42f)
+        txfIP.setSize(130f, 100f)
+        stage.addActor(txfIP)
+        Gdx.input.inputProcessor = this.stage;
+
+        txfIP.setTextFieldListener { textField, key -> ip = textField.text }
+
+        font.draw(batch, "Press ENTER to start the game!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3f);
     }
 
     private fun setBackground(delta: Float) {
@@ -143,8 +167,6 @@ class NameInputScreen (
         Gdx.input.inputProcessor = this.stage;
 
         txfUsername.setTextFieldListener { textField, key -> username = textField.text }
-
-        font.draw(batch, "Press ENTER to start the game!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 2.4f);
 
     }
 
