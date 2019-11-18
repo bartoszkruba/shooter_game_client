@@ -198,7 +198,7 @@ class GameScreen(
                 }
             }
 
-            val uiMatrix = camera.combined.cpy();
+            val uiMatrix = camera.combined.cpy()
             uiMatrix.setToOrtho2D(0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
 
             batch.projectionMatrix = uiMatrix

@@ -25,8 +25,8 @@ abstract class Projectile(
         bounds.x = x
         bounds.y = y
         sprite = Sprite(texture)
-        sprite.setPosition(x - bounds.radius, bounds.radius - 4f)
         sprite.setSize(radius * 2, radius * 2)
+        sprite.setPosition(x - bounds.radius, bounds.radius - 4f)
         velocity = Vector2(xSpeed, ySpeed)
     }
 

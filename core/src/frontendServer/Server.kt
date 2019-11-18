@@ -106,7 +106,6 @@ class Server {
                         Gdx.app.log("SocketIO", "My ID: $playerId")
                     }
                     .on("playerDisconnected") { data ->
-                        println()
                         removeOpponent(data)
                     }
                     .on("newProjectile") { processNewProjectile(it) }
@@ -181,6 +180,7 @@ class Server {
                     projectiles[id] = when (type) {
                         ProjectileType.PISTOL -> pistolProjectilePool.obtain()
                         ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
+                        ProjectileType.BAZOOKA -> bazookaProjectilePool.obtain()
                         else -> machineGunProjectilePool.obtain()
                     }.apply {
                         setPosition(x, y)
@@ -284,7 +284,9 @@ class Server {
                 projectiles[id] = when (type) {
                     ProjectileType.PISTOL -> pistolProjectilePool.obtain()
                     ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
-                    ProjectileType.BAZOOKA -> bazookaProjectilePool.obtain()
+                    ProjectileType.BAZOOKA -> {
+                        bazookaProjectilePool.obtain()
+                    }
                     else -> machineGunProjectilePool.obtain()
                 }.apply {
                     setPosition(x, y)
