@@ -235,7 +235,8 @@ async function projectileDataLoop() {
                             id: projectile.id,
                             xSpeed: projectile.velocity.x,
                             ySpeed: projectile.velocity.y,
-                            type: projectile.type
+                            type: projectile.type,
+                            agentId: projectile.agentId
                         })
                     }
             }
@@ -257,7 +258,8 @@ function broadcastNewProjectile(projectile) {
                 id: projectile.id,
                 xSpeed: projectile.velocity.x,
                 ySpeed: projectile.velocity.y,
-                type: projectile.type
+                type: projectile.type,
+                agentId: projectile.agentId
             });
         }
     }

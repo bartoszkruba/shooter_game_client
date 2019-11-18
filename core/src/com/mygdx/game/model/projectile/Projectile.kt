@@ -17,6 +17,7 @@ abstract class Projectile(
     val bounds: Circle = Circle()
     val sprite: Sprite
     val velocity: Vector2
+    var agentId = ""
 
     var justFired = false
 
