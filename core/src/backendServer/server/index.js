@@ -197,11 +197,28 @@ io.on('connection', (socket) => {
         agentDataLoop().catch(e => console.log(e));
         projectileDataLoop().catch(e => console.log(e));
         pickupDataLoop().catch(e => console.log(e));
+        agentDataOnScoreboard().catch(e => console.log(e));
     }
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
+async function agentDataOnScoreboard() {
+    while (true) {
+        for (let agent of agents) {
+            let scoreboardData = [];
+            for (let agent of agents) {
+                scoreboardData.push({
+                    id: agent.id,
+                    kills: agent.kills,
+                    deaths: agent.deaths
+                });
+            }
+            io.to(agent.id).emit("scoreboardData", {scoreboardData});
+        }
+        await sleep(1000 / constants.SCOREBOARD_UPDATE_PER_SECOND)
+    }
+}
 async function projectileDataLoop() {
     while (engine.continueLooping) {
         for (let agent of agents) {

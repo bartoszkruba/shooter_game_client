@@ -247,10 +247,9 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
                     projectile.agentId !== agent.id) {
 
                     agent.takeDamage(projectile.damage);
-
                     if (agent.isDead){
                         agent.deaths++;
-                        for (i = 0; i < agents.length; i++) {
+                        for (let i = 0; i < agents.length; i++) {
                             if (agents[i].id === projectile.agentId){
                                 agents[i].kills++
                             }
