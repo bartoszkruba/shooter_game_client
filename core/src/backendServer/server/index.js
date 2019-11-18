@@ -75,6 +75,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isRPressed = true;
+                        agents[i].lastPing = new Date().getTime();
                     }
                 }
                 break;
@@ -120,6 +121,7 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < agents.length; i++) {
                     if (agents[i].id === socket.id) {
                         agents[i].isRPressed = false;
+                        agents[i].lastPing = new Date().getTime();
                     }
                 }
                 break;
@@ -132,6 +134,7 @@ io.on('connection', (socket) => {
                 agents[i].currentHealth = constants.PLAYER_MAX_HEALTH;
                 agents[i].isDead = false;
                 agents[i].weapon = new Pistol();
+                agents[i].lastPing = new Date().getTime();
                 engine.moveAgentToRandomPlace(agents[i]);
                 break;
             }
@@ -143,6 +146,7 @@ io.on('connection', (socket) => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].name = name;
+                agents[i].lastPing = new Date().getTime();
             }
         }
     });
@@ -151,6 +155,7 @@ io.on('connection', (socket) => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id && !agents[i].isDead) {
                 agents[i].isLMPressed = true;
+                agents[i].lastPing = new Date().getTime();
             }
         }
     });
@@ -167,6 +172,7 @@ io.on('connection', (socket) => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].isLMPressed = false;
+                agents[i].lastPing = new Date().getTime();
             }
         }
     });
@@ -175,6 +181,7 @@ io.on('connection', (socket) => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].facingDirectionAngle = Object.values(data)[0]
+                agents[i].lastPing = new Date().getTime();
             }
         }
     });
@@ -197,10 +204,23 @@ io.on('connection', (socket) => {
         projectileDataLoop().catch(e => console.log(e));
         pickupDataLoop().catch(e => console.log(e));
         agentDataOnScoreboard().catch(e => console.log(e));
+        timeoutCheckLoop().catch(e => console.log(e))
     }
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
+
+async function timeoutCheckLoop() {
+    while (engine.continueLooping) {
+        for (let agent of agents) {
+            if (agent.lastPing < new Date().getTime() - 10000) {
+                engine.removeAgent(agent.id);
+                io.connected[agent.id].disconnect();
+            }
+        }
+        await sleep(5000)
+    }
+}
 
 async function agentDataOnScoreboard() {
     while (engine.continueLooping) {
@@ -218,6 +238,7 @@ async function agentDataOnScoreboard() {
         await sleep(1000 / constants.SCOREBOARD_UPDATE_PER_SECOND)
     }
 }
+
 async function projectileDataLoop() {
     while (engine.continueLooping) {
         for (let agent of agents) {
@@ -367,6 +388,7 @@ async function agentDataLoop() {
 function setVelocity(agent) {
     agent.velocity.x = 0;
     agent.velocity.y = 0;
+    agent.lastPing = new Date().getTime();
 
     let movementSpeed = constants.PLAYER_MOVEMENT_SPEED;
     let pressedKeys = 0;
