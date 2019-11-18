@@ -120,7 +120,7 @@ class GameScreen(
 
         music.isLooping = true
         music.volume = 0.2f
-//        music.play()
+        music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
