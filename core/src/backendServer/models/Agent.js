@@ -38,10 +38,12 @@ class Agent extends BaseObject {
         this.weapon.shoot();
     }
 
-    takeDamage(){
-        if(this.currentHealth > constants.PLAYER_MIN_HEALTH) {
-            this.currentHealth = this.currentHealth - constants.TAKE_DAMAGE;
-        } else {this.isDead = true}
+    takeDamage(damage) {
+        this.currentHealth -= damage;
+        if (this.currentHealth < 0) {
+            this.currentHealth = 0;
+            this.isDead = true;
+        } else this.isDead = false;
     }
 }
 

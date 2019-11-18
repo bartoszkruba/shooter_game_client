@@ -235,6 +235,8 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
         if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
             projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
             removeProjectile(projectile.id);
+            if (projectile.type === ProjectileType.BAZOOKA)
+                broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y});
             continue
         }
 
@@ -244,9 +246,8 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
                 if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead &&
                     projectile.agentId !== agent.id) {
 
-                    if (projectile.type !== ProjectileType.BAZOOKA) {
-                        agent.takeDamage();
-                    }
+                    agent.takeDamage(projectile.damage);
+
                     if (projectile.type === ProjectileType.BAZOOKA) {
                         broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
                     }
@@ -259,9 +260,8 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
             if (matrix.walls[zone] != null) for (let wall of matrix.walls[zone]) {
                 if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
 
-                    if (projectile.type === ProjectileType.BAZOOKA) {
-                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
-                    }
+                    if (projectile.type === ProjectileType.BAZOOKA)
+                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y});
 
                     removeProjectile(projectile.id);
                     removed = true;
