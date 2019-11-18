@@ -13,6 +13,8 @@ class Opponent(
         x: Float,
         y: Float,
         name: String,
+        kills: Int,
+        deaths: Int,
         isDead: Boolean,
         currentHealth: Float,
         gotShot: Boolean,
@@ -22,7 +24,7 @@ class Opponent(
         id: String,
         healthBarTexture: Texture,
         weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, name, isDead, currentHealth, gotShot, textureAtlas, healthBarTexture, weapon, facingDirectionAngle, id, OPPONENT_SPRITE_COLOR) {
+        facingDirectionAngle: Float = 0f) : Agent(x, y, name, kills, deaths, isDead, currentHealth, gotShot, textureAtlas, healthBarTexture, weapon, facingDirectionAngle, id, OPPONENT_SPRITE_COLOR) {
 
     val speed: Vector2
 

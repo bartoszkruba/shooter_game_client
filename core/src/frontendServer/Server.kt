@@ -114,6 +114,26 @@ class Server {
                     .on("pickupData") { processPickupData(it) }
                     .on("wallData") { processWallData(it) }
                     .on("newExplosion") { processNewExplosion(it) }
+                    .on("scoreboardData") { processScoreboardData(it) }
+        }
+
+        private fun processScoreboardData(data: kotlin.Array<Any>) {
+            val obj = data[0] as JSONObject
+            val agents = obj.getJSONArray("scoreboardData")
+            for (i in 0 until agents.length()) {
+                val agent = agents[i] as JSONObject
+                val id = agent.getString("id")
+                val kills = agent.getInt("kills")
+                val deaths = agent.getInt("deaths")
+
+                if (id == player.id){
+                    player.kills = kills
+                    player.deaths = deaths
+                }else{
+                    opponents[id]?.kills = kills
+                    opponents[id]?.deaths = deaths
+                }
+            }
         }
 
         private fun processWallData(data: kotlin.Array<Any>) {
@@ -313,7 +333,7 @@ class Server {
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
                                    playerTextures: TextureAtlas,
                                    healthBarTexture: Texture) {
-            val opponent = Opponent(x, y, name, false, currentHealth, false, 0f, 0f,
+            val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
             opponents[id] = opponent
             playerOnScoreboardTable[id] = opponent
@@ -328,7 +348,7 @@ class Server {
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
-            val player = Player(500f, 500f, "", false,
+            val player = Player(500f, 500f, "", 0, 0, false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
             this.player = player
             playerOnScoreboardTable[playerId] = player

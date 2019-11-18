@@ -222,8 +222,8 @@ class GameScreen(
                     t += 0.05f
                     playersOnScoreboardFont.draw(batch, "team name", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
                     playersOnScoreboardFont.draw(batch, it.name, WINDOW_WIDTH / 2.4f, WINDOW_HEIGHT / t)
-                    playersOnScoreboardFont.draw(batch, "1", WINDOW_WIDTH / 1.73f, WINDOW_HEIGHT / t)
-                    playersOnScoreboardFont.draw(batch, "1", WINDOW_WIDTH / 1.43f, WINDOW_HEIGHT / t)
+                    playersOnScoreboardFont.draw(batch, "${it.kills}", WINDOW_WIDTH / 1.73f, WINDOW_HEIGHT / t)
+                    playersOnScoreboardFont.draw(batch, "${it.deaths}", WINDOW_WIDTH / 1.43f, WINDOW_HEIGHT / t)
                 }
             }
         }
@@ -238,11 +238,11 @@ class GameScreen(
                 batch.setColor(c.r, c.g, c.b, .6f)
                 batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.1f);
 
-                val table = assets.get("scoreboard/scoreboardTable3.png", Texture::class.java)
+                val table = assets.get("scoreboard/scoreboardTable.png", Texture::class.java)
                 batch.setColor(c.r, c.g, c.b, .8f)
                 batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.15f);
 
-                scoreboardFont.draw(batch, "TEAM           PLAYER              KILLS            DEAD ", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
+                scoreboardFont.draw(batch, "TEAM           PLAYER              KILLS            DEATHS", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
                 scoreboardFont.data.setScale(1.7f)
             }
         }

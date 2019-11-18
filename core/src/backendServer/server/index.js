@@ -186,9 +186,9 @@ io.on('connection', (socket) => {
     });
 
     console.log("Adding new player, id " + socket.id);
-    const ag = new Agent(200, 200, "", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
+    const ag = new Agent(200, 200, "", 0, 0, false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
     engine.addAgent(ag, 500, 500);
-    engine.moveAgentToRandomPlace(ag);
+    //engine.moveAgentToRandomPlace(ag);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
@@ -197,11 +197,28 @@ io.on('connection', (socket) => {
         agentDataLoop().catch(e => console.log(e));
         projectileDataLoop().catch(e => console.log(e));
         pickupDataLoop().catch(e => console.log(e));
+        agentDataOnScoreboard().catch(e => console.log(e));
     }
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
+async function agentDataOnScoreboard() {
+    while (true) {
+        for (let agent of agents) {
+            let scoreboardData = [];
+            for (let agent of agents) {
+                scoreboardData.push({
+                    id: agent.id,
+                    kills: agent.kills,
+                    deaths: agent.deaths
+                });
+            }
+            io.to(agent.id).emit("scoreboardData", {scoreboardData});
+        }
+        await sleep(1000 / constants.SCOREBOARD_UPDATE_PER_SECOND)
+    }
+}
 async function projectileDataLoop() {
     while (engine.continueLooping) {
         for (let agent of agents) {

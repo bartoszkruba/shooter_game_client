@@ -11,9 +11,10 @@ import com.badlogic.gdx.graphics.g2d.Animation.PlayMode
 import com.mygdx.game.model.weapon.Weapon
 
 
-abstract class Agent(x: Float, y: Float, var name: String, var isDead: Boolean, var currentHealth: Float,
-                     var gotShot: Boolean, textureAtlas: TextureAtlas, healthBarTexture: Texture, var weapon: Weapon,
-                     var facingDirectionAngle: Float, var id: String, spritecolor: Color) {
+abstract class Agent(x: Float, y: Float, var name: String, var kills: Int, var deaths: Int, var isDead: Boolean,
+                     var currentHealth: Float, var gotShot: Boolean, textureAtlas: TextureAtlas,
+                     healthBarTexture: Texture, var weapon: Weapon, var facingDirectionAngle: Float,
+                     var id: String, spritecolor: Color) {
 
 
     private val animateRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("right"), PlayMode.LOOP_REVERSED)
