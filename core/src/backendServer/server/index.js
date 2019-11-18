@@ -85,11 +85,9 @@ io.on('connection', (socket) => {
                 }
                 break;
         }
-        // console.log(Object.keys(data)[0] + " key is pressed down")
     });
 
     socket.on('stopKey', (data) => {
-        // console.log(Object.keys(data)[0] + " key is released")
 
         switch (Object.keys(data)[0]) {
             case "W":
@@ -156,7 +154,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('mouseStart', (data) => {
-        // console.log(Object.keys(data)[0] + " just pressed");
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id && !agents[i].isDead) {
                 agents[i].isLMPressed = true;
@@ -173,7 +170,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('mouseStop', (data) => {
-        // console.log(Object.keys(data)[0] + " just released")
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
                 agents[i].isLMPressed = false;
@@ -198,48 +194,12 @@ io.on('connection', (socket) => {
     console.log("Adding new player, id " + socket.id);
     const ag = new Agent(200, 200, "", false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id)
     engine.addAgent(ag, 500, 500);
-    //engine.moveAgentToRandomPlace(ag);
+    engine.moveAgentToRandomPlace(ag);
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
-        engine.addPickup(new MachineGunPickup(0, 0, shortid.generate()), 300, 300);
-        engine.addPickup(new MachineGunPickup(0, 0, shortid.generate()), 400, 400);
         engine.lastLoop = new Date().getTime();
-        engine.physicLoop(projectile => {
-
-                zones = getZonesForObject(projectile.bounds);
-
-                for (agent of agents) {
-
-                    if (projectile.bounds.position.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
-                        projectile.bounds.position.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
-                        projectile.bounds.position.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
-                        projectile.bounds.position.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
-                        io.to(agent.id).emit("newProjectile", {
-                            x: projectile.bounds.position.x,
-                            y: projectile.bounds.position.y,
-                            id: projectile.id,
-                            xSpeed: projectile.velocity.x,
-                            ySpeed: projectile.velocity.y,
-                            type: projectile.type
-                        });
-                    }
-                }
-            },
-            explosion => {
-                console.log("Broadcasting new explosion")
-                for (agent of agents) {
-                    if (explosion.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
-                        explosion.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
-                        explosion.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
-                        explosion.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
-                        io.to(agent.id).emit("newExplosion", {
-                            x: explosion.x,
-                            y: explosion.y,
-                        });
-                    }
-                }
-            });
+        engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion);
         agentDataLoop();
         projectileDataLoop();
         pickupDataLoop()
@@ -272,6 +232,38 @@ async function projectileDataLoop() {
             io.to(agent.id).emit("projectileData", {projectileData});
         }
         await sleep(1000 / constants.PROJECTILE_UPDATES_PER_SECOND)
+    }
+}
+
+function broadcastNewProjectile(projectile) {
+    for (agent of agents) {
+        if (projectile.bounds.position.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
+            projectile.bounds.position.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
+            projectile.bounds.position.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
+            projectile.bounds.position.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
+            io.to(agent.id).emit("newProjectile", {
+                x: projectile.bounds.position.x,
+                y: projectile.bounds.position.y,
+                id: projectile.id,
+                xSpeed: projectile.velocity.x,
+                ySpeed: projectile.velocity.y,
+                type: projectile.type
+            });
+        }
+    }
+}
+
+function broadcastNewExplosion(explosion) {
+    for (agent of agents) {
+        if (explosion.x > agent.bounds.position.x - constants.WINDOW_WIDTH &&
+            explosion.x < agent.bounds.position.x + constants.WINDOW_WIDTH &&
+            explosion.y > agent.bounds.position.y - constants.WINDOW_HEIGHT &&
+            explosion.y < agent.bounds.position.y + constants.WINDOW_HEIGHT) {
+            io.to(agent.id).emit("newExplosion", {
+                x: explosion.x,
+                y: explosion.y,
+            });
+        }
     }
 }
 
