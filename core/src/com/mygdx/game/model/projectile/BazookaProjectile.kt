@@ -3,7 +3,6 @@ package com.mygdx.game.model.projectile
 import com.badlogic.gdx.graphics.Texture
 import com.mygdx.game.settings.BAZOOKA_BULLET_SPEED
 import com.mygdx.game.settings.BAZOOKA_PROJECTILE_WIDTH
-import com.mygdx.game.settings.STANDARD_PROJECTILE_WIDTH
 
 class BazookaProjectile(
         x: Float = 0f,

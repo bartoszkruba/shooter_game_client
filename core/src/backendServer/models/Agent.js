@@ -42,7 +42,7 @@ class Agent extends BaseObject {
 
     takeDamage(damage) {
         this.currentHealth -= damage;
-        if (this.currentHealth < 0) {
+        if (this.currentHealth <= 0) {
             this.currentHealth = 0;
             this.isDead = true;
         } else this.isDead = false;
