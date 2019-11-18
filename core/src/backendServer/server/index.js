@@ -1,23 +1,17 @@
 let app = require('express')();
 let server = require('http').Server(app);
 let io = require('socket.io')(server);
-const shortid = require('shortid');
 const engine = require('./physic-loop');
 const Agent = require('../models/Agent');
 const Pistol = require('../models/Pistol');
-const MachineGun = require('../models/MachineGun');
-const PistolPickup = require('../models/PistolPickup');
-const MachineGunPickup = require('../models/MachineGunPickup');
 const constants = require('../settings/constants');
 
-const projectiles = engine.projectiles;
 const agents = engine.agents;
-const pickups = engine.pickups;
 const walls = engine.walls;
 
 const worldGenerator = require('../util/worldGenerator');
 
-const getZonesForObject = require('../util/util').getZonesForObject
+const getZonesForObject = require('../util/util').getZonesForObject;
 
 let loopAlreadyRunning = false;
 
