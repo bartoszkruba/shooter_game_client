@@ -297,11 +297,12 @@ class GameScreen(
                 val playersInMiniMapexture = assets.get("images/opponentsInMiniMap.png", Texture::class.java)
                 batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
                 opponents.values.forEach {
-                    batch.draw(playersInMiniMapexture,
-                            ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
-                            ((it.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize) - playerSize / 2f,
-                            playerSize,
-                            playerSize);
+                    if (!it.isDead)
+                        batch.draw(playersInMiniMapexture,
+                                ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
+                                ((it.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize) - playerSize / 2f,
+                                playerSize,
+                                playerSize);
                 }
             }
         }
