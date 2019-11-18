@@ -211,8 +211,12 @@ class Server {
                 val xVelocity = agent.getLong("xVelocity").toFloat()
                 val yVelocity = agent.getLong("yVelocity").toFloat()
                 val angle = agent.getDouble("angle").toFloat()
+                val kills = agent.getInt("kills")
+                val deaths = agent.getInt("deaths")
                 if (id == player.id) {
                     if (!isDead) {
+                        player.kills = kills
+                        player.deaths = deaths
                         player.name = name
                         playerOnScoreboardTable[id]!!.name = name
                         player.isDead = isDead
@@ -241,6 +245,8 @@ class Server {
                         opponents[id]?.velocity?.y = yVelocity
                         opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
+                        opponents[id]?.kills = kills
+                        opponents[id]?.deaths = deaths
                         playerOnScoreboardTable[id]!!.name = name
                         opponents[id]?.name = name
                         opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
@@ -310,7 +316,7 @@ class Server {
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
                                    playerTextures: TextureAtlas,
                                    healthBarTexture: Texture) {
-            val opponent = Opponent(x, y, name, false, currentHealth, false, 0f, 0f,
+            val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
             opponents[id] = opponent
             playerOnScoreboardTable[id] = opponent
@@ -325,7 +331,7 @@ class Server {
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
-            val player = Player(500f, 500f, "", false,
+            val player = Player(500f, 500f, "", 0, 0, false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
             this.player = player
             playerOnScoreboardTable[playerId] = player

@@ -12,6 +12,8 @@ class Player(
         x: Float,
         y: Float,
         name: String,
+        kills: Int,
+        deaths: Int,
         isDead: Boolean,
         currentHealth: Float,
         gotShot: Boolean,
@@ -19,7 +21,7 @@ class Player(
         healthBarTexture: Texture,
         id: String,
         weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, name, isDead, currentHealth,gotShot, textureAtlas, healthBarTexture, weapon, facingDirectionAngle, id, PLAYER_SPRITE_COLOR) {
+        facingDirectionAngle: Float = 0f) : Agent(x, y, name, kills, deaths, isDead, currentHealth,gotShot, textureAtlas, healthBarTexture, weapon, facingDirectionAngle, id, PLAYER_SPRITE_COLOR) {
 
     fun canShoot() = weapon.canShoot()
     fun shoot() = weapon.shoot()

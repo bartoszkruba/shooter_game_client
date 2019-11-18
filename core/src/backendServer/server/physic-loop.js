@@ -246,6 +246,15 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
 
                     if (projectile.type !== ProjectileType.BAZOOKA) {
                         agent.takeDamage();
+                        if (agent.isDead){
+                            agent.deaths++;
+                            for (i = 0; i < agents.length; i++) {
+                                if (agents[i].id === projectile.agentId){
+                                    agents[i].kills++
+                                }
+                            }
+                            //agents[projectile.agentId].kills++;
+                        }
                     }
                     if (projectile.type === ProjectileType.BAZOOKA) {
                         broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
