@@ -116,6 +116,26 @@ class Server {
                     .on("pickupData") { processPickupData(it) }
                     .on("wallData") { processWallData(it) }
                     .on("newExplosion") { processNewExplosion(it) }
+                    .on("scoreboardData") { processScoreboardData(it) }
+        }
+
+        private fun processScoreboardData(data: kotlin.Array<Any>) {
+            val obj = data[0] as JSONObject
+            val agents = obj.getJSONArray("scoreboardData")
+            for (i in 0 until agents.length()) {
+                val agent = agents[i] as JSONObject
+                val id = agent.getString("id")
+                val kills = agent.getInt("kills")
+                val deaths = agent.getInt("deaths")
+
+                if (id == player.id){
+                    player.kills = kills
+                    player.deaths = deaths
+                }else{
+                    opponents[id]?.kills = kills
+                    opponents[id]?.deaths = deaths
+                }
+            }
         }
 
         private fun processWallData(data: kotlin.Array<Any>) {
@@ -211,12 +231,8 @@ class Server {
                 val xVelocity = agent.getLong("xVelocity").toFloat()
                 val yVelocity = agent.getLong("yVelocity").toFloat()
                 val angle = agent.getDouble("angle").toFloat()
-                val kills = agent.getInt("kills")
-                val deaths = agent.getInt("deaths")
                 if (id == player.id) {
                     if (!isDead) {
-                        player.kills = kills
-                        player.deaths = deaths
                         player.name = name
                         playerOnScoreboardTable[id]!!.name = name
                         player.isDead = isDead
@@ -245,8 +261,6 @@ class Server {
                         opponents[id]?.velocity?.y = yVelocity
                         opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
-                        opponents[id]?.kills = kills
-                        opponents[id]?.deaths = deaths
                         playerOnScoreboardTable[id]!!.name = name
                         opponents[id]?.name = name
                         opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth

@@ -242,12 +242,30 @@ io.on('connection', (socket) => {
             });
         agentDataLoop();
         projectileDataLoop();
-        pickupDataLoop()
+        pickupDataLoop();
+        agentDataOnScoreboard();
     }
 });
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
+
+async function agentDataOnScoreboard() {
+    while (true) {
+        for (let agent of agents) {
+            let scoreboardData = [];
+            for (let agent of agents) {
+                scoreboardData.push({
+                    id: agent.id,
+                    kills: agent.kills,
+                    deaths: agent.deaths
+                });
+            }
+            io.to(agent.id).emit("scoreboardData", {scoreboardData});
+        }
+        await sleep(1000)
+    }
+}
 async function projectileDataLoop() {
     while (true) {
         for (agent of agents) {
@@ -350,9 +368,6 @@ async function agentDataLoop() {
                             id: ag.id,
                             weapon: ag.weapon.projectileType,
                             angle: ag.facingDirectionAngle,
-                            kills: ag.kills,
-                            deaths: ag.deaths
-
                         })
                     }
             }
