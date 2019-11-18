@@ -269,7 +269,7 @@ class GameScreen(
 
     private fun checkOpponentsGotShot(batch: Batch) {
         opponents.values.forEach {
-            if (it.gotShot) {
+            if (it.gotShot && !it.isDead) {
                 drawBloodOnPlayerBody(batch, it.bounds.x - 10f, it.bounds.y)
                 bloodOnTheFloor.add(
                         bloodOnTheFloorPool.obtain().apply {
@@ -283,7 +283,7 @@ class GameScreen(
     }
 
     private fun checkPlayerGotShot(batch: Batch) {
-        if (player.gotShot) {
+        if (player.gotShot && !player.isDead) {
             drawBloodOnPlayerBody(batch, player.bounds.x - 10f, player.bounds.y)
             bloodOnTheFloor.add(
                     bloodOnTheFloorPool.obtain().apply {
