@@ -124,7 +124,7 @@ class GameScreen(
         wallMatrix = generateWallMatrix()
 
         music.isLooping = true
-        music.volume = 0.2f
+        music.volume = 0.4f
         music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
