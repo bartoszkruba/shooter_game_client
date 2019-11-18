@@ -494,7 +494,7 @@ function checkControls(agent, delta, broadcastNewProjectile) {
                 spawnBazookaProjectile(edgePoint.x, edgePoint.y, xSpeed, ySpeed, broadcastNewProjectile, agent.id);
                 break;
             case ProjectileType.SHOTGUN:
-                spawnShotgunProjectiles(agent, edgePoint.x, edgePoint.y, broadcastNewProjectile);
+                spawnShotgunProjectiles(agent, edgePoint.x, edgePoint.y, broadcastNewProjectile, agent.id);
                 break;
         }
     }
