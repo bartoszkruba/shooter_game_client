@@ -232,8 +232,10 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
 
         moveProjectile(projectile, x, y);
 
-        if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
-            projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
+        if (projectile.bounds.position.x < constants.WALL_SPRITE_WIDTH ||
+            projectile.bounds.position.x > constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH ||
+            projectile.bounds.position.y < constants.WALL_SPRITE_HEIGHT ||
+            projectile.bounds.position.y > constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT) {
             removeProjectile(projectile.id);
             if (projectile.type === ProjectileType.BAZOOKA)
                 spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
@@ -269,15 +271,14 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
                 if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
 
                     if (projectile.type === ProjectileType.BAZOOKA)
-                    spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
-                        broadcastNewExplosion);
+                        spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
+                            broadcastNewExplosion);
 
                     removeProjectile(projectile.id);
                     removed = true;
                     break;
                 }
             }
-
             if (removed) break
         }
     }
@@ -367,11 +368,12 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion) {
     const explosion = Matter.Bodies.circle(x, y, constants.BAZOOKA_EXPLOSION_SIZE / 2);
     const zones = getZonesForObject(explosion);
     for (let zone of zones) {
-        matrix.agents[zone].forEach(agent => {
-            if (Matter.SAT.collides(agent.bounds, explosion).collided) {
-                agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
-            }
-        })
+        if (matrix.agents[zone] != null)
+            matrix.agents[zone].forEach(agent => {
+                if (Matter.SAT.collides(agent.bounds, explosion).collided) {
+                    agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
+                }
+            })
     }
     broadcastBazookaExplosion({x, y})
 }
