@@ -126,12 +126,11 @@ class Server {
                 val kills = agent.getInt("kills")
                 val deaths = agent.getInt("deaths")
 
-                if (id == player.id){
-                    player.kills = kills
-                    player.deaths = deaths
-                }else{
-                    opponents[id]?.kills = kills
-                    opponents[id]?.deaths = deaths
+                for (player in playerOnScoreboardTable.values){
+                    if (player.id == id){
+                        player.kills = kills
+                        player.deaths = deaths
+                    }
                 }
             }
         }
@@ -234,10 +233,6 @@ class Server {
                 val angle = agent.getDouble("angle").toFloat()
                 if (id == player.id) {
                     if (!isDead) {
-                        player.name = name
-                        playerOnScoreboardTable[id]!!.name = name
-                        player.isDead = isDead
-                        player.setPosition(x, y)
                         if (player.weapon.type != weapon) {
                             when (weapon) {
                                 ProjectileType.PISTOL -> player.weapon = Pistol()
@@ -248,32 +243,46 @@ class Server {
                         }
                         val bulletsLeft = agent.getInt("bulletsLeft")
                         if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
-                        player.weapon.bulletsInChamber = bulletsLeft
-                        player.setPosition(x, y)
-                        player.gotShot = player.currentHealth != currentHealth
-                        player.currentHealth = currentHealth
-                        player.setHealthBar(currentHealth, x, y)
+                        playerOnScoreboardTable[id]!!.name = name
+                        player.apply {
+                            this.name = name
+                            this.isDead = isDead
+                            setPosition(x, y)
+                            this.weapon.bulletsInChamber = bulletsLeft
+                            setPosition(x, y)
+                            gotShot = player.currentHealth != currentHealth
+                            this.currentHealth = currentHealth
+                            setHealthBar(currentHealth, x, y)
+                        }
                     } else player.isDead = true
                 } else {
                     if (opponents[id] == null) {
                         createOpponent(id, x, y, name, currentHealth, playerTextures, healthBarTexture)
+                        opponents[id]?.apply {
+                            velocity.x = xVelocity
+                            setAngle(angle)
+                            velocity.y = yVelocity
+                            isMoving = xVelocity == 0f && yVelocity == 0f
+                        }
                         opponents[id]?.velocity?.x = xVelocity
                         opponents[id]?.setAngle(angle)
                         opponents[id]?.velocity?.y = yVelocity
                         opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
                     } else {
                         playerOnScoreboardTable[id]!!.name = name
-                        opponents[id]?.name = name
-                        opponents[id]?.gotShot = opponents[id]?.currentHealth != currentHealth
-                        opponents[id]?.setPosition(x, y)
-                        opponents[id]?.setAngle(angle)
-                        opponents[id]?.velocity?.x = xVelocity
-                        opponents[id]?.velocity?.y = yVelocity
-                        opponents[id]?.setHealthBar(currentHealth, x, y)
-                        opponents[id]?.isDead = isDead
-                        opponents[id]?.currentHealth = currentHealth
-                        opponents[id]?.healthBarSprite!!.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
-                        opponents[id]?.isMoving = xVelocity == 0f && yVelocity == 0f
+                        opponents[id]?.apply {
+                            this.name = name
+                            gotShot = opponents[id]?.currentHealth != currentHealth
+                            setPosition(x, y)
+                            setAngle(angle)
+                            velocity.x = xVelocity
+                            velocity.y = yVelocity
+                            setHealthBar(currentHealth, x, y)
+                            this.isDead = isDead
+                            this.currentHealth = currentHealth
+                            healthBarSprite.setSize(currentHealth, HEALTH_BAR_SPRITE_HEIGHT)
+                            isMoving = xVelocity == 0f && yVelocity == 0f
+                        }
                     }
                 }
             }
