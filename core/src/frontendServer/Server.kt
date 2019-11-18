@@ -126,8 +126,8 @@ class Server {
                 val kills = agent.getInt("kills")
                 val deaths = agent.getInt("deaths")
 
-                for (player in playerOnScoreboardTable.values){
-                    if (player.id == id){
+                for (player in playerOnScoreboardTable.values) {
+                    if (player.id == id) {
                         player.kills = kills
                         player.deaths = deaths
                     }
@@ -194,6 +194,7 @@ class Server {
                 val y = projectile.getLong("y").toFloat()
                 val xSpeed = projectile.getDouble("xSpeed").toFloat()
                 val ySpeed = projectile.getDouble("ySpeed").toFloat()
+                val agentId = projectile.getString("agentId")
 
                 if (projectiles[id] == null) {
                     projectiles[id] = when (type) {
@@ -205,12 +206,14 @@ class Server {
                         setPosition(x, y)
                         velocity.x = xSpeed
                         velocity.y = ySpeed
+                        this.agentId = agentId
                     }
                 } else {
                     projectiles[id]?.apply {
                         setPosition(x, y)
                         velocity.x = xSpeed
                         velocity.y = ySpeed
+                        this.agentId = agentId
                     }
                 }
             }
@@ -308,6 +311,7 @@ class Server {
             val y = projectile.getLong("y").toFloat()
             val xSpeed = projectile.getDouble("xSpeed").toFloat()
             val ySpeed = projectile.getDouble("ySpeed").toFloat()
+            val agentId = projectile.getString("agentId")
 
             if (projectiles[id] == null) {
                 projectiles[id] = when (type) {
@@ -322,6 +326,7 @@ class Server {
                     velocity.x = xSpeed
                     velocity.y = ySpeed
                     justFired = true
+                    this.agentId = agentId
                 }
             } else {
                 projectiles[id]?.apply {
@@ -329,6 +334,7 @@ class Server {
                     velocity.x = xSpeed
                     velocity.y = ySpeed
                     justFired = true
+                    this.agentId = agentId
                 }
             }
         }
