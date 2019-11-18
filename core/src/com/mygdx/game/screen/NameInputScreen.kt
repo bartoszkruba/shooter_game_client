@@ -36,6 +36,9 @@ class NameInputScreen (
         private val font: BitmapFont) : KtxScreen {
 
     private val ipFont = BitmapFont()
+    private val errorMassageFont = BitmapFont()
+    private var errorMassage = false
+    private var massageText = ""
     private val lastSpawn = 0L
 
     private val spawnRate = 100f
@@ -106,10 +109,18 @@ class NameInputScreen (
             drawNameSign(it)
             nameInputFiled(it)
             ipInputField(it)
+            checkNameInput(it)
+            drawErrorMassage(it)
         }
         stage.draw();
-        checkNameInput()
         drawRain();
+    }
+
+    private fun drawErrorMassage(batch: SpriteBatch) {
+        if (errorMassage) {
+            errorMassageFont.draw(batch, massageText, WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.5f);
+            errorMassageFont.color = Color.RED
+        }
     }
 
     private fun ipInputField(batch: SpriteBatch) {
@@ -143,12 +154,22 @@ class NameInputScreen (
         }
     }
 
-    private fun checkNameInput() {
+    private fun checkNameInput(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
-            rainMusic.stop()
-            backgroundMusic.stop()
-            game.changeToGame()
-            frontendServer.Server.setName(username)
+            if (::username.isInitialized && ::ip.isInitialized) {
+                if (username.length > 2 && ip.length == 14) {
+                    rainMusic.stop()
+                    backgroundMusic.stop()
+                    game.changeToGame()
+                    frontendServer.Server.setName(username)
+                }else{
+                    errorMassage = true
+                    massageText = "LENGTH OF YOUR NAME OR IP IS NOT CORRECT"
+                }
+            }else {
+                errorMassage = true
+                massageText = "YOU HAVE TO ENTER YOUR NAME AND IP"
+            }
         }
     }
 
