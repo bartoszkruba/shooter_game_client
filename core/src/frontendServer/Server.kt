@@ -119,6 +119,7 @@ class Server {
         }
 
         private fun processWallData(data: kotlin.Array<Any>) {
+            this.walls.clear()
             val walls = data[0] as JSONArray
             for (i in 0 until walls.length()) {
                 val obj = walls[i] as JSONObject
