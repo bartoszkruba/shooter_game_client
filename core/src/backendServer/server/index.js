@@ -192,8 +192,8 @@ io.on('connection', (socket) => {
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
-        engine.lastLoop = new Date().getTime();
-        engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion);
+        // engine.lastLoop = new Date().getTime();
+        engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion).catch(e => console.log(e));
         agentDataLoop().catch(e => console.log(e));
         projectileDataLoop().catch(e => console.log(e));
         pickupDataLoop().catch(e => console.log(e));
@@ -203,7 +203,7 @@ io.on('connection', (socket) => {
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
 async function projectileDataLoop() {
-    while (true) {
+    while (engine.continueLooping) {
         for (let agent of agents) {
             const projectileData = [];
 
@@ -262,7 +262,7 @@ function broadcastNewExplosion(explosion) {
 }
 
 async function pickupDataLoop() {
-    while (true) {
+    while (engine.continueLooping) {
         for (let agent of agents) {
             const pickupData = [];
             const ids = [];
@@ -286,7 +286,7 @@ async function pickupDataLoop() {
 }
 
 async function agentDataLoop() {
-    while (true) {
+    while (engine.continueLooping) {
         for (let agent of agents) {
             let minX = agent.bounds.position.x - constants.WINDOW_WIDTH;
             let minY = agent.bounds.position.y - constants.WINDOW_HEIGHT;

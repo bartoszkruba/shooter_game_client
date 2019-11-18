@@ -32,11 +32,13 @@ const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 
 let lastLoop;
 
+let continueLooping = true;
+
 const matrix = getZonesMatrix();
 
 async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
     weaponRespawnLoop().catch(e => console.log(e));
-    while (true) {
+    while (continueLooping) {
         const currentTime = new Date().getTime();
         let delta = (currentTime - lastLoop) / 1000;
         lastLoop = currentTime;
@@ -51,7 +53,7 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
 }
 
 const weaponRespawnLoop = async () => {
-    while (true) {
+    while (continueLooping) {
         console.log("Spawning weapons");
         clearAllWeaponPickups();
 
@@ -642,8 +644,7 @@ module.exports = {
     physicLoop,
     agents,
     projectiles,
-    moveAgent,
-    lastLoop,
+    continueLooping,
     pickups,
     matrix,
     addAgent,
