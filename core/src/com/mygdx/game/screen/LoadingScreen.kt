@@ -9,6 +9,7 @@ import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.*
+import frontendServer.Server
 import ktx.assets.load
 
 
@@ -56,6 +57,8 @@ class LoadingScreen(private val game: Game,
         assets.load("images/logo.png", Texture::class.java)
         assets.load("images/enterYourName.png", Texture::class.java)
         assets.load("images/txfUsernameBackground.png", Texture::class.java)
+        assets.load("scoreboard/scoreboardBackground.png", Texture::class.java)
+        assets.load("scoreboard/scoreboardTable3.png", Texture::class.java)
 
         assets.load("sounds/menu_hover.wav", Sound::class.java)
         assets.load("sounds/menu_select.wav", Sound::class.java)

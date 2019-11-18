@@ -22,6 +22,7 @@ import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.screen.Menu.*
 import com.mygdx.game.settings.WINDOW_HEIGHT
+import frontendServer.Server
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
@@ -183,7 +184,6 @@ class MenuScreen(
             when (currentChoice) {
                 startGameChoice -> {
                     game.changeToNameInputScreen(text.x)
-                    //game.changeToGame()
                 }
                 creditsChoice -> currentWindow = CREDITS
                 quitChoice -> exitProcess(0)
