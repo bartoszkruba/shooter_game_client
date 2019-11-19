@@ -56,7 +56,6 @@ class NameInputScreen (
     private val minDropletWidth = 1f
     private var showConnectionSign = false
 
-
     private val dropletPool = pool { Droplet() }
 
 
@@ -82,6 +81,7 @@ class NameInputScreen (
     lateinit var username: String
     lateinit var ipAddress: String
     private var goToGame = false
+    val c = batch.color;
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -133,23 +133,26 @@ class NameInputScreen (
     }
 
     private fun ipInputField(batch: SpriteBatch) {
-        inputFieldBackground(batch, 4.4f, 3.5f)
-        ipFont.draw(batch, "For example: 10.152.190.106", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
-        ipFont.color = Color.GRAY;
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, .5f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.9f, WINDOW_HEIGHT / 3.2f,
+                WINDOW_WIDTH / 3f, WINDOW_HEIGHT / 6.2f);
+
+        ipFont.draw(batch, "For example: 10.152.190.106", WINDOW_WIDTH / 2f, WINDOW_HEIGHT / 2.5f);
         txfIP = TextField("", skin)
-        setupTextField(txfIP, 3.42f)
+        setupTextField(txfIP, 5f,2.85f)
 
         txfIP.setTextFieldListener { textField, key -> ipAddress = textField.text }
 
-        font.draw(batch, "Press ENTER to start the game!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3f);
+        font.draw(batch, "PRESS ENTER TO START THE GAME!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 2.9f);
     }
 
     private fun inputFieldBackground(batch: SpriteBatch, x: Float, y: Float) {
         val c = batch.color;
         val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
         batch.setColor(c.r, c.g, c.b, .5f)
-        batch.draw(txfUsernameBackground, WINDOW_WIDTH / x, WINDOW_HEIGHT / y,
-                WINDOW_WIDTH / 6.1f, WINDOW_HEIGHT / 6.5f);
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.3f, WINDOW_HEIGHT / y,
+                WINDOW_WIDTH / x, WINDOW_HEIGHT / 6.5f);
     }
 
     private fun setBackground(delta: Float) {
@@ -170,6 +173,7 @@ class NameInputScreen (
                     Server.connectionSocket(ipAddress)
                     game.createGame()
                     Server.setName(username)
+                    errorMassage = false
                     goToGame = true
                 }else{
                     showConnectionSign = false
@@ -196,37 +200,37 @@ class NameInputScreen (
 
     private fun drawConnectionLabel(batch: SpriteBatch) {
         if (showConnectionSign) {
-            imgpos += (imgposdir / 3);
+            imgpos += (imgposdir / 6);
             if (imgpos < 0.0) imgposdir = -imgposdir;
             if (imgpos > 1.0) imgposdir = -imgposdir;
 
             val c = batch.color;
-            connectorFont.draw(batch, "TRY TO CONNECT..", WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.5f);
-            batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
+            connectorFont.draw(batch, "TRY TO CONNECT..", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3.8f);
+            connectorFont.setColor(c.r, c.g, c.b, imgpos.toFloat())
+            connectorFont.data.setScale(1.1f)
         }
     }
 
     private fun nameInputFiled(batch: SpriteBatch) {
-        inputFieldBackground(batch, 4.4f, 2.68f)
+        inputFieldBackground(batch, 7f, 2.68f)
         font.draw(batch, "OBS! max 8 characters", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.18f);
         txfUsername = TextField("", skin)
         txfUsername.maxLength = 8
-        setupTextField(txfUsername, 2.65f)
+        setupTextField(txfUsername, 8f,2.45f)
         txfUsername.setTextFieldListener { textField, key -> username = textField.text }
     }
 
-    private fun setupTextField(txf: TextField, y: Float) {
-        txf.setPosition(Gdx.graphics.width / 3.9f, Gdx.graphics.height / y)
-        txf.setSize(Gdx.graphics.width / 3.9f, Gdx.graphics.height / 6.5f)
+    private fun setupTextField(txf: TextField, x: Float, y: Float) {
+        txf.setPosition(Gdx.graphics.width / 3.8f, Gdx.graphics.height / y)
+        txf.setSize(Gdx.graphics.width / x, Gdx.graphics.height / 9.5f)
         stage.addActor(txf)
         Gdx.input.inputProcessor = this.stage;
     }
 
     private fun drawNameSign(batch: SpriteBatch) {
-        val c = batch.color;
-        val miniMapexture = assets.get("images/enterYourName.png", Texture::class.java)
+        val enterYourNameTexture = assets.get("images/enterYourName.png", Texture::class.java)
         batch.setColor(c.r, c.g, c.b, 1f)
-        batch.draw(miniMapexture, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2, WINDOW_WIDTH / 3, 50f);
+        batch.draw(enterYourNameTexture, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2, WINDOW_WIDTH / 3, 50f);
     }
 
 
