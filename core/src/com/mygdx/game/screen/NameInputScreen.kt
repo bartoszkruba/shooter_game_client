@@ -128,10 +128,7 @@ class NameInputScreen (
         ipFont.color = Color.GRAY;
         txfIP = TextField("", skin)
         txfIP.maxLength = 14
-        txfIP.setPosition(WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.42f)
-        txfIP.setSize(130f, 100f)
-        stage.addActor(txfIP)
-        Gdx.input.inputProcessor = this.stage;
+        setupTextField(txfIP, 3.42f)
 
         txfIP.setTextFieldListener { textField, key -> ipAddress = textField.text }
 
@@ -142,7 +139,8 @@ class NameInputScreen (
         val c = batch.color;
         val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
         batch.setColor(c.r, c.g, c.b, .5f)
-        batch.draw(txfUsernameBackground, WINDOW_WIDTH / x, WINDOW_HEIGHT / y, 210f, 110f);
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / x, WINDOW_HEIGHT / y,
+                WINDOW_WIDTH / 6.1f, WINDOW_HEIGHT / 6.5f);
     }
 
     private fun setBackground(delta: Float) {
@@ -180,12 +178,15 @@ class NameInputScreen (
         font.draw(batch, "OBS! max 8 characters", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.18f);
         txfUsername = TextField("", skin)
         txfUsername.maxLength = 8
-        txfUsername.setPosition(WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 2.6f)
-        txfUsername.setSize(130f, 100f)
-        stage.addActor(txfUsername)
-        Gdx.input.inputProcessor = this.stage;
-
+        setupTextField(txfUsername, 2.65f)
         txfUsername.setTextFieldListener { textField, key -> username = textField.text }
+    }
+
+    private fun setupTextField(txf: TextField, y: Float) {
+        txf.setPosition(Gdx.graphics.width / 3.9f, Gdx.graphics.height / y)
+        txf.setSize(Gdx.graphics.width / 3.9f, Gdx.graphics.height / 6.5f)
+        stage.addActor(txf)
+        Gdx.input.inputProcessor = this.stage;
     }
 
     private fun drawNameSign(batch: SpriteBatch) {
