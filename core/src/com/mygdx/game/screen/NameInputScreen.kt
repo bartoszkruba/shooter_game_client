@@ -212,7 +212,7 @@ class NameInputScreen (
             if (imgpos > 1.0) imgposdir = -imgposdir;
 
             val c = batch.color;
-            connectorFont.draw(batch, "TRY TO CONNECT..", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3.8f);
+            connectorFont.draw(batch, "TRYING TO CONNECT...", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3.8f);
             connectorFont.setColor(c.r, c.g, c.b, imgpos.toFloat())
             connectorFont.data.setScale(1.1f)
         }
