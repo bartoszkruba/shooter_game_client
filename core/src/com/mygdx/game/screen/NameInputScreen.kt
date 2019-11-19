@@ -70,11 +70,10 @@ class NameInputScreen (
     lateinit var txfUsername: TextField
     lateinit var txfIP: TextField
     private var stage = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
-    private var stage2 = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
     var skin: Skin = Skin(Gdx.files.internal("terra-mother/skin/terra-mother-ui.json"))
 
     lateinit var username: String
-    lateinit var ip: String
+    lateinit var ipAddress: String
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -124,11 +123,7 @@ class NameInputScreen (
     }
 
     private fun ipInputField(batch: SpriteBatch) {
-        val c = batch.color;
-        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
-        batch.setColor(c.r, c.g, c.b, .5f)
-        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.4f, WINDOW_HEIGHT / 3.5f, 210f, 110f);
-
+        inputFieldBackground(batch, 4.4f, 3.5f)
         ipFont.draw(batch, "For example: 92.254.180.153", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
         ipFont.color = Color.GRAY;
         txfIP = TextField("", skin)
@@ -138,9 +133,16 @@ class NameInputScreen (
         stage.addActor(txfIP)
         Gdx.input.inputProcessor = this.stage;
 
-        txfIP.setTextFieldListener { textField, key -> ip = textField.text }
+        txfIP.setTextFieldListener { textField, key -> ipAddress = textField.text }
 
         font.draw(batch, "Press ENTER to start the game!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3f);
+    }
+
+    private fun inputFieldBackground(batch: SpriteBatch, x: Float, y: Float) {
+        val c = batch.color;
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, .5f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / x, WINDOW_HEIGHT / y, 210f, 110f);
     }
 
     private fun setBackground(delta: Float) {
@@ -156,8 +158,8 @@ class NameInputScreen (
 
     private fun checkNameInput(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
-            if (::username.isInitialized && ::ip.isInitialized) {
-                if (username.length > 2 && ip.length == 14) {
+            if (::username.isInitialized && ::ipAddress.isInitialized) {
+                if (username.length > 2 && ipAddress.length == 14) {
                     rainMusic.stop()
                     backgroundMusic.stop()
                     game.changeToGame()
@@ -174,11 +176,7 @@ class NameInputScreen (
     }
 
     private fun nameInputFiled(batch: SpriteBatch) {
-        val c = batch.color;
-        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
-        batch.setColor(c.r, c.g, c.b, .5f)
-        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.4f, WINDOW_HEIGHT / 2.68f, 210f, 110f);
-
+        inputFieldBackground(batch, 4.4f, 2.68f)
         font.draw(batch, "OBS! max 8 characters", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.18f);
         txfUsername = TextField("", skin)
         txfUsername.maxLength = 8
@@ -188,7 +186,6 @@ class NameInputScreen (
         Gdx.input.inputProcessor = this.stage;
 
         txfUsername.setTextFieldListener { textField, key -> username = textField.text }
-
     }
 
     private fun drawNameSign(batch: SpriteBatch) {
