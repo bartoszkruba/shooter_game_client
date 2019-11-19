@@ -61,6 +61,7 @@ class GameScreen(
     private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
     private val machineGunShotSoundEffect = assets.get("sounds/machine_gun_shot.wav", Sound::class.java)
     private val bazookaShotSoundEffect = assets.get("sounds/bazooka_shot.mp3", Sound::class.java)
+    private val dryfire = assets.get("sounds/dryfire.mp3", Sound::class.java)
 
     private val bazookaExplosionSoundEffect = assets.get("sounds/bazooka_explosion.mp3", Sound::class.java)
 
@@ -400,6 +401,12 @@ class GameScreen(
         val isMouseWPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT));
         val wWasReleased = mouseWasPressed && !isMouseWPressed;
         mouseWasPressed = isMouseWPressed;
+
+        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.weapon.bulletsInChamber < 1
+                && player.weapon.canShoot()) {
+            dryfire.play()
+            player.weapon.shoot()
+        }
 
         if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
             Server.mouseStart()
