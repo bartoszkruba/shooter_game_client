@@ -199,7 +199,7 @@ io.on('connection', (socket) => {
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
-        engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion).catch(e => console.log(e));
+        engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm).catch(e => console.log(e));
         agentDataLoop().catch(e => console.log(e));
         projectileDataLoop().catch(e => console.log(e));
         pickupDataLoop().catch(e => console.log(e));
@@ -265,6 +265,10 @@ async function projectileDataLoop() {
         }
         await sleep(1000 / constants.PROJECTILE_UPDATES_PER_SECOND)
     }
+}
+
+function broadcastKillConfirm(id) {
+    io.to(id).emit("killConfirm", {})
 }
 
 function broadcastNewProjectile(projectile) {
