@@ -121,8 +121,14 @@ class NameInputScreen (
             drawConnectionLabel(it)
             setToGame()
         }
+        goBackToMenu()
         stage.draw();
         drawRain();
+    }
+
+    private fun goBackToMenu() {
+        if(Gdx.input.isKeyPressed(Input.Keys.ESCAPE))
+            game.changeToMenu()
     }
 
     private fun drawErrorMassage(batch: SpriteBatch) {
