@@ -401,7 +401,7 @@ function spawnBazookaProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, ag
 }
 
 function spawnShotgunProjectiles(agent, x, y, broadcastNewProjectile, agentId) {
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 10; i++) {
         const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-15, 15);
         const xSpeed = Math.cos(Math.PI / 180 * angle);
         const ySpeed = Math.sin(Math.PI / 180 * angle);
