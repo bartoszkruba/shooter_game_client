@@ -133,7 +133,6 @@ class NameInputScreen (
         ipFont.draw(batch, "For example: 10.152.190.106", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
         ipFont.color = Color.GRAY;
         txfIP = TextField("", skin)
-        txfIP.maxLength = 14
         setupTextField(txfIP, 3.42f)
 
         txfIP.setTextFieldListener { textField, key -> ipAddress = textField.text }
@@ -164,7 +163,7 @@ class NameInputScreen (
     private fun checkNameInput(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
             if (::username.isInitialized && ::ipAddress.isInitialized) {
-                if (username.length > 2 && ipAddress.length == 14) {
+                if (username.length > 2) {
                     Server.connectionSocket(ipAddress)
                     rainMusic.stop()
                     backgroundMusic.stop()
