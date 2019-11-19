@@ -122,7 +122,6 @@ class Server {
         var shouldPlayDeathSound = false;
 
         private fun processKillConfirm(data: kotlin.Array<Any>) {
-            println("Kill confirm")
             shouldPlayDeathSound = true;
         }
 

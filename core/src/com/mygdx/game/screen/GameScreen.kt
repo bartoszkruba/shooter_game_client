@@ -156,7 +156,6 @@ class GameScreen(
     private var pressedKeys = 0
     override fun render(delta: Float) {
         if (Server.shouldPlayDeathSound) {
-            println("Playing death sound")
             deathSound.play()
             Server.shouldPlayDeathSound = false
         }
