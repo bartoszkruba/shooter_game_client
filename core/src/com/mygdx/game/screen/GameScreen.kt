@@ -127,7 +127,7 @@ class GameScreen(
 
         music.isLooping = true
         music.volume = 0.4f
-//        music.play()
+        music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -577,7 +577,7 @@ class GameScreen(
             if (entry.value.justFired) {
                 entry.value.justFired = false
                 when {
-                    entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.14f)
+                    entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.2f)
                     entry.value is MachineGunProjectile -> machineGunShotSoundEffect.play()
                     entry.value is BazookaProjectile -> bazookaShotSoundEffect.play()
                     else -> pistolShotSoundEffect.play(1.5f)
