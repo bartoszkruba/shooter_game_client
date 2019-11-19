@@ -114,6 +114,8 @@ class GameScreen(
     private var shakeDirection = SHAKE_DIRECTION.RIGHT
     private var lastExplosion = 0L
 
+    var gameScreenMusic = false
+
     init {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
 
@@ -123,9 +125,11 @@ class GameScreen(
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         wallMatrix = generateWallMatrix()
 
-        music.isLooping = true
-        music.volume = 0.4f
-        music.play()
+        if (gameScreenMusic) {
+            music.isLooping = true
+            music.volume = 0.4f
+            music.play()
+        }
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {

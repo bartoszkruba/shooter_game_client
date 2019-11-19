@@ -17,6 +17,7 @@ import ktx.inject.Context
 class Game : KtxGame<KtxScreen>() {
     private val context = Context()
     private val assets = AssetManager()
+    private lateinit var gameScreen: GameScreen
     override fun create() {
         context.register {
             bindSingleton(this@Game)
@@ -41,12 +42,18 @@ class Game : KtxGame<KtxScreen>() {
         setScreen<MenuScreen>()
     }
 
-    fun changeToGame() {
-        val gameScreen = GameScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
+    fun createGame() {
+        gameScreen = GameScreen(this, context.inject(), context.inject(), context.inject(), context.inject())
+    }
 
+    fun changeToGame() {
         addScreen(gameScreen)
         removeScreen<MenuScreen>()
         setScreen<GameScreen>()
+    }
+
+    fun playGameScreenMusic() {
+        gameScreen.gameScreenMusic = true
     }
 
     fun changeToNameInputScreen(x: Float) {

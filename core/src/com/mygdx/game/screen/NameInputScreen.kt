@@ -54,6 +54,8 @@ class NameInputScreen (
     private val minDropletLength = 10f
     private val maxDropletWidth = 2f
     private val minDropletWidth = 1f
+    private var showConnectionSign = false
+
 
     private val dropletPool = pool { Droplet() }
 
@@ -79,6 +81,7 @@ class NameInputScreen (
 
     lateinit var username: String
     lateinit var ipAddress: String
+    private var goToGame = false
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -116,6 +119,7 @@ class NameInputScreen (
             checkNameInput(it)
             drawErrorMassage(it)
             drawConnectionLabel(it)
+            setToGame()
         }
         stage.draw();
         drawRain();
@@ -133,7 +137,6 @@ class NameInputScreen (
         ipFont.draw(batch, "For example: 10.152.190.106", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
         ipFont.color = Color.GRAY;
         txfIP = TextField("", skin)
-        txfIP.maxLength = 14
         setupTextField(txfIP, 3.42f)
 
         txfIP.setTextFieldListener { textField, key -> ipAddress = textField.text }
@@ -160,17 +163,14 @@ class NameInputScreen (
         }
     }
 
-            var showConnectionSign = false
     private fun checkNameInput(batch: SpriteBatch) {
-        if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
+        if(Gdx.input.isKeyPressed(Input.Keys.ENTER))
             if (::username.isInitialized && ::ipAddress.isInitialized) {
-                if (username.length > 2 && ipAddress.length == 14) {
+                if (username.length > 2 && ipAddress.length > 6) {
                     Server.connectionSocket(ipAddress)
-                    rainMusic.stop()
-                    backgroundMusic.stop()
+                    game.createGame()
                     Server.setName(username)
-                    game.changeToGame()
-
+                    goToGame = true
                 }else{
                     showConnectionSign = false
                     errorMassage = true
@@ -181,7 +181,17 @@ class NameInputScreen (
                 errorMassage = true
                 massageText = "YOU HAVE TO ENTER YOUR NAME AND IP"
             }
-        }
+
+    }
+
+    private fun setToGame() {
+        if (goToGame)
+            if (Server.getPlayer() != null) {
+                rainMusic.stop()
+                backgroundMusic.stop()
+                game.playGameScreenMusic()
+                game.changeToGame()
+            }else showConnectionSign = true
     }
 
     private fun drawConnectionLabel(batch: SpriteBatch) {
