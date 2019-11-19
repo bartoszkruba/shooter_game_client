@@ -1,23 +1,23 @@
 const Matter = require('matter-js');
 const shortid = require('shortid');
 
-const Pistol = require('../models/Pistol');
-const MachineGun = require('../models/MachineGun');
-const Shotgun = require('../models/Shotgun');
-const Bazooka = require('../models/Bazooka');
+const Pistol = require('../models/weapons/Pistol');
+const MachineGun = require('../models/weapons/MachineGun');
+const Shotgun = require('../models/weapons/Shotgun');
+const Bazooka = require('../models/weapons/Bazooka');
 
-const PistolProjectile = require('../models/PistolProjectile');
-const MachineGunProjectile = require('../models/MachineGunProjectile');
-const ShotgunProjectile = require('../models/ShotgunProjectile');
-const BazookaProjectile = require('../models/BazookaProjectile');
+const PistolProjectile = require('../models/projectiles/PistolProjectile');
+const MachineGunProjectile = require('../models/projectiles/MachineGunProjectile');
+const ShotgunProjectile = require('../models/projectiles/ShotgunProjectile');
+const BazookaProjectile = require('../models/projectiles/BazookaProjectile');
 
-const PistolPickup = require('../models/PistolPickup');
-const MachineGunPickup = require('../models/MachineGunPickup');
-const ShotgunPickup = require('../models/ShotgunPickup');
-const BazookaPickup = require("../models/BazookaPickup");
-const ProjectileType = require('../models/ProjectileType');
+const PistolPickup = require('../models/pickups/PistolPickup');
+const MachineGunPickup = require('../models/pickups/MachineGunPickup');
+const ShotgunPickup = require('../models/pickups/ShotgunPickup');
+const BazookaPickup = require("../models/pickups/BazookaPickup");
+const ProjectileType = require('../models/projectiles/ProjectileType');
 const constants = require('../settings/constants');
-const Wall = require('../models/Wall');
+const Wall = require('../models/obstacles/Wall');
 
 const util = require('../util/util');
 

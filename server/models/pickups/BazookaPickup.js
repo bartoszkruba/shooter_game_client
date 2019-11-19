@@ -1,6 +1,6 @@
 const Pickup = require('./Pickup');
-const constants = require('../settings/constants');
-const ProjectileType = require('./ProjectileType');
+const constants = require('../../settings/constants');
+const ProjectileType = require('../projectiles/ProjectileType');
 
 class BazookaPickup extends Pickup {
     constructor(x, y, id, ammunition = constants.BAZOOKA_BULLETS_IN_CHAMBER) {

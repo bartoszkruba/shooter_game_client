@@ -1,7 +1,7 @@
 const Matter = require('matter-js');
 
-const constants = require('../settings/constants');
-const BaseObject = require('./BaseObject');
+const constants = require('../../settings/constants');
+const BaseObject = require('../BaseObject');
 
 class Wall extends BaseObject {
     constructor(x, y, id) {

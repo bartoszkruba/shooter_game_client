@@ -1,5 +1,5 @@
 const Matter = require('matter-js');
-const BaseObject = require('./BaseObject');
+const BaseObject = require('../BaseObject');
 
 class Pickup extends BaseObject {
     constructor(x, y, width, height, type, id, ammunition) {

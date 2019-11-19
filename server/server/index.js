@@ -2,8 +2,8 @@ let app = require('express')();
 let server = require('http').Server(app);
 let io = require('socket.io')(server);
 const engine = require('./physic-loop');
-const Agent = require('../models/Agent');
-const Pistol = require('../models/Pistol');
+const Agent = require('../models/agents/Agent');
+const Pistol = require('../models/weapons/Pistol');
 const constants = require('../settings/constants');
 
 const agents = engine.agents;

@@ -1,6 +1,6 @@
 const Pickup = require('./Pickup');
-const constants = require('../settings/constants');
-const ProjectileType = require('./ProjectileType');
+const constants = require('../../settings/constants');
+const ProjectileType = require('../projectiles/ProjectileType');
 
 class MachineGunPickup extends Pickup {
     constructor(x, y, id, ammunition = constants.MACHINE_GUN_BULLETS_IN_CHAMBER) {
