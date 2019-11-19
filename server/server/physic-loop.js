@@ -1,23 +1,23 @@
 const Matter = require('matter-js');
 const shortid = require('shortid');
 
-const Pistol = require('../models/Pistol');
-const MachineGun = require('../models/MachineGun');
-const Shotgun = require('../models/Shotgun');
-const Bazooka = require('../models/Bazooka');
+const Pistol = require('../models/weapons/Pistol');
+const MachineGun = require('../models/weapons/MachineGun');
+const Shotgun = require('../models/weapons/Shotgun');
+const Bazooka = require('../models/weapons/Bazooka');
 
-const PistolProjectile = require('../models/PistolProjectile');
-const MachineGunProjectile = require('../models/MachineGunProjectile');
-const ShotgunProjectile = require('../models/ShotgunProjectile');
-const BazookaProjectile = require('../models/BazookaProjectile');
+const PistolProjectile = require('../models/projectiles/PistolProjectile');
+const MachineGunProjectile = require('../models/projectiles/MachineGunProjectile');
+const ShotgunProjectile = require('../models/projectiles/ShotgunProjectile');
+const BazookaProjectile = require('../models/projectiles/BazookaProjectile');
 
-const PistolPickup = require('../models/PistolPickup');
-const MachineGunPickup = require('../models/MachineGunPickup');
-const ShotgunPickup = require('../models/ShotgunPickup');
-const BazookaPickup = require("../models/BazookaPickup");
-const ProjectileType = require('../models/ProjectileType');
+const PistolPickup = require('../models/pickups/PistolPickup');
+const MachineGunPickup = require('../models/pickups/MachineGunPickup');
+const ShotgunPickup = require('../models/pickups/ShotgunPickup');
+const BazookaPickup = require("../models/pickups/BazookaPickup");
+const ProjectileType = require('../models/projectiles/ProjectileType');
 const constants = require('../settings/constants');
-const Wall = require('../models/Wall');
+const Wall = require('../models/obstacles/Wall');
 
 const util = require('../util/util');
 
@@ -36,7 +36,7 @@ let continueLooping = true;
 
 const matrix = getZonesMatrix();
 
-async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
+async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm) {
     weaponRespawnLoop().catch(e => console.log(e));
     while (continueLooping) {
         const currentTime = new Date().getTime();
@@ -48,7 +48,7 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
                 agent.invisible = false;
             checkControls(agent, delta, broadcastNewProjectile)
         }
-        calculateProjectilePositions(delta, broadcastNewExplosion);
+        calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKillConfirm);
 
         await sleep(1000 / 60)
     }
@@ -227,7 +227,7 @@ const spawnPistolPickupAtRandomPlace = () => {
     pickups.push(weapon)
 };
 
-function calculateProjectilePositions(delta, broadcastNewExplosion) {
+function calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKillConfirm) {
     for (let projectile of projectiles) {
         const x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
         const y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
@@ -241,7 +241,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
             removeProjectile(projectile.id);
             if (projectile.type === ProjectileType.BAZOOKA)
                 spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
-                    broadcastNewExplosion);
+                    broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
             continue
         }
 
@@ -253,6 +253,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
 
                     agent.takeDamage(projectile.damage);
                     if (agent.isDead) {
+                        broadcastKillConfirm(projectile.agentId);
                         agent.deaths++;
                         for (let i = 0; i < agents.length; i++) {
                             if (agents[i].id === projectile.agentId) {
@@ -262,7 +263,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
                     }
                     if (projectile.type === ProjectileType.BAZOOKA)
                         spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
-                            broadcastNewExplosion);
+                            broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
 
                     removeProjectile(projectile.id);
                     removed = true;
@@ -274,7 +275,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
 
                     if (projectile.type === ProjectileType.BAZOOKA)
                         spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
-                            broadcastNewExplosion);
+                            broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
 
                     removeProjectile(projectile.id);
                     removed = true;
@@ -366,14 +367,15 @@ function movePickup(pickup, x, y) {
     });
 }
 
-function spawnBazookaExplosion(x, y, broadcastBazookaExplosion) {
+function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillConfirm, agentId) {
     const explosion = Matter.Bodies.circle(x, y, constants.BAZOOKA_EXPLOSION_SIZE / 2);
     const zones = getZonesForObject(explosion);
     for (let zone of zones) {
         if (matrix.agents[zone] != null)
             matrix.agents[zone].forEach(agent => {
-                if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible) {
+                if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible && !agent.isDead) {
                     agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
+                    if (agent.isDead) broadcastKillConfirm(agentId);
                 }
             })
     }
@@ -399,7 +401,7 @@ function spawnBazookaProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, ag
 }
 
 function spawnShotgunProjectiles(agent, x, y, broadcastNewProjectile, agentId) {
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 10; i++) {
         const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-15, 15);
         const xSpeed = Math.cos(Math.PI / 180 * angle);
         const ySpeed = Math.sin(Math.PI / 180 * angle);

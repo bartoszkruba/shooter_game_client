@@ -116,6 +116,13 @@ class Server {
                     .on("wallData") { processWallData(it) }
                     .on("newExplosion") { processNewExplosion(it) }
                     .on("scoreboardData") { processScoreboardData(it) }
+                    .on("killConfirm") { processKillConfirm(it) }
+        }
+
+        var shouldPlayDeathSound = false;
+
+        private fun processKillConfirm(data: kotlin.Array<Any>) {
+            shouldPlayDeathSound = true;
         }
 
         private fun processScoreboardData(data: kotlin.Array<Any>) {
@@ -312,6 +319,8 @@ class Server {
             val xSpeed = projectile.getDouble("xSpeed").toFloat()
             val ySpeed = projectile.getDouble("ySpeed").toFloat()
             val agentId = projectile.getString("agentId")
+
+            if (agentId == player.id) player.weapon.shoot()
 
             if (projectiles[id] == null) {
                 projectiles[id] = when (type) {

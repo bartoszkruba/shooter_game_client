@@ -1,6 +1,6 @@
-const constants = require('../settings/constants');
+const constants = require('../../settings/constants');
 const Weapon = require('./Weapon');
-const ProjectileType = require('./ProjectileType');
+const ProjectileType = require('../projectiles/ProjectileType');
 
 class Pistol extends Weapon {
     constructor() {

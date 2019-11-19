@@ -102,7 +102,16 @@ const generateRandomHouse = () => {
         if (free) break;
     }
 
-    return generateHouse(x, y)
+    let dice = Math.round(getRandomArbitrary(0, 4));
+    if (dice === 1) {
+        return generateHouseFacingDown(x, y)
+    } else if (dice === 2) {
+        return generateHouseFacingRight(x, y)
+    } else if (dice === 3) {
+        return generateHouseFacingUp(x, y)
+    } else {
+        return generateHouseFacingLeft(x, y)
+    }
 };
 
 const generateVerticalWall = (x, y) => {
@@ -143,12 +152,12 @@ const generateHorizontalWall = (x, y) => {
     return wall;
 };
 
-const generateHouse = (x, y) => {
+const generateHouseFacingDown = (x, y) => {
     let house = [];
 
     house = [...house, ...generateVerticalWall(x, y)];
     house = [...house, ...generateVerticalWall(x + 9 * constants.WALL_SPRITE_WIDTH, y)];
-    house = [...house, ...generateHorizontalWall(x, y + 10 * constants.WALL_SPRITE_HEIGHT)];
+    house = [...house, ...generateHorizontalWall(x, y + 9 * constants.WALL_SPRITE_HEIGHT)];
 
     for (let i = 1; i <= 2; i++) {
         house.push({x: (x + i * constants.WALL_SPRITE_WIDTH), y})
@@ -156,6 +165,96 @@ const generateHouse = (x, y) => {
 
     for (let i = 1; i <= 3; i++) {
         house.push({x: (x + (10 * constants.WALL_SPRITE_WIDTH) - i * constants.WALL_SPRITE_WIDTH), y})
+    }
+
+    occupiedPlaces.push(Matter.Bodies.rectangle(
+        x + ((10 * constants.WALL_SPRITE_WIDTH) / 2),
+        y + ((11 * constants.WALL_SPRITE_HEIGHT) / 2),
+        10 * constants.WALL_SPRITE_WIDTH + 2 * constants.PLAYER_SPRITE_WIDTH,
+        11 * constants.WALL_SPRITE_HEIGHT + 2 * constants.PLAYER_SPRITE_HEIGHT));
+
+    return house;
+};
+
+const generateHouseFacingUp = (x, y) => {
+    let house = [];
+
+    house = [...house, ...generateVerticalWall(x, y)];
+    house = [...house, ...generateVerticalWall(x + 9 * constants.WALL_SPRITE_WIDTH, y)];
+    house = [...house, ...generateHorizontalWall(x, y)];
+
+    for (let i = 1; i <= 2; i++) {
+        house.push({
+            x: (x + i * constants.WALL_SPRITE_WIDTH),
+            y: y + 9 * constants.WALL_SPRITE_HEIGHT
+        })
+    }
+
+    for (let i = 1; i <= 3; i++) {
+        house.push({
+            x: (x + (10 * constants.WALL_SPRITE_WIDTH) - i * constants.WALL_SPRITE_WIDTH),
+            y: y + 9 * constants.WALL_SPRITE_HEIGHT
+        })
+    }
+
+    occupiedPlaces.push(Matter.Bodies.rectangle(
+        x + ((10 * constants.WALL_SPRITE_WIDTH) / 2),
+        y + ((11 * constants.WALL_SPRITE_HEIGHT) / 2),
+        10 * constants.WALL_SPRITE_WIDTH + 2 * constants.PLAYER_SPRITE_WIDTH,
+        11 * constants.WALL_SPRITE_HEIGHT + 2 * constants.PLAYER_SPRITE_HEIGHT));
+
+    return house;
+};
+
+const generateHouseFacingRight = (x, y) => {
+    let house = [];
+
+    house = [...house, ...generateVerticalWall(x, y)];
+    house = [...house, ...generateHorizontalWall(x, y + 9 * constants.WALL_SPRITE_HEIGHT)];
+    house = [...house, ...generateHorizontalWall(x, y)];
+
+    for (let i = 1; i <= 2; i++) {
+        house.push({
+            y: (y + i * constants.WALL_SPRITE_HEIGHT),
+            x: x + 9 * constants.WALL_SPRITE_WIDTH
+        })
+    }
+
+    for (let i = 1; i <= 3; i++) {
+        house.push({
+            y: (y + (10 * constants.WALL_SPRITE_WIDTH) - i * constants.WALL_SPRITE_WIDTH),
+            x: x + 9 * constants.WALL_SPRITE_WIDTH
+        })
+    }
+
+    occupiedPlaces.push(Matter.Bodies.rectangle(
+        x + ((10 * constants.WALL_SPRITE_WIDTH) / 2),
+        y + ((11 * constants.WALL_SPRITE_HEIGHT) / 2),
+        10 * constants.WALL_SPRITE_WIDTH + 2 * constants.PLAYER_SPRITE_WIDTH,
+        11 * constants.WALL_SPRITE_HEIGHT + 2 * constants.PLAYER_SPRITE_HEIGHT));
+
+    return house;
+};
+
+const generateHouseFacingLeft = (x, y) => {
+    let house = [];
+
+    house = [...house, ...generateVerticalWall(x + 9 * constants.WALL_SPRITE_WIDTH, y)];
+    house = [...house, ...generateHorizontalWall(x, y + 9 * constants.WALL_SPRITE_HEIGHT)];
+    house = [...house, ...generateHorizontalWall(x, y)];
+
+    for (let i = 1; i <= 2; i++) {
+        house.push({
+            y: (y + i * constants.WALL_SPRITE_HEIGHT),
+            x
+        })
+    }
+
+    for (let i = 1; i <= 3; i++) {
+        house.push({
+            y: (y + (10 * constants.WALL_SPRITE_WIDTH) - i * constants.WALL_SPRITE_WIDTH),
+            x
+        })
     }
 
     occupiedPlaces.push(Matter.Bodies.rectangle(

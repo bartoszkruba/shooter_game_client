@@ -1,7 +1,7 @@
 const Matter = require('matter-js');
-const constants = require('../settings/constants');
-const Pistol = require('./Pistol');
-const BaseObject = require('./BaseObject');
+const constants = require('../../settings/constants');
+const Pistol = require('../weapons/Pistol');
+const BaseObject = require('../BaseObject');
 
 class Agent extends BaseObject {
 

@@ -127,3 +127,4 @@ Thumbs.db
 /ios-moe/xcode/native/
 /core/src/frontendServer/node_modules/
 /core/src/backendServer/node_modules/
+/server/node_modules/

@@ -55,11 +55,13 @@ class GameScreen(
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
 
     private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
+    private val damageSound = assets.get("sounds/damage.mp3", Sound::class.java)
 
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
     private val machineGunShotSoundEffect = assets.get("sounds/machine_gun_shot.wav", Sound::class.java)
     private val bazookaShotSoundEffect = assets.get("sounds/bazooka_shot.mp3", Sound::class.java)
+    private val dryfire = assets.get("sounds/dryfire.mp3", Sound::class.java)
 
     private val bazookaExplosionSoundEffect = assets.get("sounds/bazooka_explosion.mp3", Sound::class.java)
 
@@ -158,6 +160,11 @@ class GameScreen(
 
     private var pressedKeys = 0
     override fun render(delta: Float) {
+        if (Server.shouldPlayDeathSound) {
+            deathSound.play()
+            Server.shouldPlayDeathSound = false
+        }
+
         shouldPlayReload = Server.shouldPlayReload
         if (Server.getPlayer() != null) {
             player = Server.getPlayer()!!
@@ -399,6 +406,12 @@ class GameScreen(
         val wWasReleased = mouseWasPressed && !isMouseWPressed;
         mouseWasPressed = isMouseWPressed;
 
+        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.weapon.bulletsInChamber < 1
+                && player.weapon.canShoot()) {
+            dryfire.play()
+            player.weapon.shoot()
+        }
+
         if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
             Server.mouseStart()
         }
@@ -568,7 +581,7 @@ class GameScreen(
             if (entry.value.justFired) {
                 entry.value.justFired = false
                 when {
-                    entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.14f)
+                    entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.2f)
                     entry.value is MachineGunProjectile -> machineGunShotSoundEffect.play()
                     entry.value is BazookaProjectile -> bazookaShotSoundEffect.play()
                     else -> pistolShotSoundEffect.play(1.5f)
@@ -612,6 +625,7 @@ class GameScreen(
         for (opponent in opponents.entries) {
             if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead) {
                 removeProjectile(projectile, key)
+                if (!opponent.value.isDead) damageSound.play()
                 return true
             }
         }
@@ -621,6 +635,7 @@ class GameScreen(
     private fun checkPlayerCollision(projectile: Projectile, key: String): Boolean {
         if (Intersector.overlaps(projectile.bounds, player.bounds) && projectile.agentId != player.id) {
             removeProjectile(projectile, key)
+            if (!player.isDead) damageSound.play()
             return true
         }
         return false
