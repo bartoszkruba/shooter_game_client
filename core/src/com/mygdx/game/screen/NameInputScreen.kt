@@ -78,8 +78,8 @@ class NameInputScreen (
     private var stage = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
     var skin: Skin = Skin(Gdx.files.internal("terra-mother/skin/terra-mother-ui.json"))
 
-    lateinit var username: String
-    lateinit var ipAddress: String
+    private var username = ""
+    private var ipAddress = ""
     private var goToGame = false
     val c = batch.color;
 
@@ -174,17 +174,18 @@ class NameInputScreen (
 
     private fun checkNameInput(batch: SpriteBatch) {
         if(Gdx.input.isKeyPressed(Input.Keys.ENTER))
-            if (::username.isInitialized && ::ipAddress.isInitialized) {
+            if (username != "" && ipAddress != "") {
                 if (username.length > 2 && ipAddress.length > 6) {
                     Server.connectionSocket(ipAddress)
                     game.createGame()
                     Server.setName(username)
                     errorMassage = false
                     goToGame = true
+                    showConnectionSign = true
                 }else{
                     showConnectionSign = false
                     errorMassage = true
-                    massageText = "LENGTH OF YOUR NAME OR IP IS NOT CORRECT"
+                    massageText = "THE LENGTH OF YOUR NAME OR IP IS NOT ENOUGH"
                 }
             }else {
                 showConnectionSign = false
@@ -201,7 +202,7 @@ class NameInputScreen (
                 backgroundMusic.stop()
                 game.playGameScreenMusic()
                 game.changeToGame()
-            }else showConnectionSign = true
+            }
     }
 
     private fun drawConnectionLabel(batch: SpriteBatch) {
