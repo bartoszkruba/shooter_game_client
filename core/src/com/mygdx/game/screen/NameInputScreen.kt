@@ -21,6 +21,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import com.mygdx.game.Game
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
+import frontendServer.Server
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
@@ -35,7 +36,15 @@ class NameInputScreen (
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
+    private val ipFont = BitmapFont()
+    private val errorMassageFont = BitmapFont()
+    private val connectorFont = BitmapFont()
+    private var errorMassage = false
+    private var massageText = ""
     private val lastSpawn = 0L
+
+    var imgpos = 0.0
+    var imgposdir = 0.1
 
     private val spawnRate = 100f
 
@@ -64,11 +73,12 @@ class NameInputScreen (
     val smallFont = BitmapFont()
 
     lateinit var txfUsername: TextField
+    lateinit var txfIP: TextField
     private var stage = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
-    private var stage2 = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
     var skin: Skin = Skin(Gdx.files.internal("terra-mother/skin/terra-mother-ui.json"))
 
     lateinit var username: String
+    lateinit var ipAddress: String
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -102,10 +112,40 @@ class NameInputScreen (
             text.draw(it)
             drawNameSign(it)
             nameInputFiled(it)
+            ipInputField(it)
+            checkNameInput(it)
+            drawErrorMassage(it)
+            drawConnectionLabel(it)
         }
         stage.draw();
-        checkNameInput()
         drawRain();
+    }
+
+    private fun drawErrorMassage(batch: SpriteBatch) {
+        if (errorMassage) {
+            errorMassageFont.draw(batch, massageText, WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.5f);
+            errorMassageFont.color = Color.RED
+        }
+    }
+
+    private fun ipInputField(batch: SpriteBatch) {
+        inputFieldBackground(batch, 4.4f, 3.5f)
+        ipFont.draw(batch, "For example: 10.152.190.106", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
+        ipFont.color = Color.GRAY;
+        txfIP = TextField("", skin)
+        setupTextField(txfIP, 3.42f)
+
+        txfIP.setTextFieldListener { textField, key -> ipAddress = textField.text }
+
+        font.draw(batch, "Press ENTER to start the game!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3f);
+    }
+
+    private fun inputFieldBackground(batch: SpriteBatch, x: Float, y: Float) {
+        val c = batch.color;
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, .5f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / x, WINDOW_HEIGHT / y,
+                WINDOW_WIDTH / 6.1f, WINDOW_HEIGHT / 6.5f);
     }
 
     private fun setBackground(delta: Float) {
@@ -119,33 +159,56 @@ class NameInputScreen (
         }
     }
 
-    private fun checkNameInput() {
+            var showConnectionSign = false
+    private fun checkNameInput(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
-            rainMusic.stop()
-            backgroundMusic.stop()
-            game.changeToGame()
-            frontendServer.Server.setName(username)
+            if (::username.isInitialized && ::ipAddress.isInitialized) {
+                if (username.length > 2) {
+                    Server.connectionSocket(ipAddress)
+                    rainMusic.stop()
+                    backgroundMusic.stop()
+                    Server.setName(username)
+                    game.changeToGame()
+
+                }else{
+                    showConnectionSign = false
+                    errorMassage = true
+                    massageText = "LENGTH OF YOUR NAME OR IP IS NOT CORRECT"
+                }
+            }else {
+                showConnectionSign = false
+                errorMassage = true
+                massageText = "YOU HAVE TO ENTER YOUR NAME AND IP"
+            }
+        }
+    }
+
+    private fun drawConnectionLabel(batch: SpriteBatch) {
+        if (showConnectionSign) {
+            imgpos += (imgposdir / 3);
+            if (imgpos < 0.0) imgposdir = -imgposdir;
+            if (imgpos > 1.0) imgposdir = -imgposdir;
+
+            val c = batch.color;
+            connectorFont.draw(batch, "TRY TO CONNECT..", WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.5f);
+            batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
         }
     }
 
     private fun nameInputFiled(batch: SpriteBatch) {
-        val c = batch.color;
-        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
-        batch.setColor(c.r, c.g, c.b, .5f)
-        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.4f, WINDOW_HEIGHT / 2.68f, 210f, 110f);
-
+        inputFieldBackground(batch, 4.4f, 2.68f)
         font.draw(batch, "OBS! max 8 characters", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.18f);
         txfUsername = TextField("", skin)
         txfUsername.maxLength = 8
-        txfUsername.setPosition(WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 2.6f)
-        txfUsername.setSize(130f, 100f)
-        stage.addActor(txfUsername)
-        Gdx.input.inputProcessor = this.stage;
-
+        setupTextField(txfUsername, 2.65f)
         txfUsername.setTextFieldListener { textField, key -> username = textField.text }
+    }
 
-        font.draw(batch, "Press ENTER to start the game!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 2.4f);
-
+    private fun setupTextField(txf: TextField, y: Float) {
+        txf.setPosition(Gdx.graphics.width / 3.9f, Gdx.graphics.height / y)
+        txf.setSize(Gdx.graphics.width / 3.9f, Gdx.graphics.height / 6.5f)
+        stage.addActor(txf)
+        Gdx.input.inputProcessor = this.stage;
     }
 
     private fun drawNameSign(batch: SpriteBatch) {
