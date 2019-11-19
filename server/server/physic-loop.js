@@ -263,7 +263,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKil
                     }
                     if (projectile.type === ProjectileType.BAZOOKA)
                         spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
-                            broadcastNewExplosion);
+                            broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
 
                     removeProjectile(projectile.id);
                     removed = true;
@@ -275,7 +275,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKil
 
                     if (projectile.type === ProjectileType.BAZOOKA)
                         spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
-                            broadcastNewExplosion);
+                            broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
 
                     removeProjectile(projectile.id);
                     removed = true;
