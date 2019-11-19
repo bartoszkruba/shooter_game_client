@@ -130,7 +130,6 @@ class GameScreen(
                 ground.add(groundSprite)
             }
         }
-        Server.connectionSocket()
         Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
                 playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, walls)
 

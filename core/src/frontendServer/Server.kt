@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class Server {
     companion object {
-        private lateinit var socket: Socket
+        lateinit var socket: Socket
         val pickups = ConcurrentHashMap<String, Pickup>()
 
         lateinit var projectileTexture: Texture
@@ -61,11 +61,12 @@ class Server {
         private lateinit var walls: Array<Wall>
         var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
 
-        fun connectionSocket() {
+        fun connectionSocket(ipAddress: String) {
             try {
-                socket = IO.socket("http://localhost:8080")
+                socket = IO.socket("http://$ipAddress:8080")
                 socket.connect()
             } catch (e: Exception) {
+                println("something went wrong!")
             }
         }
 

@@ -21,6 +21,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import com.mygdx.game.Game
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
+import frontendServer.Server
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
@@ -37,9 +38,13 @@ class NameInputScreen (
 
     private val ipFont = BitmapFont()
     private val errorMassageFont = BitmapFont()
+    private val connectorFont = BitmapFont()
     private var errorMassage = false
     private var massageText = ""
     private val lastSpawn = 0L
+
+    var imgpos = 0.0
+    var imgposdir = 0.1
 
     private val spawnRate = 100f
 
@@ -110,6 +115,7 @@ class NameInputScreen (
             ipInputField(it)
             checkNameInput(it)
             drawErrorMassage(it)
+            drawConnectionLabel(it)
         }
         stage.draw();
         drawRain();
@@ -124,7 +130,7 @@ class NameInputScreen (
 
     private fun ipInputField(batch: SpriteBatch) {
         inputFieldBackground(batch, 4.4f, 3.5f)
-        ipFont.draw(batch, "For example: 92.254.180.153", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
+        ipFont.draw(batch, "For example: 10.152.190.106", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.7f);
         ipFont.color = Color.GRAY;
         txfIP = TextField("", skin)
         txfIP.maxLength = 14
@@ -154,22 +160,39 @@ class NameInputScreen (
         }
     }
 
+            var showConnectionSign = false
     private fun checkNameInput(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
             if (::username.isInitialized && ::ipAddress.isInitialized) {
                 if (username.length > 2 && ipAddress.length == 14) {
+                    Server.connectionSocket(ipAddress)
                     rainMusic.stop()
                     backgroundMusic.stop()
+                    Server.setName(username)
                     game.changeToGame()
-                    frontendServer.Server.setName(username)
+
                 }else{
+                    showConnectionSign = false
                     errorMassage = true
                     massageText = "LENGTH OF YOUR NAME OR IP IS NOT CORRECT"
                 }
             }else {
+                showConnectionSign = false
                 errorMassage = true
                 massageText = "YOU HAVE TO ENTER YOUR NAME AND IP"
             }
+        }
+    }
+
+    private fun drawConnectionLabel(batch: SpriteBatch) {
+        if (showConnectionSign) {
+            imgpos += (imgposdir / 3);
+            if (imgpos < 0.0) imgposdir = -imgposdir;
+            if (imgpos > 1.0) imgposdir = -imgposdir;
+
+            val c = batch.color;
+            connectorFont.draw(batch, "TRY TO CONNECT..", WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.5f);
+            batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
         }
     }
 
