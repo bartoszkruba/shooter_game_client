@@ -44,6 +44,8 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
         lastLoop = currentTime;
 
         for (let agent of agents) {
+            if (agent.invisible && agent.lastRespawn < new Date().getTime() - constants.INVISIBILITY_DURATION * 1000)
+                agent.invisible = false;
             checkControls(agent, delta, broadcastNewProjectile)
         }
         calculateProjectilePositions(delta, broadcastNewExplosion);
@@ -232,33 +234,35 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
 
         moveProjectile(projectile, x, y);
 
-        if (projectile.bounds.position.x < 0 || projectile.bounds.position.x > constants.MAP_WIDTH ||
-            projectile.bounds.position.y < 0 || projectile.bounds.position.y > constants.MAP_HEIGHT) {
+        if (projectile.bounds.position.x < constants.WALL_SPRITE_WIDTH ||
+            projectile.bounds.position.x > constants.MAP_WIDTH - constants.WALL_SPRITE_WIDTH ||
+            projectile.bounds.position.y < constants.WALL_SPRITE_HEIGHT ||
+            projectile.bounds.position.y > constants.MAP_HEIGHT - constants.WALL_SPRITE_HEIGHT) {
             removeProjectile(projectile.id);
             if (projectile.type === ProjectileType.BAZOOKA)
-                broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y});
+                spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
+                    broadcastNewExplosion);
             continue
         }
 
         let removed = false;
         for (let zone of projectile.zones) {
             if (matrix.agents[zone] != null) for (let agent of matrix.agents[zone]) {
-                if (Matter.SAT.collides(agent.bounds, projectile.bounds).collided && !agent.isDead &&
-                    projectile.agentId !== agent.id) {
+                if (!agent.isDead && !agent.invisible && projectile.agentId !== agent.id &&
+                    Matter.SAT.collides(agent.bounds, projectile.bounds).collided) {
 
                     agent.takeDamage(projectile.damage);
-                    if (agent.isDead){
+                    if (agent.isDead) {
                         agent.deaths++;
                         for (let i = 0; i < agents.length; i++) {
-                            if (agents[i].id === projectile.agentId){
+                            if (agents[i].id === projectile.agentId) {
                                 agents[i].kills++
                             }
                         }
-                        //agents[projectile.agentId].kills++;
                     }
-                    if (projectile.type === ProjectileType.BAZOOKA) {
-                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y})
-                    }
+                    if (projectile.type === ProjectileType.BAZOOKA)
+                        spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
+                            broadcastNewExplosion);
 
                     removeProjectile(projectile.id);
                     removed = true;
@@ -269,14 +273,14 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
                 if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
 
                     if (projectile.type === ProjectileType.BAZOOKA)
-                        broadcastNewExplosion({x: projectile.bounds.position.x, y: projectile.bounds.position.y});
+                        spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
+                            broadcastNewExplosion);
 
                     removeProjectile(projectile.id);
                     removed = true;
                     break;
                 }
             }
-
             if (removed) break
         }
     }
@@ -362,6 +366,20 @@ function movePickup(pickup, x, y) {
     });
 }
 
+function spawnBazookaExplosion(x, y, broadcastBazookaExplosion) {
+    const explosion = Matter.Bodies.circle(x, y, constants.BAZOOKA_EXPLOSION_SIZE / 2);
+    const zones = getZonesForObject(explosion);
+    for (let zone of zones) {
+        if (matrix.agents[zone] != null)
+            matrix.agents[zone].forEach(agent => {
+                if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible) {
+                    agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
+                }
+            })
+    }
+    broadcastBazookaExplosion({x, y})
+}
+
 function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, agentId) {
     const projectile = new PistolProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
     addProjectileToMatrix(projectile);
@@ -382,7 +400,7 @@ function spawnBazookaProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, ag
 
 function spawnShotgunProjectiles(agent, x, y, broadcastNewProjectile, agentId) {
     for (let i = 0; i < 15; i++) {
-        const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-10, 10);
+        const angle = agent.facingDirectionAngle + util.getRandomArbitrary(-15, 15);
         const xSpeed = Math.cos(Math.PI / 180 * angle);
         const ySpeed = Math.sin(Math.PI / 180 * angle);
         const projectile = new ShotgunProjectile(x, y, xSpeed, ySpeed, shortid.generate(), agentId);
@@ -611,6 +629,8 @@ const moveAgentToRandomPlace = (agent) => {
         if (!collided) break
     }
 
+    agent.invisible = true;
+    agent.lastRespawn = new Date().getTime();
 };
 
 const removeAgent = id => {
