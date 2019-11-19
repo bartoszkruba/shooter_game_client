@@ -36,7 +36,7 @@ let continueLooping = true;
 
 const matrix = getZonesMatrix();
 
-async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
+async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm) {
     weaponRespawnLoop().catch(e => console.log(e));
     while (continueLooping) {
         const currentTime = new Date().getTime();
@@ -48,7 +48,7 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion) {
                 agent.invisible = false;
             checkControls(agent, delta, broadcastNewProjectile)
         }
-        calculateProjectilePositions(delta, broadcastNewExplosion);
+        calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKillConfirm);
 
         await sleep(1000 / 60)
     }
@@ -227,7 +227,7 @@ const spawnPistolPickupAtRandomPlace = () => {
     pickups.push(weapon)
 };
 
-function calculateProjectilePositions(delta, broadcastNewExplosion) {
+function calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKillConfirm) {
     for (let projectile of projectiles) {
         const x = projectile.bounds.position.x + projectile.velocity.x * delta * projectile.speed;
         const y = projectile.bounds.position.y + projectile.velocity.y * delta * projectile.speed;
@@ -241,7 +241,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
             removeProjectile(projectile.id);
             if (projectile.type === ProjectileType.BAZOOKA)
                 spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
-                    broadcastNewExplosion);
+                    broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
             continue
         }
 
@@ -253,6 +253,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion) {
 
                     agent.takeDamage(projectile.damage);
                     if (agent.isDead) {
+                        broadcastKillConfirm(projectile.agentId);
                         agent.deaths++;
                         for (let i = 0; i < agents.length; i++) {
                             if (agents[i].id === projectile.agentId) {
@@ -366,14 +367,15 @@ function movePickup(pickup, x, y) {
     });
 }
 
-function spawnBazookaExplosion(x, y, broadcastBazookaExplosion) {
+function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillConfirm, agentId) {
     const explosion = Matter.Bodies.circle(x, y, constants.BAZOOKA_EXPLOSION_SIZE / 2);
     const zones = getZonesForObject(explosion);
     for (let zone of zones) {
         if (matrix.agents[zone] != null)
             matrix.agents[zone].forEach(agent => {
-                if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible) {
+                if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible && !agent.isDead) {
                     agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
+                    if (agent.isDead) broadcastKillConfirm(agentId);
                 }
             })
     }

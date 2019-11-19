@@ -115,6 +115,14 @@ class Server {
                     .on("wallData") { processWallData(it) }
                     .on("newExplosion") { processNewExplosion(it) }
                     .on("scoreboardData") { processScoreboardData(it) }
+                    .on("killConfirm") { processKillConfirm(it) }
+        }
+
+        var shouldPlayDeathSound = false;
+
+        private fun processKillConfirm(data: kotlin.Array<Any>) {
+            println("Kill confirm")
+            shouldPlayDeathSound = true;
         }
 
         private fun processScoreboardData(data: kotlin.Array<Any>) {

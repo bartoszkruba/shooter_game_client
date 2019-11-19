@@ -55,6 +55,7 @@ class GameScreen(
     private val music = assets.get("music/ingame_music.ogg", Music::class.java)
 
     private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
+    private val damageSound = assets.get("sounds/damage.mp3", Sound::class.java)
 
     private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
     private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
@@ -125,7 +126,7 @@ class GameScreen(
 
         music.isLooping = true
         music.volume = 0.4f
-        music.play()
+//        music.play()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -155,6 +156,12 @@ class GameScreen(
 
     private var pressedKeys = 0
     override fun render(delta: Float) {
+        if (Server.shouldPlayDeathSound) {
+            println("Playing death sound")
+            deathSound.play()
+            Server.shouldPlayDeathSound = false
+        }
+
         shouldPlayReload = Server.shouldPlayReload
         if (Server.getPlayer() != null) {
             player = Server.getPlayer()!!
@@ -609,6 +616,7 @@ class GameScreen(
         for (opponent in opponents.entries) {
             if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead) {
                 removeProjectile(projectile, key)
+                if (!opponent.value.isDead) damageSound.play()
                 return true
             }
         }
@@ -618,6 +626,7 @@ class GameScreen(
     private fun checkPlayerCollision(projectile: Projectile, key: String): Boolean {
         if (Intersector.overlaps(projectile.bounds, player.bounds) && projectile.agentId != player.id) {
             removeProjectile(projectile, key)
+            if (!player.isDead) damageSound.play()
             return true
         }
         return false
