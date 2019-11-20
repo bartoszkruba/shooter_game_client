@@ -135,6 +135,7 @@ io.on('connection', (socket) => {
                 agents[i].weapon = new Pistol();
                 agents[i].lastPing = new Date().getTime();
                 engine.moveAgentToRandomPlace(agents[i]);
+                //agents[i].invisible = true;
                 break;
             }
         }
@@ -196,6 +197,7 @@ io.on('connection', (socket) => {
     const ag = new Agent(200, 200, "", 0, 0, false, constants.PLAYER_MAX_HEALTH, new Pistol(), 0, socket.id);
     engine.addAgent(ag, 500, 500);
     engine.moveAgentToRandomPlace(ag);
+    //ag.invisible = true;
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
