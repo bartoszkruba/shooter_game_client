@@ -30,6 +30,10 @@ import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.projectile.*
 import ktx.assets.pool
 import ktx.collections.iterate
+import com.mygdx.game.model.projectile.Projectile
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+
 
 private enum class SHAKE_DIRECTION { RIGHT, LEFT }
 
@@ -223,14 +227,22 @@ class GameScreen(
     private fun drawScoresOnBoard(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.TAB)) {
             var t = 1.14f
+            var sortedByKills = ArrayList<Agent>()
             playerOnScoreboardTable.values.forEach {
+                sortedByKills.add(it)
+            }
+
+            sortedByKills = ArrayList( sortedByKills.sortedWith(compareBy { it.kills }).reversed() )
+
+            for (it in sortedByKills) {
                 if (it.id == player.id) playersOnScoreboardFont.color = Color.GREEN else playersOnScoreboardFont.color = Color.RED;
                 t += 0.05f
-                playersOnScoreboardFont.draw(batch, "team name", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
+                playersOnScoreboardFont.draw(batch, "${sortedByKills.indexOf(it) + 1}" , WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, it.name, WINDOW_WIDTH / 2.4f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.kills}", WINDOW_WIDTH / 1.73f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.deaths}", WINDOW_WIDTH / 1.43f, WINDOW_HEIGHT / t)
             }
+
         }
     }
 
@@ -248,7 +260,7 @@ class GameScreen(
             batch.setColor(c.r, c.g, c.b, .8f)
             batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.15f);
 
-            scoreboardFont.draw(batch, "TEAM           PLAYER              KILLS            DEATHS", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
+            scoreboardFont.draw(batch, "RANK           PLAYER              KILLS            DEATHS", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
             scoreboardFont.data.setScale(1.7f)
         }
     }
@@ -278,11 +290,11 @@ class GameScreen(
             if (it.gotShot && !it.isDead) {
                 drawBloodOnPlayerBody(batch, it.bounds.x - 10f, it.bounds.y)
                 bloodOnTheFloor.add(
-                        bloodOnTheFloorPool.obtain().apply {
-                            bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
-                            gotShot = true
-                            transparent = 1f
-                        }
+                    bloodOnTheFloorPool.obtain().apply {
+                        bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                        gotShot = true
+                        transparent = 1f
+                    }
                 )
             }
         }
