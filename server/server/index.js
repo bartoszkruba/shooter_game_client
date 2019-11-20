@@ -15,8 +15,7 @@ const getZonesForObject = require('../util/util').getZonesForObject;
 
 let loopAlreadyRunning = false;
 
-server.listen(8080, () =>
-    console.log("Server is running.."));
+server.listen(8080, () => console.log("Server is running.."));
 
 worldGenerator.generateWalls().forEach(wall => engine.addWall(wall.x, wall.y));
 
@@ -180,7 +179,7 @@ io.on('connection', (socket) => {
     socket.on('playerRotation', data => {
         for (let i = 0; i < agents.length; i++) {
             if (agents[i].id === socket.id) {
-                agents[i].facingDirectionAngle = Object.values(data)[0]
+                agents[i].facingDirectionAngle = Object.values(data)[0];
                 agents[i].lastPing = new Date().getTime();
             }
         }
@@ -206,6 +205,7 @@ io.on('connection', (socket) => {
         projectileDataLoop().catch(e => console.log(e));
         pickupDataLoop().catch(e => console.log(e));
         agentDataOnScoreboard().catch(e => console.log(e));
+        explosiveBarrelDataLoop().catch(e => console.log(e));
         // timeoutCheckLoop().catch(e => console.log(e))
     }
 });
@@ -273,6 +273,28 @@ async function projectileDataLoop() {
             io.to(agent.id).emit("projectileData", {projectileData});
         }
         await sleep(1000 / constants.PROJECTILE_UPDATES_PER_SECOND)
+    }
+}
+
+async function explosiveBarrelDataLoop() {
+    while (engine.continueLooping) {
+        for (let agent of agents) {
+            const barrelData = [];
+            const ids = [];
+            for (let zone of agent.viewportZones) {
+                if (engine.matrix[zone != null])
+                    for (let barrel of engine.matrix.explosiveBarrels[zone]) {
+                        if (ids.includes(barrel.id)) continue;
+                        ids.push(barrel.id);
+                        barrelData.push({
+                            x: barrel.bounds.bounds.min.x,
+                            y: barrel.bounds.bounds.min.y,
+                            id: barrel.id
+                        })
+                    }
+            }
+            io.to(agent.id).emit("barrelData", barrelData);
+        }
     }
 }
 
