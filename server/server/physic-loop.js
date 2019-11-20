@@ -386,15 +386,17 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillCon
                     if (agent.isDead) {
                         broadcastKillConfirm(agentId);
                         agent.deaths++;
-                        for (let i = 0; i < agents.length; i++) {
-                            if (agents[i].id === agentId) {
-                                agents[i].kills++
+                        if (agent.id === agentId) {
+                            agent.kills--
+                        } else {
+                            for (let i = 0; i < agents.length; i++) {
+                                if (agents[i].id === agentId) {
+                                    agents[i].kills++
+                                }
                             }
                         }
-
                     }
-                }
-            });
+                }});
     }
     broadcastBazookaExplosion({x, y})
 }
