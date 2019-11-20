@@ -383,9 +383,18 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillCon
             matrix.agents[zone].forEach(agent => {
                 if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible && !agent.isDead) {
                     agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
-                    if (agent.isDead) broadcastKillConfirm(agentId);
+                    if (agent.isDead) {
+                        broadcastKillConfirm(agentId);
+                        agent.deaths++;
+                        for (let i = 0; i < agents.length; i++) {
+                            if (agents[i].id === agentId) {
+                                agents[i].kills++
+                            }
+                        }
+
+                    }
                 }
-            })
+            });
     }
     broadcastBazookaExplosion({x, y})
 }
