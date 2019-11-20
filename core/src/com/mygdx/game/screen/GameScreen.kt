@@ -613,7 +613,8 @@ class GameScreen(
 
     private fun checkOpponentCollisions(projectile: Projectile, key: String): Boolean {
         for (opponent in opponents.entries) {
-            if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead) {
+            if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead &&
+                    projectile.agentId != opponent.value.id) {
                 removeProjectile(projectile, key)
                 if (!opponent.value.isDead) damageSound.play()
                 return true
@@ -743,9 +744,9 @@ class GameScreen(
     }
 
     fun playGameScreenMusic() {
-            Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
-            music.isLooping = true
-            music.volume = 0.4f
-            music.play()
+        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
+        music.isLooping = true
+        music.volume = 0.4f
+//        music.play()
     }
 }
