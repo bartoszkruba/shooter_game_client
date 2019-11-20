@@ -36,9 +36,17 @@ let continueLooping = true;
 
 const matrix = getZonesMatrix();
 
-async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm) {
+const agentsToRemove = [];
+
+async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm, broadcastDisconnect) {
     weaponRespawnLoop().catch(e => console.log(e));
     while (continueLooping) {
+        for (let id of agentsToRemove) {
+            removeAgent(id);
+            console.log("removing " + id)
+            broadcastDisconnect(id);
+        }
+        agentsToRemove.splice(0, agentsToRemove.length);
         const currentTime = new Date().getTime();
         let delta = (currentTime - lastLoop) / 1000;
         lastLoop = currentTime;
@@ -375,9 +383,20 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillCon
             matrix.agents[zone].forEach(agent => {
                 if (Matter.SAT.collides(agent.bounds, explosion).collided && !agent.invisible && !agent.isDead) {
                     agent.takeDamage(constants.BAZOOKA_EXPLOSION_DAMAGE);
-                    if (agent.isDead) broadcastKillConfirm(agentId);
-                }
-            })
+                    if (agent.isDead) {
+                        broadcastKillConfirm(agentId);
+                        agent.deaths++;
+                        if (agent.id === agentId) {
+                            agent.kills--
+                        } else {
+                            for (let i = 0; i < agents.length; i++) {
+                                if (agents[i].id === agentId) {
+                                    agents[i].kills++
+                                }
+                            }
+                        }
+                    }
+                }});
     }
     broadcastBazookaExplosion({x, y})
 }
@@ -644,6 +663,15 @@ const removeAgent = id => {
             break;
         }
     }
+
+    for (let zone in matrix.agents) {
+        for (let agent of zone) {
+            if (agent.id === id) {
+                zone.splice(zone.indexOf(agent, 1));
+                break;
+            }
+        }
+    }
 };
 
 const removePickup = id => {
@@ -683,6 +711,7 @@ module.exports = {
     addPickup,
     addWall,
     walls,
-    moveAgentToRandomPlace
+    moveAgentToRandomPlace,
+    agentsToRemove,
 };
 
