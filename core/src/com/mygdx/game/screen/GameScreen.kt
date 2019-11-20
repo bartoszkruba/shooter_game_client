@@ -27,6 +27,7 @@ import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Player
 import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
+import com.mygdx.game.model.obstacles.ExplosiveBarrel
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.projectile.*
 import ktx.assets.pool
@@ -70,6 +71,7 @@ class GameScreen(
 
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
     private val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+    private val explosiveBarrelTexture = assets.get("images/explosive_barrel.png", Texture::class.java)
 
     private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
 
@@ -104,6 +106,7 @@ class GameScreen(
     private val barrelExplosions: Array<BarrelExplosion>
 
     private val pickups: ConcurrentHashMap<String, Pickup>
+    private val explosiveBarrels: ConcurrentHashMap<String, ExplosiveBarrel>
     var imgpos = 0.0
     var imgposdir = 0.1
     var showMiniMap = 0
@@ -136,7 +139,7 @@ class GameScreen(
             }
         }
         Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
-                playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, walls)
+                playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, explosiveBarrelTexture, walls)
 
         projectiles = Server.projectiles
         opponents = Server.opponents
@@ -153,6 +156,7 @@ class GameScreen(
         barrelExplosions = Server.barrelExplosions
 
         pickups = Server.pickups
+        explosiveBarrels = Server.explosiveBarrels
     }
 
     private var pressedKeys = 0
@@ -206,6 +210,7 @@ class GameScreen(
                     shouldPlayReload = false
                     Server.shouldPlayReload = false
                 }
+                drawExplosiveBarrels(it)
                 drawWalls(it)
                 drawExplosions(it)
             }
@@ -714,6 +719,10 @@ class GameScreen(
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) if (inFrustum(camera, walls[i])) walls[i].draw(batch)
+    }
+
+    private fun drawExplosiveBarrels(batch: Batch) {
+        for (barrel in explosiveBarrels.values) barrel.draw(batch)
     }
 
     private fun drawPickups(batch: Batch) {

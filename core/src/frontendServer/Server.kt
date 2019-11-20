@@ -10,6 +10,7 @@ import com.mygdx.game.model.agent.Player
 import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.explosion.ExplosionType
+import com.mygdx.game.model.obstacles.ExplosiveBarrel
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.pickup.*
 import com.mygdx.game.model.projectile.*
@@ -57,11 +58,16 @@ class Server {
         private var shotgunPickupPool = pool { ShotgunPickup(texture = shotgunTexture) }
         private var bazookaPickupPool = pool { BazookaPickup(texture = bazookaTexture) }
 
+        private var explosiveBarrelPool = pool { ExplosiveBarrel(texture = explosiveBarrelTexture) }
+
+        var explosiveBarrels = ConcurrentHashMap<String, ExplosiveBarrel>()
+
         val opponents = ConcurrentHashMap<String, Opponent>()
         private lateinit var playerTextures: TextureAtlas
         private lateinit var healthBarTexture: Texture
         private lateinit var wallMatrix: HashMap<String, Array<Wall>>
         private lateinit var wallTexture: Texture
+        private lateinit var explosiveBarrelTexture: Texture
         private lateinit var walls: Array<Wall>
         var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
 
@@ -84,7 +90,8 @@ class Server {
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
                                shotgunTexture: Texture, bazookaTexture: Texture, playerTextures: TextureAtlas,
                                healthBarTexture: Texture, bazookaExplosionTextureAtlas: TextureAtlas,
-                               wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture, walls: Array<Wall>) {
+                               wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture,
+                               explosiveBarrelTexture: Texture, walls: Array<Wall>) {
 
             this.projectileTexture = projectileTexture
             this.pistolTexture = pistolTexture
@@ -97,6 +104,7 @@ class Server {
             this.bazookaExplosionTextureAtlas = bazookaExplosionTextureAtlas
             this.wallMatrix = wallMatrix
             this.wallTexture = wallTexture
+            this.explosiveBarrelTexture = explosiveBarrelTexture
             this.walls = walls
 
             socket.on(Socket.EVENT_CONNECT) {
@@ -117,6 +125,7 @@ class Server {
                     .on("agentData") { processAgentData(it) }
                     .on("projectileData") { processProjectileData(it) }
                     .on("pickupData") { processPickupData(it) }
+                    .on("barrelData") { processBarrelData(it) }
                     .on("wallData") { processWallData(it) }
                     .on("newExplosion") { processNewExplosion(it) }
                     .on("scoreboardData") { processScoreboardData(it) }
@@ -233,6 +242,20 @@ class Server {
                         this.agentId = agentId
                     }
                 }
+            }
+        }
+
+        private fun processBarrelData(data: kotlin.Array<Any>) {
+            for (barrel in explosiveBarrels.values) explosiveBarrelPool.free(barrel)
+            explosiveBarrels.clear()
+            val barrels = data[0] as JSONArray
+
+            for (i in 0 until barrels.length()) {
+                val barrel = barrels[i] as JSONObject
+                val x = barrel.getDouble("x").toFloat()
+                val y = barrel.getDouble("y").toFloat()
+                val id = barrel.getString("id")
+                explosiveBarrels[id] = explosiveBarrelPool.obtain().apply { setPosition(x, y) }
             }
         }
 
