@@ -188,8 +188,9 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('Player disconnected, id:', socket.id);
-        socket.broadcast.emit('playerDisconnected', {id: socket.id});
-        engine.removeAgent(socket.id);
+        // socket.broadcast.emit('playerDisconnected', {id: socket.id});
+        // engine.removeAgent(socket.id);
+        engine.agentsToRemove.push(socket.id);
     });
 
     console.log("Adding new player, id " + socket.id);
@@ -199,14 +200,21 @@ io.on('connection', (socket) => {
 
     if (!loopAlreadyRunning) {
         loopAlreadyRunning = true;
-        engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm).catch(e => console.log(e));
+        engine.physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm, broadcastDisconnect)
+            .catch(e => console.log(e));
         agentDataLoop().catch(e => console.log(e));
         projectileDataLoop().catch(e => console.log(e));
         pickupDataLoop().catch(e => console.log(e));
         agentDataOnScoreboard().catch(e => console.log(e));
-        timeoutCheckLoop().catch(e => console.log(e))
+        // timeoutCheckLoop().catch(e => console.log(e))
     }
 });
+
+const broadcastDisconnect = (id) => {
+    for (let agent of agents) {
+        io.to(agent.id).emit("playerDisconnected", {id})
+    }
+};
 
 const sleep = ms => new Promise((resolve => setTimeout(resolve, ms)));
 

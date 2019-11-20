@@ -36,9 +36,17 @@ let continueLooping = true;
 
 const matrix = getZonesMatrix();
 
-async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm) {
+const agentsToRemove = [];
+
+async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm, broadcastDisconnect) {
     weaponRespawnLoop().catch(e => console.log(e));
     while (continueLooping) {
+        for (let id of agentsToRemove) {
+            removeAgent(id);
+            console.log("removing " + id)
+            broadcastDisconnect(id);
+        }
+        agentsToRemove.splice(0, agentsToRemove.length);
         const currentTime = new Date().getTime();
         let delta = (currentTime - lastLoop) / 1000;
         lastLoop = currentTime;
@@ -644,6 +652,15 @@ const removeAgent = id => {
             break;
         }
     }
+
+    for (let zone in matrix.agents) {
+        for (let agent of zone) {
+            if (agent.id === id) {
+                zone.splice(zone.indexOf(agent, 1));
+                break;
+            }
+        }
+    }
 };
 
 const removePickup = id => {
@@ -683,6 +700,7 @@ module.exports = {
     addPickup,
     addWall,
     walls,
-    moveAgentToRandomPlace
+    moveAgentToRandomPlace,
+    agentsToRemove,
 };
 
