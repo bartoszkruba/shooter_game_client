@@ -7,7 +7,9 @@ import com.badlogic.gdx.utils.Array
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Player
+import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
+import com.mygdx.game.model.explosion.ExplosionType
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.pickup.*
 import com.mygdx.game.model.projectile.*
@@ -46,7 +48,9 @@ class Server {
 
         lateinit var bazookaExplosionTextureAtlas: TextureAtlas
         val bazookaExplosionPool = pool { BazookaExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
-        val explosions = Array<BazookaExplosion>()
+        val barrelExplosionPool = pool { BarrelExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
+        val bazookaExplosions = Array<BazookaExplosion>()
+        val barrelExplosions = Array<BarrelExplosion>()
 
         private var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
         private var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
@@ -135,11 +139,11 @@ class Server {
                 val deaths = agent.getInt("deaths")
                 val name = agent.getString("name")
 
-                    for (player in playerOnScoreboardTable.values) {
+                for (player in playerOnScoreboardTable.values) {
                     if (player.id == id) {
                         player.kills = kills
                         player.deaths = deaths
-                    }else{
+                    } else {
                         playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
                                 0f, false, 0f, 0f, playerTextures, id,
                                 healthBarTexture)
@@ -306,12 +310,22 @@ class Server {
             val explosion = data[0] as JSONObject
             val x = explosion.getDouble("x").toFloat()
             val y = explosion.getDouble("y").toFloat()
-            explosions.add(bazookaExplosionPool.obtain().apply {
-                this.justSpawned = true
-                this.x = x
-                this.y = y
-                resetTimer()
-            })
+            val type = explosion.getString("type")
+            if (type == ExplosionType.BAZOOKA) {
+                bazookaExplosions.add(bazookaExplosionPool.obtain().apply {
+                    this.justSpawned = true
+                    this.x = x
+                    this.y = y
+                    resetTimer()
+                })
+            } else if (type == ExplosionType.BARREL) {
+                barrelExplosions.add(barrelExplosionPool.obtain().apply {
+                    this.justSpawned = true
+                    this.x = x
+                    this.y = y
+                    resetTimer()
+                })
+            }
         }
 
         private fun processNewProjectile(data: kotlin.Array<Any>) {

@@ -25,6 +25,7 @@ import com.mygdx.game.model.pickup.Pickup
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Player
+import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.projectile.*
@@ -97,7 +98,10 @@ class GameScreen(
     private val bazookaProjectilePool: Pool<BazookaProjectile>
 
     private val bazookaExplosionPool: Pool<BazookaExplosion>
-    private val explosions: Array<BazookaExplosion>
+    private val barrelExplosionPool: Pool<BarrelExplosion>
+
+    private val bazookaExplosions: Array<BazookaExplosion>
+    private val barrelExplosions: Array<BarrelExplosion>
 
     private val pickups: ConcurrentHashMap<String, Pickup>
     var imgpos = 0.0
@@ -143,7 +147,10 @@ class GameScreen(
         bazookaProjectilePool = Server.bazookaProjectilePool
 
         bazookaExplosionPool = Server.bazookaExplosionPool
-        explosions = Server.explosions
+        bazookaExplosions = Server.bazookaExplosions
+
+        barrelExplosionPool = Server.barrelExplosionPool
+        barrelExplosions = Server.barrelExplosions
 
         pickups = Server.pickups
     }
@@ -667,7 +674,7 @@ class GameScreen(
     }
 
     private fun drawExplosions(batch: Batch) {
-        explosions.iterate { explosion, iterator ->
+        bazookaExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
                 bazookaExplosionSoundEffect.play()
@@ -676,6 +683,19 @@ class GameScreen(
             explosion.animate()
             if (explosion.isFinished()) {
                 bazookaExplosionPool.free(explosion)
+                iterator.remove()
+            }
+            explosion.sprite.draw(batch)
+        }
+        barrelExplosions.iterate { explosion, iterator ->
+            if (explosion.justSpawned) {
+                lastExplosion = TimeUtils.millis()
+                bazookaExplosionSoundEffect.play()
+                explosion.justSpawned = false
+            }
+            explosion.animate()
+            if (explosion.isFinished()) {
+                barrelExplosionPool.free(explosion)
                 iterator.remove()
             }
             explosion.sprite.draw(batch)
@@ -743,9 +763,9 @@ class GameScreen(
     }
 
     fun playGameScreenMusic() {
-            Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
-            music.isLooping = true
-            music.volume = 0.4f
-            music.play()
+        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
+        music.isLooping = true
+        music.volume = 0.4f
+        music.play()
     }
 }
