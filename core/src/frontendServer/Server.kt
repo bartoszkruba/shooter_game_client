@@ -135,7 +135,7 @@ class Server {
                 val deaths = agent.getInt("deaths")
                 val name = agent.getString("name")
 
-                for (player in playerOnScoreboardTable.values) {
+                    for (player in playerOnScoreboardTable.values) {
                     if (player.id == id) {
                         player.kills = kills
                         player.deaths = deaths

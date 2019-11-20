@@ -116,22 +116,12 @@ class GameScreen(
     private var shakeDirection = SHAKE_DIRECTION.RIGHT
     private var lastExplosion = 0L
 
-    var gameScreenMusic = false
-
     init {
-        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
-
         playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
         playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         wallMatrix = generateWallMatrix()
-
-        if (gameScreenMusic) {
-            music.isLooping = true
-            music.volume = 0.4f
-            music.play()
-        }
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
@@ -750,5 +740,12 @@ class GameScreen(
 
         camera.position.x = MathUtils.clamp(player.bounds.x, WINDOW_WIDTH / 2f, MAP_WIDTH - WINDOW_WIDTH / 2f)
         camera.position.y = MathUtils.clamp(player.bounds.y, WINDOW_HEIGHT / 2f, MAP_HEIGHT - WINDOW_HEIGHT / 2f)
+    }
+
+    fun playGameScreenMusic() {
+            Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
+            music.isLooping = true
+            music.volume = 0.4f
+            music.play()
     }
 }

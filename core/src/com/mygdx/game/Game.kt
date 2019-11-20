@@ -54,7 +54,7 @@ class Game : KtxGame<KtxScreen>() {
     }
 
     fun playGameScreenMusic() {
-        gameScreen.gameScreenMusic = true
+        gameScreen.playGameScreenMusic()
     }
 
     fun changeToNameInputScreen(x: Float) {
