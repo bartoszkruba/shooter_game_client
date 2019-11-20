@@ -230,7 +230,8 @@ async function agentDataOnScoreboard() {
                 scoreboardData.push({
                     id: agent.id,
                     kills: agent.kills,
-                    deaths: agent.deaths
+                    deaths: agent.deaths,
+                    name: agent.name
                 });
             }
             io.to(agent.id).emit("scoreboardData", {scoreboardData});

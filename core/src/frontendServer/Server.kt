@@ -133,11 +133,16 @@ class Server {
                 val id = agent.getString("id")
                 val kills = agent.getInt("kills")
                 val deaths = agent.getInt("deaths")
+                val name = agent.getString("name")
 
                 for (player in playerOnScoreboardTable.values) {
                     if (player.id == id) {
                         player.kills = kills
                         player.deaths = deaths
+                    }else{
+                        playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
+                                0f, false, 0f, 0f, playerTextures, id,
+                                healthBarTexture)
                     }
                 }
             }
@@ -255,7 +260,7 @@ class Server {
                         }
                         val bulletsLeft = agent.getInt("bulletsLeft")
                         if (bulletsLeft == -1 && player.weapon.bulletsInChamber != -1) shouldPlayReload = true
-                        playerOnScoreboardTable[id]!!.name = name
+                        //playerOnScoreboardTable[id]!!.name = name
                         player.apply {
                             this.invisible = invisible
                             this.name = name
@@ -278,7 +283,6 @@ class Server {
                             this.invisible = invisible
                         }
                     } else {
-                        playerOnScoreboardTable[id]!!.name = name
                         opponents[id]?.apply {
                             this.name = name
                             gotShot = opponents[id]?.currentHealth != currentHealth
@@ -360,7 +364,6 @@ class Server {
             val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false, 0f, 0f,
                     playerTextures, id, healthBarTexture)
             opponents[id] = opponent
-            playerOnScoreboardTable[id] = opponent
             return opponent
         }
 
