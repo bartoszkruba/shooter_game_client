@@ -250,8 +250,6 @@ class Server {
             explosiveBarrels.clear()
             val barrels = data[0] as JSONArray
 
-            println("barrels: ${barrels.length()}")
-
             for (i in 0 until barrels.length()) {
                 val barrel = barrels[i] as JSONObject
                 val x = barrel.getDouble("x").toFloat()

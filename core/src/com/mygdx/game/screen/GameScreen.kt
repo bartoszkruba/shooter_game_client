@@ -244,12 +244,12 @@ class GameScreen(
                 sortedByKills.add(it)
             }
 
-            sortedByKills = ArrayList( sortedByKills.sortedWith(compareBy { it.kills }).reversed() )
+            sortedByKills = ArrayList(sortedByKills.sortedWith(compareBy { it.kills }).reversed())
 
             for (it in sortedByKills) {
                 if (it.id == player.id) playersOnScoreboardFont.color = Color.GREEN else playersOnScoreboardFont.color = Color.RED;
                 t += 0.05f
-                playersOnScoreboardFont.draw(batch, "${sortedByKills.indexOf(it) + 1}" , WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
+                playersOnScoreboardFont.draw(batch, "${sortedByKills.indexOf(it) + 1}", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, it.name, WINDOW_WIDTH / 2.4f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.kills}", WINDOW_WIDTH / 1.73f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.deaths}", WINDOW_WIDTH / 1.43f, WINDOW_HEIGHT / t)
@@ -302,11 +302,11 @@ class GameScreen(
             if (it.gotShot && !it.isDead) {
                 drawBloodOnPlayerBody(batch, it.bounds.x - 10f, it.bounds.y)
                 bloodOnTheFloor.add(
-                    bloodOnTheFloorPool.obtain().apply {
-                        bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
-                        gotShot = true
-                        transparent = 1f
-                    }
+                        bloodOnTheFloorPool.obtain().apply {
+                            bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                            gotShot = true
+                            transparent = 1f
+                        }
                 )
             }
         }
@@ -576,6 +576,7 @@ class GameScreen(
         val zones = getZonesForRectangle(player.bounds)
         var collided = false
         for (i in 0 until zones.size) {
+            if (collided) return
             for (j in 0 until wallMatrix[zones[i]]!!.size) {
                 if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
                     player.setPosition(oldX, oldY)
@@ -583,6 +584,13 @@ class GameScreen(
                     break
                 }
                 if (collided) break
+            }
+        }
+        for (barrel in explosiveBarrels) {
+            if (Intersector.overlaps(barrel.value.bounds, player.bounds)) {
+                player.setPosition(oldX, oldY)
+//                collided = true
+                break
             }
         }
     }

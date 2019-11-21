@@ -405,8 +405,14 @@ function moveAgent(agent, x, y, oldX, oldY) {
     let collided = false;
 
     agent.zones.forEach(zone => {
-        if (matrix.walls[zone] != null) matrix.walls[zone].forEach(wall => {
+        if (matrix.walls[zone]) matrix.walls[zone].forEach(wall => {
             if (Matter.SAT.collides(wall.bounds, agent.bounds).collided) {
+                Matter.Body.setPosition(agent.bounds, {x: oldX, y: oldY});
+                collided = true
+            }
+        });
+        if (matrix.explosiveBarrels[zone]) matrix.explosiveBarrels[zone].forEach(barrel => {
+            if (Matter.SAT.collides(barrel.bounds, agent.bounds).collided) {
                 Matter.Body.setPosition(agent.bounds, {x: oldX, y: oldY});
                 collided = true
             }
@@ -458,7 +464,8 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillCon
                             }
                         }
                     }
-                }});
+                }
+            });
     }
     broadcastBazookaExplosion({x, y})
 }
