@@ -350,7 +350,7 @@ function calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKil
                             broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
 
                     spawnExplosiveBarrelExplosion(barrel.bounds.position.x, barrel.bounds.position.y,
-                        broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
+                        broadcastNewExplosion, broadcastKillConfirm, projectile.agentId, barrel.id);
 
                     removeExplosiveBarrel(barrel.id);
                     removeProjectile(projectile.id);
@@ -486,28 +486,51 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillCon
             }
         });
         if (matrix.explosiveBarrels[zone]) for (let barrel of matrix.explosiveBarrels[zone]) {
-            if (Matter.SAT.collides(barrel.bounds, explosion) && !barrelIds.includes(barrel.id)) {
+            if (Matter.SAT.collides(barrel.bounds, explosion).collided && !barrelIds.includes(barrel.id)) {
                 barrelIds.push(barrel.id);
                 removeExplosiveBarrel(barrel.id);
                 spawnExplosiveBarrelExplosion(barrel.bounds.position.x, barrel.bounds.position.y,
-                    broadcastBazookaExplosion, broadcastKillConfirm, agentId)
+                    broadcastBazookaExplosion, broadcastKillConfirm, agentId, barrel.id)
             }
         }
     }
     broadcastBazookaExplosion({x, y, type: explosionType.BAZOOKA})
 }
 
-function spawnExplosiveBarrelExplosion(x, y, broadcastBarrelExplosion, broadcastKillConfirm, agentId) {
+function spawnExplosiveBarrelExplosion(x, y, broadcastBarrelExplosion, broadcastKillConfirm, agentId, barrelId) {
     const explosion = Matter.Bodies.circle(x, y, constants.EXPLOSIVE_BARREL_EXPLOSION_SIZE / 2);
     const zones = getZonesForObject(explosion);
     const barrelIds = [];
+    const agentIds = [];
     for (let zone of zones) {
         if (matrix.explosiveBarrels[zone]) for (let barrel of matrix.explosiveBarrels[zone]) {
-            if (Matter.SAT.collides(barrel.bounds, explosion) && barrelIds.includes(barrel.id)) {
+            if (Matter.SAT.collides(barrel.bounds, explosion).collided && !barrelIds.includes(barrel.id) &&
+                barrelId !== barrel.id) {
+                console.log("explosion");
                 barrelIds.push(barrel.id);
                 removeExplosiveBarrel(barrel.id);
                 spawnExplosiveBarrelExplosion(barrel.bounds.position.x, barrel.bounds.position.y,
-                    broadcastBarrelExplosion, broadcastKillConfirm, agentId)
+                    broadcastBarrelExplosion, broadcastKillConfirm, agentId, barrel.id)
+            }
+        }
+        if (matrix.agents[zone]) for (let agent of matrix.agents[zone]) {
+            if (Matter.SAT.collides(agent.bounds, explosion).collided && !agentIds.includes(agent.id) &&
+                !agent.invisible && !agent.isDead) {
+                agentIds.push(agent.id);
+                agent.takeDamage(constants.EXPLOSIVE_BARREL_EXPLOSION_DAMAGE);
+                if (agent.isDead) {
+                    broadcastKillConfirm(agentId);
+                    agent.deaths++;
+                    if (agent.id === agentId) {
+                        agent.kills--
+                    } else {
+                        for (let i = 0; i < agents.length; i++) {
+                            if (agents[i].id === agentId) {
+                                agents[i].kills++
+                            }
+                        }
+                    }
+                }
             }
         }
     }
