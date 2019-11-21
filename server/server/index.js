@@ -284,7 +284,7 @@ async function explosiveBarrelDataLoop() {
             const barrelData = [];
             const ids = [];
             for (let zone of agent.viewportZones) {
-                if (engine.matrix[zone != null])
+                if (engine.matrix.explosiveBarrels[zone])
                     for (let barrel of engine.matrix.explosiveBarrels[zone]) {
                         if (ids.includes(barrel.id)) continue;
                         ids.push(barrel.id);
@@ -297,6 +297,7 @@ async function explosiveBarrelDataLoop() {
             }
             io.to(agent.id).emit("barrelData", barrelData);
         }
+        await sleep(1000 / constants.EXPLOSIVE_BARREL_UPDATE_PER_SECOND)
     }
 }
 

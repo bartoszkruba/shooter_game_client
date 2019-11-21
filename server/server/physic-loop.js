@@ -43,7 +43,7 @@ const agentsToRemove = [];
 
 async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadcastKillConfirm, broadcastDisconnect) {
     weaponRespawnLoop().catch(e => console.log(e));
-    // explosiveBarrelRespawnLoop().catch(e => console.log(e));
+    explosiveBarrelRespawnLoop().catch(e => console.log(e));
 
     while (continueLooping) {
         for (let id of agentsToRemove) {
@@ -52,6 +52,7 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadca
             broadcastDisconnect(id);
         }
         agentsToRemove.splice(0, agentsToRemove.length);
+
         const currentTime = new Date().getTime();
         let delta = (currentTime - lastLoop) / 1000;
         lastLoop = currentTime;
@@ -63,7 +64,7 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadca
         }
         calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKillConfirm);
 
-        await sleep(1000 / 60)
+        await sleep(1000 / 60).catch(e => console.log(e));
     }
 }
 
