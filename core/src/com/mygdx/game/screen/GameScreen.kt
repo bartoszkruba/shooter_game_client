@@ -25,7 +25,9 @@ import com.mygdx.game.model.pickup.Pickup
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Player
+import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
+import com.mygdx.game.model.obstacles.ExplosiveBarrel
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.projectile.*
 import ktx.assets.pool
@@ -35,7 +37,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
-private enum class SHAKE_DIRECTION { RIGHT, LEFT }
+private enum class ShakeDirection { RIGHT, LEFT }
 
 class GameScreen(
         val game: Game,
@@ -73,6 +75,7 @@ class GameScreen(
 
     private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
     private val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
+    private val explosiveBarrelTexture = assets.get("images/explosive_barrel.png", Texture::class.java)
 
     private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
 
@@ -88,7 +91,7 @@ class GameScreen(
     private var scoreboardFont = BitmapFont()
     private var playersOnScoreboardFont = BitmapFont()
 
-    val playerTextures: Array<Texture> = Array<Texture>()
+    private val playerTextures: Array<Texture> = Array()
     private val mousePosition = Vector2()
     private val walls = Array<Wall>()
     private val wallMatrix: HashMap<String, Array<Wall>>
@@ -101,23 +104,27 @@ class GameScreen(
     private val bazookaProjectilePool: Pool<BazookaProjectile>
 
     private val bazookaExplosionPool: Pool<BazookaExplosion>
-    private val explosions: Array<BazookaExplosion>
+    private val barrelExplosionPool: Pool<BarrelExplosion>
+
+    private val bazookaExplosions: Array<BazookaExplosion>
+    private val barrelExplosions: Array<BarrelExplosion>
 
     private val pickups: ConcurrentHashMap<String, Pickup>
-    var imgpos = 0.0
-    var imgposdir = 0.1
-    var showMiniMap = 0
+    private val explosiveBarrels: ConcurrentHashMap<String, ExplosiveBarrel>
+    private var imgpos = 0.0
+    private var imgposdir = 0.1
+    private var showMiniMap = 0
 
     private val ground = Array<Sprite>()
-    lateinit var player: Player
+    private lateinit var player: Player
 
-    var bloodOnTheFloor = ArrayList<Blood>()
+    private var bloodOnTheFloor = ArrayList<Blood>()
     private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
-    var shouldDeathSoundPlay = false
+    private var shouldDeathSoundPlay = false
 
-    private var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
+    private var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap()
 
-    private var shakeDirection = SHAKE_DIRECTION.RIGHT
+    private var shakeDirection = ShakeDirection.RIGHT
     private var lastExplosion = 0L
 
     init {
@@ -136,7 +143,7 @@ class GameScreen(
             }
         }
         Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
-                playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, walls)
+                playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, explosiveBarrelTexture, walls)
 
         projectiles = Server.projectiles
         opponents = Server.opponents
@@ -147,9 +154,13 @@ class GameScreen(
         bazookaProjectilePool = Server.bazookaProjectilePool
 
         bazookaExplosionPool = Server.bazookaExplosionPool
-        explosions = Server.explosions
+        bazookaExplosions = Server.bazookaExplosions
+
+        barrelExplosionPool = Server.barrelExplosionPool
+        barrelExplosions = Server.barrelExplosions
 
         pickups = Server.pickups
+        explosiveBarrels = Server.explosiveBarrels
     }
 
     private var pressedKeys = 0
@@ -166,7 +177,7 @@ class GameScreen(
         }
 
         Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
         if (::player.isInitialized) {
             updateServerRotation()
@@ -203,6 +214,7 @@ class GameScreen(
                     shouldPlayReload = false
                     Server.shouldPlayReload = false
                 }
+                drawExplosiveBarrels(it)
                 drawWalls(it)
                 drawExplosions(it)
             }
@@ -232,12 +244,12 @@ class GameScreen(
                 sortedByKills.add(it)
             }
 
-            sortedByKills = ArrayList( sortedByKills.sortedWith(compareBy { it.kills }).reversed() )
+            sortedByKills = ArrayList(sortedByKills.sortedWith(compareBy { it.kills }).reversed())
 
             for (it in sortedByKills) {
-                if (it.id == player.id) playersOnScoreboardFont.color = Color.GREEN else playersOnScoreboardFont.color = Color.RED;
+                if (it.id == player.id) playersOnScoreboardFont.color = Color.GREEN else playersOnScoreboardFont.color = Color.RED
                 t += 0.05f
-                playersOnScoreboardFont.draw(batch, "${sortedByKills.indexOf(it) + 1}" , WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
+                playersOnScoreboardFont.draw(batch, "${sortedByKills.indexOf(it) + 1}", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, it.name, WINDOW_WIDTH / 2.4f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.kills}", WINDOW_WIDTH / 1.73f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.deaths}", WINDOW_WIDTH / 1.43f, WINDOW_HEIGHT / t)
@@ -249,16 +261,16 @@ class GameScreen(
     private fun scoreboard(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.TAB)) {
             val scoreboard = assets.get("scoreboard/scoreboardBackground.png", Texture::class.java)
-            val c = batch.color;
+            val c = batch.color
             batch.setColor(c.r, c.g, c.b, .3f)
-            batch.draw(scoreboard, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
+            batch.draw(scoreboard, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
 
             batch.setColor(c.r, c.g, c.b, .6f)
-            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.1f);
+            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.1f)
 
             val table = assets.get("scoreboard/scoreboardTable.png", Texture::class.java)
             batch.setColor(c.r, c.g, c.b, .8f)
-            batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.15f);
+            batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.15f)
 
             scoreboardFont.draw(batch, "RANK           PLAYER              KILLS            DEATHS", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
             scoreboardFont.data.setScale(1.7f)
@@ -290,11 +302,11 @@ class GameScreen(
             if (it.gotShot && !it.isDead) {
                 drawBloodOnPlayerBody(batch, it.bounds.x - 10f, it.bounds.y)
                 bloodOnTheFloor.add(
-                    bloodOnTheFloorPool.obtain().apply {
-                        bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
-                        gotShot = true
-                        transparent = 1f
-                    }
+                        bloodOnTheFloorPool.obtain().apply {
+                            bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
+                            gotShot = true
+                            transparent = 1f
+                        }
                 )
             }
         }
@@ -315,7 +327,7 @@ class GameScreen(
 
     private fun drawBloodOnPlayerBody(batch: Batch, x: Float, y: Float) {
         val blood = assets.get("images/blood-animation.png", Texture::class.java)
-        batch.draw(blood, x, y, 65f, 65f);
+        batch.draw(blood, x, y, 65f, 65f)
     }
 
 
@@ -324,24 +336,24 @@ class GameScreen(
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
             if (showMiniMap == 2) showMiniMap = 0
             if (showMiniMap != 1) {
-                font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f);
+                font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f)
             }
 
             if (showMiniMap == 1) {
-                imgpos += (imgposdir / 3);
-                if (imgpos < 0.0) imgposdir = -imgposdir;
-                if (imgpos > 1.0) imgposdir = -imgposdir;
-                val miniMapSize = 200f;
-                val playerSize = 6f;
-                val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize;
-                val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize;
+                imgpos += (imgposdir / 3)
+                if (imgpos < 0.0) imgposdir = -imgposdir
+                if (imgpos > 1.0) imgposdir = -imgposdir
+                val miniMapSize = 200f
+                val playerSize = 6f
+                val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize
+                val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize
 
-                font.draw(batch, "Press \"M\" to hide map", WINDOW_WIDTH - 160f, 15f);
+                font.draw(batch, "Press \"M\" to hide map", WINDOW_WIDTH - 160f, 15f)
 
                 val miniMapexture = assets.get("images/miniMap.png", Texture::class.java)
-                val c = batch.color;
+                val c = batch.color
                 batch.setColor(c.r, c.g, c.b, .5f)
-                batch.draw(miniMapexture, 0f, 0f, miniMapSize, miniMapSize);
+                batch.draw(miniMapexture, 0f, 0f, miniMapSize, miniMapSize)
                 val meInMiniMapexture = assets.get("images/meInMiniMap.png", Texture::class.java)
                 batch.setColor(c.r, c.g, c.b, 1f)
 
@@ -349,7 +361,7 @@ class GameScreen(
                         playerPosPercentageX - playerSize / 2f,
                         playerPosPercentageY - playerSize / 2f,
                         playerSize,
-                        playerSize);
+                        playerSize)
 
 
                 val playersInMiniMapexture = assets.get("images/opponentsInMiniMap.png", Texture::class.java)
@@ -360,7 +372,7 @@ class GameScreen(
                                 ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
                                 ((it.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize) - playerSize / 2f,
                                 playerSize,
-                                playerSize);
+                                playerSize)
                 }
             }
         }
@@ -368,7 +380,7 @@ class GameScreen(
 
     private fun checkRestart() {
         if (player.isDead) {
-            if (Gdx.input.isButtonPressed((Input.Buttons.LEFT))) {
+            if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
                 Server.restart()
             }
         }
@@ -381,9 +393,9 @@ class GameScreen(
                 shouldDeathSoundPlay = false
             }
             val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
-            val c: Color = batch.color;
+            val c: Color = batch.color
             batch.setColor(c.r, c.g, c.b, .7f)
-            batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT);
+            batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
         } else {
             shouldDeathSoundPlay = true
         }
@@ -404,9 +416,9 @@ class GameScreen(
     }
 
     private fun updateServerMouse() {
-        val isMouseWPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT));
-        val wWasReleased = mouseWasPressed && !isMouseWPressed;
-        mouseWasPressed = isMouseWPressed;
+        val isMouseWPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT))
+        val wWasReleased = mouseWasPressed && !isMouseWPressed
+        mouseWasPressed = isMouseWPressed
 
         if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.weapon.bulletsInChamber < 1
                 && player.weapon.canShoot()) {
@@ -564,6 +576,7 @@ class GameScreen(
         val zones = getZonesForRectangle(player.bounds)
         var collided = false
         for (i in 0 until zones.size) {
+            if (collided) return
             for (j in 0 until wallMatrix[zones[i]]!!.size) {
                 if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
                     player.setPosition(oldX, oldY)
@@ -571,6 +584,13 @@ class GameScreen(
                     break
                 }
                 if (collided) break
+            }
+        }
+        for (barrel in explosiveBarrels) {
+            if (Intersector.overlaps(barrel.value.bounds, player.bounds)) {
+                player.setPosition(oldX, oldY)
+//                collided = true
+                break
             }
         }
     }
@@ -597,7 +617,8 @@ class GameScreen(
             if (!removed) removed = checkIfOutsideViewport(entry.value, entry.key)
             if (!removed) removed = checkOpponentCollisions(entry.value, entry.key)
             if (!removed) removed = checkPlayerCollision(entry.value, entry.key)
-            if (!removed) removed = checkWallsCollisions(entry.value, entry.key)
+            if (!removed) removed = checkBarrelCollisions(entry.value, entry.key)
+            if (!removed) checkWallsCollisions(entry.value, entry.key)
         }
     }
 
@@ -644,6 +665,16 @@ class GameScreen(
         return false
     }
 
+    private fun checkBarrelCollisions(projectile: Projectile, key: String): Boolean {
+        for (barrel in explosiveBarrels) {
+            if (Intersector.overlaps(projectile.bounds, barrel.value.bounds)) {
+                removeProjectile(projectile, key)
+                return true
+            }
+        }
+        return false
+    }
+
     private fun checkWallsCollisions(projectile: Projectile, key: String): Boolean {
         for (zone in getZonesForCircle(projectile.bounds)) {
             if (wallMatrix[zone] != null) for (i in 0 until wallMatrix[zone]!!.size) {
@@ -671,7 +702,7 @@ class GameScreen(
             setPlayerRotation()
             agent.sprite.draw(batch)
             agent.healthBarSprite.draw(batch)
-            font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f);
+            font.draw(batch, player.name, player.bounds.x + 10f, player.bounds.y + 88f)
         }
     }
 
@@ -680,7 +711,7 @@ class GameScreen(
     }
 
     private fun drawExplosions(batch: Batch) {
-        explosions.iterate { explosion, iterator ->
+        bazookaExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
                 bazookaExplosionSoundEffect.play()
@@ -693,20 +724,37 @@ class GameScreen(
             }
             explosion.sprite.draw(batch)
         }
+        barrelExplosions.iterate { explosion, iterator ->
+            if (explosion.justSpawned) {
+                lastExplosion = TimeUtils.millis()
+                bazookaExplosionSoundEffect.play()
+                explosion.justSpawned = false
+            }
+            explosion.animate()
+            if (explosion.isFinished()) {
+                barrelExplosionPool.free(explosion)
+                iterator.remove()
+            }
+            explosion.sprite.draw(batch)
+        }
     }
 
     private fun drawOpponents(batch: Batch) {
         opponents.values.forEach {
             if (!it.isDead) {
-                it.healthBarSprite.draw(batch);
+                it.healthBarSprite.draw(batch)
                 it.sprite.draw(batch)
-                font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f);
+                font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f)
             }
         }
     }
 
     private fun drawWalls(batch: Batch) {
         for (i in 0 until walls.size) if (inFrustum(camera, walls[i])) walls[i].draw(batch)
+    }
+
+    private fun drawExplosiveBarrels(batch: Batch) {
+        for (barrel in explosiveBarrels.values) barrel.draw(batch)
     }
 
     private fun drawPickups(batch: Batch) {
@@ -718,13 +766,13 @@ class GameScreen(
             font.draw(batch, "${player.weapon.type}, Ammo: ${player.weapon.bulletsInChamber}/${player.weapon.maxBulletsInChamber}",
                     WINDOW_WIDTH - 150f,
                     WINDOW_HEIGHT - 55f)
-            font.getData().setScale(1f, 1f);
+            font.data.setScale(1f, 1f)
         } else {
             if (!player.isDead)
                 font.draw(batch, "Reloading...",
                         WINDOW_WIDTH - 150f,
                         WINDOW_HEIGHT - 55f)
-            font.getData().setScale(1f, 1f);
+            font.data.setScale(1f, 1f)
         }
     }
 
@@ -735,15 +783,15 @@ class GameScreen(
         if (TimeUtils.millis() - shakeLoop > 50f) {
             shakeLoop = TimeUtils.millis()
             shake = 1
-            shakeDirection = if (shakeDirection == SHAKE_DIRECTION.LEFT) SHAKE_DIRECTION.RIGHT
-            else SHAKE_DIRECTION.LEFT
+            shakeDirection = if (shakeDirection == ShakeDirection.LEFT) ShakeDirection.RIGHT
+            else ShakeDirection.LEFT
         }
 
         when (shakeDirection) {
-            SHAKE_DIRECTION.RIGHT -> {
+            ShakeDirection.RIGHT -> {
                 camera.position.x += shake++
             }
-            SHAKE_DIRECTION.LEFT -> {
+            ShakeDirection.LEFT -> {
                 camera.position.x -= shake++
             }
         }
@@ -756,7 +804,7 @@ class GameScreen(
     }
 
     fun playGameScreenMusic() {
-        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16));
+        Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16))
         music.isLooping = true
         music.volume = 0.4f
         music.play()
