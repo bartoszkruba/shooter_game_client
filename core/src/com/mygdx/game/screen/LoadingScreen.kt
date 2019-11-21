@@ -9,7 +9,6 @@ import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.*
-import frontendServer.Server
 import ktx.assets.load
 
 
@@ -92,8 +91,7 @@ class LoadingScreen(private val game: Game,
         batch.projectionMatrix = camera.combined
 
         batch.use {
-            font.draw(it, "Welcome to Leprechaun Nuclear Invasion 420 (GOTY edition)", 100f, 150f)
-            font.draw(it, "Loading assets...", 100f, 100f)
+            font.draw(it, "Loading...", 100f, 100f)
         }
 
         if (assets.isFinished) {
