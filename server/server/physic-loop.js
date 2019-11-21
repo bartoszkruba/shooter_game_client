@@ -498,6 +498,20 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillCon
 }
 
 function spawnExplosiveBarrelExplosion(x, y, broadcastBarrelExplosion, broadcastKillConfirm, agentId) {
+    const explosion = Matter.Bodies.circle(x, y, constants.EXPLOSIVE_BARREL_EXPLOSION_SIZE / 2);
+    const zones = getZonesForObject(explosion);
+    const barrelIds = [];
+    for (let zone of zones) {
+        if (matrix.explosiveBarrels[zone]) for (let barrel of matrix.explosiveBarrels[zone]) {
+            if (Matter.SAT.collides(barrel.bounds, explosion) && barrelIds.includes(barrel.id)) {
+                barrelIds.push(barrel.id);
+                removeExplosiveBarrel(barrel.id);
+                spawnExplosiveBarrelExplosion(barrel.bounds.position.x, barrel.bounds.position.y,
+                    broadcastBarrelExplosion, broadcastKillConfirm, agentId)
+            }
+        }
+    }
+
     broadcastBarrelExplosion({x, y, type: explosionType.BARREL})
 }
 
