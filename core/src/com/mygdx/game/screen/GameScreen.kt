@@ -617,6 +617,7 @@ class GameScreen(
             if (!removed) removed = checkIfOutsideViewport(entry.value, entry.key)
             if (!removed) removed = checkOpponentCollisions(entry.value, entry.key)
             if (!removed) removed = checkPlayerCollision(entry.value, entry.key)
+            if (!removed) removed = checkBarrelCollisions(entry.value, entry.key)
             if (!removed) removed = checkWallsCollisions(entry.value, entry.key)
         }
     }
@@ -660,6 +661,16 @@ class GameScreen(
             removeProjectile(projectile, key)
             if (!player.isDead) damageSound.play()
             return true
+        }
+        return false
+    }
+
+    private fun checkBarrelCollisions(projectile: Projectile, key: String): Boolean {
+        for (barrel in explosiveBarrels) {
+            if (Intersector.overlaps(projectile.bounds, barrel.value.bounds)) {
+                removeProjectile(projectile, key)
+                return true
+            }
         }
         return false
     }
