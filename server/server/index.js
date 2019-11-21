@@ -333,6 +333,7 @@ function broadcastNewExplosion(explosion) {
             io.to(agent.id).emit("newExplosion", {
                 x: explosion.x,
                 y: explosion.y,
+                type: explosion.type
             });
         }
     }

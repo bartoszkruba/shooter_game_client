@@ -2,6 +2,7 @@ const Matter = require('matter-js');
 const shortid = require('shortid');
 
 const ExplosiveBarrel = require("../models/obstacles/ExplosiveBarrel");
+const explosionType = require("../models/explosions/explosionType");
 
 const Pistol = require('../models/weapons/Pistol');
 const MachineGun = require('../models/weapons/MachineGun');
@@ -340,6 +341,24 @@ function calculateProjectilePositions(delta, broadcastNewExplosion, broadcastKil
                     break;
                 }
             }
+
+            if (matrix.explosiveBarrels[zone]) for (let barrel of matrix.explosiveBarrels[zone]) {
+                if (Matter.SAT.collides(barrel.bounds, projectile.bounds).collided) {
+
+                    if (projectile.type === ProjectileType.BAZOOKA)
+                        spawnBazookaExplosion(projectile.bounds.position.x, projectile.bounds.position.y,
+                            broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
+
+                    spawnExplosiveBarrelExplosion(barrel.bounds.position.x, barrel.bounds.position.y,
+                        broadcastNewExplosion, broadcastKillConfirm, projectile.agentId);
+
+                    removeExplosiveBarrel(barrel.id);
+                    removeProjectile(projectile.id);
+                    removed = true;
+                    break;
+                }
+            }
+
             if (matrix.walls[zone] != null) for (let wall of matrix.walls[zone]) {
                 if (Matter.SAT.collides(wall.bounds, projectile.bounds).collided) {
 
@@ -467,7 +486,11 @@ function spawnBazookaExplosion(x, y, broadcastBazookaExplosion, broadcastKillCon
                 }
             });
     }
-    broadcastBazookaExplosion({x, y})
+    broadcastBazookaExplosion({x, y, type: explosionType.BAZOOKA})
+}
+
+function spawnExplosiveBarrelExplosion(x, y, broadcastBarrelExplosion, broadcastKillConfirm, agentId) {
+    broadcastBarrelExplosion({x, y, type: explosionType.BARREL})
 }
 
 function spawnPistolProjectile(x, y, xSpeed, ySpeed, broadcastNewProjectile, agentId) {
@@ -749,6 +772,17 @@ const removePickup = id => {
             let zones = pickups[i].zones;
             zones.forEach(zone => matrix.pickups[zone].splice(matrix.pickups[zone].indexOf(pickups[i]), 1));
             pickups.splice(i, 1);
+            break;
+        }
+    }
+};
+
+const removeExplosiveBarrel = id => {
+    for (let i = 0; i < barrels.length; i++) {
+        if (barrels[i].id === id) {
+            let zones = barrels[i].zones;
+            zones.forEach(zone => matrix.explosiveBarrels[zone].splice(matrix.explosiveBarrels[zone].indexOf(pickups[i]), 1));
+            barrels.splice(i, 1);
             break;
         }
     }
