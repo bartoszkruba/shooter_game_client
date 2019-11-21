@@ -380,7 +380,7 @@ class GameScreen(
 
     private fun checkRestart() {
         if (player.isDead) {
-            if (Gdx.input.isButtonPressed((Input.Buttons.LEFT))) {
+            if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
                 Server.restart()
             }
         }
