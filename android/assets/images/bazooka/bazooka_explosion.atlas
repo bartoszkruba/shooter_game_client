@@ -1,0 +1,153 @@
+
+bazooka_explosion.png
+size: 512,256
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+explosion
+  rotate: false
+  xy: 2, 134
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 10
+explosion
+  rotate: false
+  xy: 2, 68
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 11
+explosion
+  rotate: false
+  xy: 68, 134
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 12
+explosion
+  rotate: false
+  xy: 2, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 13
+explosion
+  rotate: false
+  xy: 68, 68
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 14
+explosion
+  rotate: false
+  xy: 134, 134
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 15
+explosion
+  rotate: false
+  xy: 68, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 16
+explosion
+  rotate: false
+  xy: 134, 68
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 17
+explosion
+  rotate: false
+  xy: 200, 134
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 18
+explosion
+  rotate: false
+  xy: 134, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 19
+explosion
+  rotate: false
+  xy: 200, 68
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 20
+explosion
+  rotate: false
+  xy: 266, 134
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 21
+explosion
+  rotate: false
+  xy: 200, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 1
+explosion
+  rotate: false
+  xy: 266, 68
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 2
+explosion
+  rotate: false
+  xy: 332, 134
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 3
+explosion
+  rotate: false
+  xy: 266, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 4
+explosion
+  rotate: false
+  xy: 332, 68
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 5
+explosion
+  rotate: false
+  xy: 398, 134
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 6
+explosion
+  rotate: false
+  xy: 332, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 7
+explosion
+  rotate: false
+  xy: 398, 68
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 8
+explosion
+  rotate: false
+  xy: 398, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: 9

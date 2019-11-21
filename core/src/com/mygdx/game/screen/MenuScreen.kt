@@ -22,6 +22,7 @@ import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.screen.Menu.*
 import com.mygdx.game.settings.WINDOW_HEIGHT
+import frontendServer.Server
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
@@ -29,7 +30,7 @@ import ktx.graphics.use
 import kotlin.system.exitProcess
 
 
-private class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
+class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
 
 private enum class Menu {
     MAIN, CREDITS, START_GAME, OPTIONS, SPLASH_SCREEN
@@ -182,9 +183,7 @@ class MenuScreen(
             selectSound.play()
             when (currentChoice) {
                 startGameChoice -> {
-                    rainMusic.stop()
-                    backgroundMusic.stop()
-                    game.changeToGame()
+                    game.changeToNameInputScreen(text.x)
                 }
                 creditsChoice -> currentWindow = CREDITS
                 quitChoice -> exitProcess(0)
