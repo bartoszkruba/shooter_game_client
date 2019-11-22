@@ -22,7 +22,6 @@ import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.screen.Menu.*
 import com.mygdx.game.settings.WINDOW_HEIGHT
-import frontendServer.Server
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
@@ -84,8 +83,8 @@ class MenuScreen(
 
     private var currentChoice = ""
 
-    val bigFont = BitmapFont()
-    val smallFont = BitmapFont()
+    private val bigFont = BitmapFont()
+    private val smallFont = BitmapFont()
 
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
@@ -94,9 +93,9 @@ class MenuScreen(
         text.y = WINDOW_HEIGHT - 280f
 
         bigFont.data.setScale(4f)
-        bigFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        bigFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         smallFont.data.scale(2f)
-        smallFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        smallFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
         mainMenuChoices.add(MenuChoice(
                 assets.get<Texture>("images/menu/quit_selected.png"),

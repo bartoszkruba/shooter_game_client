@@ -7,7 +7,10 @@ import com.badlogic.gdx.utils.Array
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Player
+import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
+import com.mygdx.game.model.explosion.ExplosionType
+import com.mygdx.game.model.obstacles.ExplosiveBarrel
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.pickup.*
 import com.mygdx.game.model.projectile.*
@@ -46,18 +49,25 @@ class Server {
 
         lateinit var bazookaExplosionTextureAtlas: TextureAtlas
         val bazookaExplosionPool = pool { BazookaExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
-        val explosions = Array<BazookaExplosion>()
+        val barrelExplosionPool = pool { BarrelExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
+        val bazookaExplosions = Array<BazookaExplosion>()
+        val barrelExplosions = Array<BarrelExplosion>()
 
         private var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
         private var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
         private var shotgunPickupPool = pool { ShotgunPickup(texture = shotgunTexture) }
         private var bazookaPickupPool = pool { BazookaPickup(texture = bazookaTexture) }
 
+        private var explosiveBarrelPool = pool { ExplosiveBarrel(texture = explosiveBarrelTexture) }
+
+        var explosiveBarrels = ConcurrentHashMap<String, ExplosiveBarrel>()
+
         val opponents = ConcurrentHashMap<String, Opponent>()
         private lateinit var playerTextures: TextureAtlas
         private lateinit var healthBarTexture: Texture
         private lateinit var wallMatrix: HashMap<String, Array<Wall>>
         private lateinit var wallTexture: Texture
+        private lateinit var explosiveBarrelTexture: Texture
         private lateinit var walls: Array<Wall>
         var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
 
@@ -80,7 +90,8 @@ class Server {
         fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
                                shotgunTexture: Texture, bazookaTexture: Texture, playerTextures: TextureAtlas,
                                healthBarTexture: Texture, bazookaExplosionTextureAtlas: TextureAtlas,
-                               wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture, walls: Array<Wall>) {
+                               wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture,
+                               explosiveBarrelTexture: Texture, walls: Array<Wall>) {
 
             this.projectileTexture = projectileTexture
             this.pistolTexture = pistolTexture
@@ -93,6 +104,7 @@ class Server {
             this.bazookaExplosionTextureAtlas = bazookaExplosionTextureAtlas
             this.wallMatrix = wallMatrix
             this.wallTexture = wallTexture
+            this.explosiveBarrelTexture = explosiveBarrelTexture
             this.walls = walls
 
             socket.on(Socket.EVENT_CONNECT) {
@@ -113,6 +125,7 @@ class Server {
                     .on("agentData") { processAgentData(it) }
                     .on("projectileData") { processProjectileData(it) }
                     .on("pickupData") { processPickupData(it) }
+                    .on("barrelData") { processBarrelData(it) }
                     .on("wallData") { processWallData(it) }
                     .on("newExplosion") { processNewExplosion(it) }
                     .on("scoreboardData") { processScoreboardData(it) }
@@ -135,11 +148,11 @@ class Server {
                 val deaths = agent.getInt("deaths")
                 val name = agent.getString("name")
 
-                    for (player in playerOnScoreboardTable.values) {
+                for (player in playerOnScoreboardTable.values) {
                     if (player.id == id) {
                         player.kills = kills
                         player.deaths = deaths
-                    }else{
+                    } else {
                         playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
                                 0f, false, 0f, 0f, playerTextures, id,
                                 healthBarTexture)
@@ -232,6 +245,20 @@ class Server {
             }
         }
 
+        private fun processBarrelData(data: kotlin.Array<Any>) {
+            for (barrel in explosiveBarrels.values) explosiveBarrelPool.free(barrel)
+            explosiveBarrels.clear()
+            val barrels = data[0] as JSONArray
+
+            for (i in 0 until barrels.length()) {
+                val barrel = barrels[i] as JSONObject
+                val x = barrel.getDouble("x").toFloat()
+                val y = barrel.getDouble("y").toFloat()
+                val id = barrel.getString("id")
+                explosiveBarrels[id] = explosiveBarrelPool.obtain().apply { setPosition(x, y) }
+            }
+        }
+
         private fun processAgentData(data: kotlin.Array<Any>) {
             val obj = data[0] as JSONObject
             val agents = obj.getJSONArray("agentData")
@@ -306,12 +333,22 @@ class Server {
             val explosion = data[0] as JSONObject
             val x = explosion.getDouble("x").toFloat()
             val y = explosion.getDouble("y").toFloat()
-            explosions.add(bazookaExplosionPool.obtain().apply {
-                this.justSpawned = true
-                this.x = x
-                this.y = y
-                resetTimer()
-            })
+            val type = explosion.getString("type")
+            if (type == ExplosionType.BAZOOKA) {
+                bazookaExplosions.add(bazookaExplosionPool.obtain().apply {
+                    this.justSpawned = true
+                    this.x = x
+                    this.y = y
+                    resetTimer()
+                })
+            } else if (type == ExplosionType.BARREL) {
+                barrelExplosions.add(barrelExplosionPool.obtain().apply {
+                    this.justSpawned = true
+                    this.x = x
+                    this.y = y
+                    resetTimer()
+                })
+            }
         }
 
         private fun processNewProjectile(data: kotlin.Array<Any>) {

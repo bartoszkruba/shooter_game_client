@@ -16,11 +16,12 @@ getZonesForCoordinates = (min, max) => {
 };
 
 getZonesMatrix = () => {
-    matrix = {
+    const matrix = {
         agents: {},
         projectiles: {},
         walls: {},
-        pickups: {}
+        pickups: {},
+        explosiveBarrels: {}
     };
 
     for (let i = 0; i <= floor(constants.MAP_WIDTH / constants.ZONE_SIZE); i++) {
@@ -29,6 +30,7 @@ getZonesMatrix = () => {
             matrix.projectiles["_" + i + "_" + j] = [];
             matrix.walls["_" + i + "_" + j] = [];
             matrix.pickups["_" + i + "_" + j] = [];
+            matrix.explosiveBarrels["_" + i + "_" + j] = [];
         }
     }
 
