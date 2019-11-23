@@ -17,7 +17,7 @@ Run desktop client thorugh gradle
 
 ### Server
 Navigate into server directory  
-`cd server/server`  
+`cd server`  
 
 Install npm dependencies  
 `npm install`  
