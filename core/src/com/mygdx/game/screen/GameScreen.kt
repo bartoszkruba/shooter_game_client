@@ -19,7 +19,7 @@ import com.mygdx.game.util.getZonesForRectangle
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
-import frontendServer.Server
+import client.Client
 import java.util.concurrent.ConcurrentHashMap
 import com.mygdx.game.model.pickup.Pickup
 import com.mygdx.game.model.agent.Opponent
@@ -142,38 +142,38 @@ class GameScreen(
                 ground.add(groundSprite)
             }
         }
-        Server.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
+        Client.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
                 playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, explosiveBarrelTexture, walls)
 
-        projectiles = Server.projectiles
-        opponents = Server.opponents
+        projectiles = Client.projectiles
+        opponents = Client.opponents
 
-        pistolProjectilePool = Server.pistolProjectilePool
-        machineGunProjectilePool = Server.machineGunProjectilePool
-        shotgunProjectilePool = Server.shotgunProjectilePool
-        bazookaProjectilePool = Server.bazookaProjectilePool
+        pistolProjectilePool = Client.pistolProjectilePool
+        machineGunProjectilePool = Client.machineGunProjectilePool
+        shotgunProjectilePool = Client.shotgunProjectilePool
+        bazookaProjectilePool = Client.bazookaProjectilePool
 
-        bazookaExplosionPool = Server.bazookaExplosionPool
-        bazookaExplosions = Server.bazookaExplosions
+        bazookaExplosionPool = Client.bazookaExplosionPool
+        bazookaExplosions = Client.bazookaExplosions
 
-        barrelExplosionPool = Server.barrelExplosionPool
-        barrelExplosions = Server.barrelExplosions
+        barrelExplosionPool = Client.barrelExplosionPool
+        barrelExplosions = Client.barrelExplosions
 
-        pickups = Server.pickups
-        explosiveBarrels = Server.explosiveBarrels
+        pickups = Client.pickups
+        explosiveBarrels = Client.explosiveBarrels
     }
 
     private var pressedKeys = 0
     override fun render(delta: Float) {
-        if (Server.shouldPlayDeathSound) {
+        if (Client.shouldPlayDeathSound) {
             deathSound.play()
-            Server.shouldPlayDeathSound = false
+            Client.shouldPlayDeathSound = false
         }
 
-        shouldPlayReload = Server.shouldPlayReload
-        if (Server.getPlayer() != null) {
-            player = Server.getPlayer()!!
-            playerOnScoreboardTable = Server.playerOnScoreboardTable
+        shouldPlayReload = Client.shouldPlayReload
+        if (Client.getPlayer() != null) {
+            player = Client.getPlayer()!!
+            playerOnScoreboardTable = Client.playerOnScoreboardTable
         }
 
         Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
@@ -212,7 +212,7 @@ class GameScreen(
                 if (shouldPlayReload) {
                     reloadSoundEffect.play()
                     shouldPlayReload = false
-                    Server.shouldPlayReload = false
+                    Client.shouldPlayReload = false
                 }
                 drawExplosiveBarrels(it)
                 drawWalls(it)
@@ -381,7 +381,7 @@ class GameScreen(
     private fun checkRestart() {
         if (player.isDead) {
             if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
-                Server.restart()
+                Client.restart()
             }
         }
     }
@@ -407,7 +407,7 @@ class GameScreen(
             val b = true
             val thread = Thread {
                 while (b) {
-                    Server.playerRotation("degrees", player.facingDirectionAngle)
+                    Client.playerRotation("degrees", player.facingDirectionAngle)
                     Thread.sleep(100)
                 }
             }
@@ -427,10 +427,10 @@ class GameScreen(
         }
 
         if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
-            Server.mouseStart()
+            Client.mouseStart()
         }
         if (wWasReleased) {
-            Server.mouseStop()
+            Client.mouseStop()
         }
     }
 
@@ -468,18 +468,18 @@ class GameScreen(
         checkKeyJustPressed(Input.Keys.R, "R")
         checkKeyJustReleased(rWasReleased, "R")
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) Server.pickWeapon()
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) Client.pickWeapon()
     }
 
     private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
         if (Gdx.input.isKeyJustPressed(keyNumber)) {
-            Server.startKey(keyLetter, true)
+            Client.startKey(keyLetter, true)
         }
     }
 
     private fun checkKeyJustReleased(keyJustPressed: Boolean, key: String) {
         if (keyJustPressed) {
-            Server.stopKey(key, true)
+            Client.stopKey(key, true)
         }
     }
 

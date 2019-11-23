@@ -21,7 +21,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import com.mygdx.game.Game
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
-import frontendServer.Server
+import client.Client
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
@@ -176,9 +176,9 @@ class NameInputScreen (
         if(Gdx.input.isKeyPressed(Input.Keys.ENTER))
             if (username != "" && ipAddress != "") {
                 if (username.length > 2 && ipAddress.length > 6) {
-                    Server.connectionSocket(ipAddress)
+                    Client.connectionSocket(ipAddress)
                     game.createGame()
-                    Server.setName(username)
+                    Client.setName(username)
                     errorMassage = false
                     goToGame = true
                     showConnectionSign = true
@@ -197,7 +197,7 @@ class NameInputScreen (
 
     private fun setToGame() {
         if (goToGame)
-            if (Server.getPlayer() != null) {
+            if (Client.getPlayer() != null) {
                 rainMusic.stop()
                 backgroundMusic.stop()
                 game.playGameScreenMusic()

@@ -1,4 +1,4 @@
-package frontendServer
+package client
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
@@ -27,7 +27,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 
-class Server {
+class Client {
     companion object {
         lateinit var socket: Socket
         val pickups = ConcurrentHashMap<String, Pickup>()
