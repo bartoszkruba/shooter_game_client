@@ -24,3 +24,13 @@ Install npm dependencies
 
 Run server  
 `node index.js`
+
+## Docker  
+
+### Creating docker image for server
+
+Navigate into server directory  
+`cd server`  
+
+Build docker image  
+`docker build -t IMAGE_NAME`
