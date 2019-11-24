@@ -1,6 +1,6 @@
 # 2D-online-realtime shooter  
 
-Written in LibKTX(Kotlin API for libGDX) and Node.js  
+Written in [LibKTX](https://github.com/libktx/ktx)(Kotlin API for [libGDX](https://github.com/libgdx/libgdx)) and Node.js  
 
 ## How to run  
 
