@@ -1,0 +1,14 @@
+{
+  "platform": "",
+  "jdk": "",
+  "executable": "shooter_game",
+  "classpath": [
+    ""
+  ],
+  "mainclass": "com.mygdx.game.desktop.DesktopLauncherKt",
+  "vmargs": [
+    "Xmx1G"
+  ],
+  "minimizejre": "soft",
+  "output": ""
+}
