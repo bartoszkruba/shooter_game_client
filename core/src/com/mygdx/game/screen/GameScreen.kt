@@ -128,10 +128,6 @@ class GameScreen(
     private var lastExplosion = 0L
 
     init {
-        playerTextures.add(assets.get("images/player/up.png", Texture::class.java))
-        playerTextures.add(assets.get("images/player/down.png", Texture::class.java))
-        playerTextures.add(assets.get("images/player/left.png", Texture::class.java))
-        playerTextures.add(assets.get("images/player/right.png", Texture::class.java))
         wallMatrix = generateWallMatrix()
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
