@@ -262,6 +262,7 @@ class Client {
         private fun processAgentData(data: kotlin.Array<Any>) {
             val obj = data[0] as JSONObject
             val agents = obj.getJSONArray("agentData")
+
             for (i in 0 until agents.length()) {
                 val agent = agents[i] as JSONObject
                 val id = agent.getString("id")

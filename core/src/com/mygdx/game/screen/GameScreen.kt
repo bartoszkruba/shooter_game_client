@@ -803,6 +803,6 @@ class GameScreen(
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16))
         music.isLooping = true
         music.volume = 0.4f
-        music.play()
+//        music.play()
     }
 }

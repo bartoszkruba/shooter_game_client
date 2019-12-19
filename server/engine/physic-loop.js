@@ -49,7 +49,7 @@ async function physicLoop(broadcastNewProjectile, broadcastNewExplosion, broadca
     while (continueLooping) {
         for (let id of agentsToRemove) {
             removeAgent(id);
-            console.log("removing " + id)
+            console.log("removing " + id);
             broadcastDisconnect(id);
         }
         agentsToRemove.splice(0, agentsToRemove.length);
