@@ -1,4 +1,4 @@
-package client
+package com.mygdx.game.client
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
@@ -81,7 +81,7 @@ class Client {
         }
 
         fun getPlayer(): Player? {
-            if (::player.isInitialized) {
+            if (Companion::player.isInitialized) {
                 return player
             }
             return null
@@ -93,19 +93,19 @@ class Client {
                                wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture,
                                explosiveBarrelTexture: Texture, walls: Array<Wall>) {
 
-            this.projectileTexture = projectileTexture
-            this.pistolTexture = pistolTexture
-            this.machineGunTexture = machineGunTexture
-            this.shotgunTexture = shotgunTexture
-            this.bazookaTexture = bazookaTexture
+            Companion.projectileTexture = projectileTexture
+            Companion.pistolTexture = pistolTexture
+            Companion.machineGunTexture = machineGunTexture
+            Companion.shotgunTexture = shotgunTexture
+            Companion.bazookaTexture = bazookaTexture
 
-            this.playerTextures = playerTextures
-            this.healthBarTexture = healthBarTexture
-            this.bazookaExplosionTextureAtlas = bazookaExplosionTextureAtlas
-            this.wallMatrix = wallMatrix
-            this.wallTexture = wallTexture
-            this.explosiveBarrelTexture = explosiveBarrelTexture
-            this.walls = walls
+            Companion.playerTextures = playerTextures
+            Companion.healthBarTexture = healthBarTexture
+            Companion.bazookaExplosionTextureAtlas = bazookaExplosionTextureAtlas
+            Companion.wallMatrix = wallMatrix
+            Companion.wallTexture = wallTexture
+            Companion.explosiveBarrelTexture = explosiveBarrelTexture
+            Companion.walls = walls
 
             socket.on(Socket.EVENT_CONNECT) {
                 Gdx.app.log("SocketIO", "Connected")
@@ -162,7 +162,7 @@ class Client {
         }
 
         private fun processWallData(data: kotlin.Array<Any>) {
-            this.walls.clear()
+            walls.clear()
             generateEdgeWalls()
             val walls = data[0] as JSONArray
             for (i in 0 until walls.length()) {
@@ -173,7 +173,7 @@ class Client {
                 for (zone in getZonesForRectangle(wall.bounds)) {
                     wallMatrix[zone]?.add(wall)
                 }
-                this.walls.add(wall)
+                Companion.walls.add(wall)
             }
         }
 
@@ -415,7 +415,7 @@ class Client {
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
             val player = Player(500f, 500f, "", 0, 0, false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
-            this.player = player
+            Companion.player = player
             playerOnScoreboardTable[playerId] = player
         }
 

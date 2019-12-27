@@ -19,7 +19,7 @@ import com.mygdx.game.util.getZonesForRectangle
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
-import client.Client
+import com.mygdx.game.client.Client
 import java.util.concurrent.ConcurrentHashMap
 import com.mygdx.game.model.pickup.Pickup
 import com.mygdx.game.model.agent.Opponent

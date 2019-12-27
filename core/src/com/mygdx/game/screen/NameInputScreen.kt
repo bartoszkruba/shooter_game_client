@@ -21,7 +21,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import com.mygdx.game.Game
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
-import client.Client
+import com.mygdx.game.client.Client
 import ktx.app.KtxScreen
 import ktx.assets.pool
 import ktx.collections.iterate
