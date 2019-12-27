@@ -1,10 +1,9 @@
 # 2D-online-realtime shooter  
 
-Written in [LibKTX](https://github.com/libktx/ktx) (Kotlin API for [libGDX](https://github.com/libgdx/libgdx)) and Node.js  
+## Continuation of [shooter_game](https://github.com/bartoszkruba/shooter_game) project.
 
 ## How to run  
 
-### Client  
 In order to run client you have to setup path to your SDK  
 
 Create file `local.properties` in project root  
@@ -13,27 +12,6 @@ File should contain path to your SDK
 
 Run desktop client thorugh gradle  
 `./gradlew desktop:run`  
-
-
-### Server
-Navigate into server directory  
-`cd server`  
-
-Install npm dependencies  
-`npm install`  
-
-Run server  
-`node index.js`
-
-## Docker  
-
-### Creating docker image for server
-
-Navigate into server directory  
-`cd server`  
-
-Build docker image  
-`docker build -t IMAGE_NAME`
 
 ### Creating desktop executable
 
