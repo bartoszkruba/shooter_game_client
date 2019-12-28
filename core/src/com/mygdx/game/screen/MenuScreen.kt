@@ -20,6 +20,7 @@ import com.mygdx.game.ui.MenuChoice
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
+import com.mygdx.game.assets.*
 import com.mygdx.game.screen.Menu.*
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import ktx.app.KtxScreen
@@ -27,7 +28,6 @@ import ktx.assets.pool
 import ktx.collections.iterate
 import ktx.graphics.use
 import kotlin.system.exitProcess
-
 
 class Droplet(var x: Float = 0f, var y: Float = 0f, var length: Float = 0f, var width: Float = 0f)
 
@@ -53,16 +53,16 @@ class MenuScreen(
 
     private val mainMenuChoices = Array<MenuChoice>()
 
-    private val rainMusic = assets.get<Music>("music/rain.mp3")
-    private val backgroundMusic = assets.get<Music>("music/waiting.ogg")
+    private val rainMusic = assets[MusicAssets.Rain]
+    private val backgroundMusic = assets[MusicAssets.MenuMusic]
 
-    private val background: Sprite = Sprite(assets.get<Texture>("images/splashscreen/background.png"))
-    private val foreground: Sprite = Sprite(assets.get<Texture>("images/splashscreen/foreground.png"))
+    private val background = Sprite(assets[TextureAssets.MenuBackground])
+    private val foreground = Sprite(assets[TextureAssets.MenuForeground])
 
-    private val text = Sprite(assets.get<Texture>("images/logo.png"))
+    private val text = Sprite(assets[TextureAssets.Logo])
 
-    private val hoverSound = assets.get<Sound>("sounds/menu_hover.wav")
-    private val selectSound = assets.get<Sound>("sounds/menu_select.wav")
+    private val hoverSound = assets[SoundAssets.MenuHover]
+    private val selectSound = assets[SoundAssets.MenuSelect]
 
     private val shape = ShapeRenderer()
 
@@ -98,28 +98,17 @@ class MenuScreen(
         smallFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
         mainMenuChoices.add(MenuChoice(
-                assets.get<Texture>("images/menu/quit_selected.png"),
-                assets.get<Texture>("images/menu/quit.png"),
-                quitChoice
-        ))
+                assets[TextureAssets.MenuQuitSelected], assets[TextureAssets.MenuQuit], quitChoice))
 
         mainMenuChoices.add(MenuChoice(
-                assets.get<Texture>("images/menu/credits_selected.png"),
-                assets.get<Texture>("images/menu/credits.png"),
-                creditsChoice
-        ))
+                assets[TextureAssets.MenuCreditsSelected], assets[TextureAssets.MenuCredits], creditsChoice))
 
         mainMenuChoices.add(MenuChoice(
-                assets.get<Texture>("images/menu/options_selected.png"),
-                assets.get<Texture>("images/menu/options.png"),
-                optionsChoice
-        ))
+                assets[TextureAssets.MenuOptionsSelected], assets[TextureAssets.MenuOptions], optionsChoice))
 
         mainMenuChoices.add(MenuChoice(
-                assets.get<Texture>("images/menu/start_selected.png"),
-                assets.get<Texture>("images/menu/start.png"),
-                startGameChoice
-        ))
+                assets[TextureAssets.MenuStartSelected], assets[TextureAssets.MenuStart], startGameChoice))
+
         val x = (WINDOW_WIDTH - mainMenuChoices[0].sprite.width) / 2
         var y = 100f
 
@@ -316,10 +305,10 @@ class MenuScreen(
     override fun show() {
         super.show()
         rainMusic.isLooping = true
-//        rainMusic.play()
+        rainMusic.play()
         backgroundMusic.isLooping = true
         backgroundMusic.volume = 0.3f
-//        backgroundMusic.play()
+        backgroundMusic.play()
     }
 
     override fun dispose() {
