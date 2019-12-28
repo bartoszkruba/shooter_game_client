@@ -45,36 +45,11 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-    private val playerAtlas = assets[TextureAtlasAssets.Player]
-    private val bazookaExplosionAtlas = assets[TextureAtlasAssets.BazookaExplosion]
 
-    private val projectileTexture = assets[TextureAssets.Projectile]
-    private val wallTexture = assets[TextureAssets.Wall]
-    private val healthBarTexture = assets[TextureAssets.HealthBar]
-
-    private val pistolTexture = assets[TextureAssets.Pistol]
-    private val machineGunTexture = assets[TextureAssets.MachineGun]
-    private val shotgunTexture = assets[TextureAssets.Shotgun]
-    private val bazookaTexture = assets[TextureAssets.Bazooka]
-
-    private val music = assets[MusicAssets.GameMusic]
-
-    private val deathSound = assets[SoundAssets.Death]
-    private val damageSound = assets[SoundAssets.Damage]
-
-    private val pistolShotSoundEffect = assets[SoundAssets.PistolShot]
-    private val shotgunShotSoundEffect = assets[SoundAssets.ShotgunShot]
-    private val machineGunShotSoundEffect = assets[SoundAssets.MachineGunShot]
-    private val bazookaShotSoundEffect = assets[SoundAssets.BazookaShot]
-
-    private val dryfire = assets[SoundAssets.DryFire]
-    private val reloadSoundEffect = assets[SoundAssets.Reload]
-
-    private val explosionSoundEffect = assets[SoundAssets.Explosion]
-
-    private val groundTexture = assets[TextureAssets.Ground]
-    private val bloodOnTheFloorTexture = assets[TextureAssets.BloodOnTheFloor]
-    private val explosiveBarrelTexture = assets[TextureAssets.Barrel]
+    private val atlases = Atlases(assets)
+    private val textures = Textures(assets)
+    private val musics = Musics(assets)
+    private val sounds = Sounds(assets)
 
     private val cursor = Pixmap(Gdx.files.internal(TextureAssets.MouseCrossHair.path))
 
@@ -117,7 +92,7 @@ class GameScreen(
     private lateinit var player: Player
 
     private var bloodOnTheFloor = ArrayList<Blood>()
-    private val bloodOnTheFloorPool = pool { Blood(bloodOnTheFloorTexture) }
+    private val bloodOnTheFloorPool = pool { Blood(textures.bloodOnTheFloorTexture) }
     private var shouldDeathSoundPlay = false
 
     private var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap()
@@ -130,14 +105,14 @@ class GameScreen(
 
         for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
             for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
-                val groundSprite = Sprite(groundTexture)
+                val groundSprite = Sprite(textures.groundTexture)
                 groundSprite.setPosition(i * GROUND_TEXTURE_WIDTH, j * GROUND_TEXTURE_HEIGHT)
                 groundSprite.setSize(GROUND_TEXTURE_WIDTH, GROUND_TEXTURE_HEIGHT)
                 ground.add(groundSprite)
             }
         }
-        Client.configSocketEvents(projectileTexture, pistolTexture, machineGunTexture, shotgunTexture, bazookaTexture,
-                playerAtlas, healthBarTexture, bazookaExplosionAtlas, wallMatrix, wallTexture, explosiveBarrelTexture, walls)
+
+        Client.configSocketEvents(textures, atlases, wallMatrix, walls)
 
         projectiles = Client.projectiles
         opponents = Client.opponents
@@ -160,7 +135,7 @@ class GameScreen(
     private var pressedKeys = 0
     override fun render(delta: Float) {
         if (Client.shouldPlayDeathSound) {
-            deathSound.play()
+            sounds.deathSound.play()
             Client.shouldPlayDeathSound = false
         }
 
@@ -204,7 +179,7 @@ class GameScreen(
                 checkOpponentsGotShot(it)
                 removeUnnecessaryBloodOnTheFloor()
                 if (shouldPlayReload) {
-                    reloadSoundEffect.play()
+                    sounds.reloadSoundEffect.play()
                     shouldPlayReload = false
                     Client.shouldPlayReload = false
                 }
@@ -383,7 +358,7 @@ class GameScreen(
     private fun drawGameOver(batch: Batch) {
         if (player.isDead) {
             if (shouldDeathSoundPlay) {
-                deathSound.play()
+                sounds.deathSound.play()
                 shouldDeathSoundPlay = false
             }
             val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
@@ -416,7 +391,7 @@ class GameScreen(
 
         if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.weapon.bulletsInChamber < 1
                 && player.weapon.canShoot()) {
-            dryfire.play()
+            sounds.dryfire.play()
             player.weapon.shoot()
         }
 
@@ -597,10 +572,10 @@ class GameScreen(
             if (entry.value.justFired) {
                 entry.value.justFired = false
                 when (entry.value) {
-                    is ShotgunProjectile -> shotgunShotSoundEffect.play(0.2f)
-                    is MachineGunProjectile -> machineGunShotSoundEffect.play()
-                    is BazookaProjectile -> bazookaShotSoundEffect.play()
-                    else -> pistolShotSoundEffect.play(1.5f)
+                    is ShotgunProjectile -> sounds.shotgunShotSoundEffect.play(0.2f)
+                    is MachineGunProjectile -> sounds.machineGunShotSoundEffect.play()
+                    is BazookaProjectile -> sounds.bazookaShotSoundEffect.play()
+                    else -> sounds.pistolShotSoundEffect.play(1.5f)
                 }
             }
             entry.value.setPosition(
@@ -643,7 +618,7 @@ class GameScreen(
             if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead &&
                     projectile.agentId != opponent.value.id) {
                 removeProjectile(projectile, key)
-                if (!opponent.value.isDead) damageSound.play()
+                if (!opponent.value.isDead) sounds.damageSound.play()
                 return true
             }
         }
@@ -653,7 +628,7 @@ class GameScreen(
     private fun checkPlayerCollision(projectile: Projectile, key: String): Boolean {
         if (Intersector.overlaps(projectile.bounds, player.bounds) && projectile.agentId != player.id) {
             removeProjectile(projectile, key)
-            if (!player.isDead) damageSound.play()
+            if (!player.isDead) sounds.damageSound.play()
             return true
         }
         return false
@@ -708,7 +683,7 @@ class GameScreen(
         bazookaExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
-                explosionSoundEffect.play()
+                sounds.explosionSoundEffect.play()
                 explosion.justSpawned = false
             }
             explosion.animate()
@@ -721,7 +696,7 @@ class GameScreen(
         barrelExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
-                explosionSoundEffect.play()
+                sounds.explosionSoundEffect.play()
                 explosion.justSpawned = false
             }
             explosion.animate()
@@ -799,8 +774,8 @@ class GameScreen(
 
     fun playGameScreenMusic() {
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16))
-        music.isLooping = true
-        music.volume = 0.4f
-        music.play()
+        musics.music.isLooping = true
+        musics.music.volume = 0.4f
+        musics.music.play()
     }
 }

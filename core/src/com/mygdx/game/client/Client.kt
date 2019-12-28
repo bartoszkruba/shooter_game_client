@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.utils.Array
+import com.mygdx.game.assets.Atlases
+import com.mygdx.game.assets.Textures
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Player
@@ -63,7 +65,7 @@ class Client {
         var explosiveBarrels = ConcurrentHashMap<String, ExplosiveBarrel>()
 
         val opponents = ConcurrentHashMap<String, Opponent>()
-        private lateinit var playerTextures: TextureAtlas
+        private lateinit var playerAtlas: TextureAtlas
         private lateinit var healthBarTexture: Texture
         private lateinit var wallMatrix: HashMap<String, Array<Wall>>
         private lateinit var wallTexture: Texture
@@ -87,24 +89,24 @@ class Client {
             return null
         }
 
-        fun configSocketEvents(projectileTexture: Texture, pistolTexture: Texture, machineGunTexture: Texture,
-                               shotgunTexture: Texture, bazookaTexture: Texture, playerTextures: TextureAtlas,
-                               healthBarTexture: Texture, bazookaExplosionTextureAtlas: TextureAtlas,
-                               wallMatrix: HashMap<String, Array<Wall>>, wallTexture: Texture,
-                               explosiveBarrelTexture: Texture, walls: Array<Wall>) {
+        fun configSocketEvents(textures: Textures, atlases: Atlases, wallMatrix: HashMap<String,
+                Array<Wall>>, walls: Array<Wall>) {
 
-            Companion.projectileTexture = projectileTexture
-            Companion.pistolTexture = pistolTexture
-            Companion.machineGunTexture = machineGunTexture
-            Companion.shotgunTexture = shotgunTexture
-            Companion.bazookaTexture = bazookaTexture
+            projectileTexture = textures.projectileTexture
+            pistolTexture = textures.pistolTexture
+            machineGunTexture = textures.machineGunTexture
+            shotgunTexture = textures.shotgunTexture
+            bazookaTexture = textures.bazookaTexture
 
-            Companion.playerTextures = playerTextures
-            Companion.healthBarTexture = healthBarTexture
-            Companion.bazookaExplosionTextureAtlas = bazookaExplosionTextureAtlas
+            healthBarTexture = textures.healthBarTexture
+            explosiveBarrelTexture = textures.explosiveBarrelTexture
+
+            wallTexture = textures.wallTexture
+
+            playerAtlas = atlases.playerAtlas
+            bazookaExplosionTextureAtlas = atlases.bazookaExplosionAtlas
+
             Companion.wallMatrix = wallMatrix
-            Companion.wallTexture = wallTexture
-            Companion.explosiveBarrelTexture = explosiveBarrelTexture
             Companion.walls = walls
 
             socket.on(Socket.EVENT_CONNECT) {
@@ -114,7 +116,7 @@ class Client {
                         val obj: JSONObject = data[0] as JSONObject
                         val playerId = obj.getString("id")
 
-                        createPlayer(playerId, healthBarTexture, playerTextures)
+                        createPlayer(playerId, healthBarTexture, playerAtlas)
 
                         Gdx.app.log("SocketIO", "My ID: $playerId")
                     }
@@ -154,7 +156,7 @@ class Client {
                         player.deaths = deaths
                     } else {
                         playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
-                                0f, false, 0f, 0f, playerTextures, id,
+                                0f, false, 0f, 0f, playerAtlas, id,
                                 healthBarTexture)
                     }
                 }
@@ -303,7 +305,7 @@ class Client {
                     } else player.isDead = true
                 } else {
                     if (opponents[id] == null) {
-                        createOpponent(id, x, y, name, currentHealth, playerTextures, healthBarTexture).apply {
+                        createOpponent(id, x, y, name, currentHealth, playerAtlas, healthBarTexture).apply {
                             velocity.x = xVelocity
                             setAngle(angle)
                             velocity.y = yVelocity
