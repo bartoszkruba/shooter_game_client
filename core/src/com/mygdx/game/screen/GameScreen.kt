@@ -3,8 +3,6 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
-import com.badlogic.gdx.audio.Music
-import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
@@ -12,6 +10,7 @@ import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
 import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
+import com.mygdx.game.assets.*
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.generateWallMatrix
 import com.mygdx.game.util.getZonesForCircle
@@ -46,38 +45,38 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-    private val playerAtlas = assets.get<TextureAtlas>("images/player/player.atlas")
-    private val bazookaExplosionAtlas = assets.get<TextureAtlas>("images/bazooka/bazooka_explosion.atlas")
+    private val playerAtlas = assets[TextureAtlasAssets.Player]
+    private val bazookaExplosionAtlas = assets[TextureAtlasAssets.BazookaExplosion]
 
-    private val projectileTexture = assets.get("images/projectile.png", Texture::class.java)
-    private val wallTexture = assets.get("images/brickwall2.jpg", Texture::class.java)
-    private val healthBarTexture = assets.get("images/healthBar3.png", Texture::class.java)
+    private val projectileTexture = assets[TextureAssets.Projectile]
+    private val wallTexture = assets[TextureAssets.Wall]
+    private val healthBarTexture = assets[TextureAssets.HealthBar]
 
-    private val pistolTexture = assets.get("images/pistol.png", Texture::class.java)
-    private val machineGunTexture = assets.get("images/machine_gun.png", Texture::class.java)
-    private val shotgunTexture = assets.get("images/shotgun.png", Texture::class.java)
-    private val bazookaTexture = assets.get("images/bazooka.png", Texture::class.java)
+    private val pistolTexture = assets[TextureAssets.Pistol]
+    private val machineGunTexture = assets[TextureAssets.MachineGun]
+    private val shotgunTexture = assets[TextureAssets.Shotgun]
+    private val bazookaTexture = assets[TextureAssets.Bazooka]
 
-    private val music = assets.get("music/ingame_music.ogg", Music::class.java)
+    private val music = assets[MusicAssets.GameMusic]
 
-    private val deathSound = assets.get("sounds/deathSound.wav", Sound::class.java)
-    private val damageSound = assets.get("sounds/damage.mp3", Sound::class.java)
+    private val deathSound = assets[SoundAssets.Death]
+    private val damageSound = assets[SoundAssets.Damage]
 
-    private val pistolShotSoundEffect = assets.get("sounds/pistol_shot.wav", Sound::class.java)
-    private val shotgunShotSoundEffect = assets.get("sounds/shotgun_shot.wav", Sound::class.java)
-    private val machineGunShotSoundEffect = assets.get("sounds/machine_gun_shot.wav", Sound::class.java)
-    private val bazookaShotSoundEffect = assets.get("sounds/bazooka_shot.mp3", Sound::class.java)
-    private val dryfire = assets.get("sounds/dryfire.mp3", Sound::class.java)
+    private val pistolShotSoundEffect = assets[SoundAssets.PistolShot]
+    private val shotgunShotSoundEffect = assets[SoundAssets.ShotgunShot]
+    private val machineGunShotSoundEffect = assets[SoundAssets.MachineGunShot]
+    private val bazookaShotSoundEffect = assets[SoundAssets.BazookaShot]
 
-    private val bazookaExplosionSoundEffect = assets.get("sounds/bazooka_explosion.mp3", Sound::class.java)
+    private val dryfire = assets[SoundAssets.DryFire]
+    private val reloadSoundEffect = assets[SoundAssets.Reload]
 
-    private val reloadSoundEffect = assets.get("sounds/reload_sound.mp3", Sound::class.java)
+    private val explosionSoundEffect = assets[SoundAssets.Explosion]
 
-    private val groundTexture = assets.get("images/ground.jpg", Texture::class.java)
-    private val bloodOnTheFloorTexture = assets.get("images/blood-onTheFloor.png", Texture::class.java)
-    private val explosiveBarrelTexture = assets.get("images/explosive_barrel.png", Texture::class.java)
+    private val groundTexture = assets[TextureAssets.Ground]
+    private val bloodOnTheFloorTexture = assets[TextureAssets.BloodOnTheFloor]
+    private val explosiveBarrelTexture = assets[TextureAssets.Barrel]
 
-    private val cursor = Pixmap(Gdx.files.internal("images/crosshair.png"))
+    private val cursor = Pixmap(Gdx.files.internal(TextureAssets.MouseCrossHair.path))
 
     private var shouldPlayReload = false
     private var opponents = ConcurrentHashMap<String, Opponent>()
@@ -91,7 +90,6 @@ class GameScreen(
     private var scoreboardFont = BitmapFont()
     private var playersOnScoreboardFont = BitmapFont()
 
-    private val playerTextures: Array<Texture> = Array()
     private val mousePosition = Vector2()
     private val walls = Array<Wall>()
     private val wallMatrix: HashMap<String, Array<Wall>>
@@ -598,10 +596,10 @@ class GameScreen(
             removed = false
             if (entry.value.justFired) {
                 entry.value.justFired = false
-                when {
-                    entry.value is ShotgunProjectile -> shotgunShotSoundEffect.play(0.2f)
-                    entry.value is MachineGunProjectile -> machineGunShotSoundEffect.play()
-                    entry.value is BazookaProjectile -> bazookaShotSoundEffect.play()
+                when (entry.value) {
+                    is ShotgunProjectile -> shotgunShotSoundEffect.play(0.2f)
+                    is MachineGunProjectile -> machineGunShotSoundEffect.play()
+                    is BazookaProjectile -> bazookaShotSoundEffect.play()
                     else -> pistolShotSoundEffect.play(1.5f)
                 }
             }
@@ -710,7 +708,7 @@ class GameScreen(
         bazookaExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
-                bazookaExplosionSoundEffect.play()
+                explosionSoundEffect.play()
                 explosion.justSpawned = false
             }
             explosion.animate()
@@ -723,7 +721,7 @@ class GameScreen(
         barrelExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
-                bazookaExplosionSoundEffect.play()
+                explosionSoundEffect.play()
                 explosion.justSpawned = false
             }
             explosion.animate()
