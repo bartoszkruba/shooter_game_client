@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.utils.Array
-import com.badlogic.gdx.utils.Pool
 import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.assets.*
@@ -32,6 +31,9 @@ import com.mygdx.game.model.projectile.*
 import ktx.assets.pool
 import ktx.collections.iterate
 import com.mygdx.game.model.projectile.Projectile
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
@@ -45,11 +47,12 @@ class GameScreen(
         private val camera: OrthographicCamera,
         private val font: BitmapFont) : KtxScreen {
 
-
     private val atlases = Atlases(assets)
     private val textures = Textures(assets)
     private val musics = Musics(assets)
     private val sounds = Sounds(assets)
+
+    private val pools = Pools(textures, atlases)
 
     private val cursor = Pixmap(Gdx.files.internal(TextureAssets.MouseCrossHair.path))
 
@@ -61,7 +64,6 @@ class GameScreen(
     private var sWasPressed = false
     private var rWasPressed = false
     private var mouseWasPressed = false
-    private var forIf = true
     private var scoreboardFont = BitmapFont()
     private var playersOnScoreboardFont = BitmapFont()
 
@@ -70,14 +72,6 @@ class GameScreen(
     private val wallMatrix: HashMap<String, Array<Wall>>
 
     private val projectiles: ConcurrentHashMap<String, Projectile>
-
-    private val pistolProjectilePool: Pool<PistolProjectile>
-    private val machineGunProjectilePool: Pool<MachineGunProjectile>
-    private val shotgunProjectilePool: Pool<ShotgunProjectile>
-    private val bazookaProjectilePool: Pool<BazookaProjectile>
-
-    private val bazookaExplosionPool: Pool<BazookaExplosion>
-    private val barrelExplosionPool: Pool<BarrelExplosion>
 
     private val bazookaExplosions: Array<BazookaExplosion>
     private val barrelExplosions: Array<BarrelExplosion>
@@ -112,24 +106,19 @@ class GameScreen(
             }
         }
 
-        Client.configSocketEvents(textures, atlases, wallMatrix, walls)
+        Client.configSocketEvents(textures, atlases, pools, wallMatrix, walls)
 
         projectiles = Client.projectiles
         opponents = Client.opponents
 
-        pistolProjectilePool = Client.pistolProjectilePool
-        machineGunProjectilePool = Client.machineGunProjectilePool
-        shotgunProjectilePool = Client.shotgunProjectilePool
-        bazookaProjectilePool = Client.bazookaProjectilePool
-
-        bazookaExplosionPool = Client.bazookaExplosionPool
         bazookaExplosions = Client.bazookaExplosions
 
-        barrelExplosionPool = Client.barrelExplosionPool
         barrelExplosions = Client.barrelExplosions
 
         pickups = Client.pickups
         explosiveBarrels = Client.explosiveBarrels
+
+        playerRotationUpdateLoop()
     }
 
     private var pressedKeys = 0
@@ -149,11 +138,10 @@ class GameScreen(
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
         if (::player.isInitialized) {
-            updateServerRotation()
-            updateServerMoves()
-            updateServerMouse()
             getMousePosInGameWorld()
             setPlayerRotation()
+            updateServerMouse()
+            updateServerMoves()
 
             calculateProjectilePositions(delta)
             checkControls(delta)
@@ -172,7 +160,6 @@ class GameScreen(
                 drawPickups(it)
                 drawProjectiles(it)
                 drawOpponents(it)
-                // drawCursor(it)
                 moveOpponents(delta)
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
@@ -370,27 +357,22 @@ class GameScreen(
         }
     }
 
-    private fun updateServerRotation() {
-        if (forIf) {
-            forIf = false
-            val b = true
-            val thread = Thread {
-                while (b) {
-                    Client.playerRotation("degrees", player.facingDirectionAngle)
-                    Thread.sleep(100)
-                }
+    private fun playerRotationUpdateLoop() = GlobalScope.launch {
+        while (true) {
+            if (::player.isInitialized) {
+                Client.sendPlayerRotationData()
+                delay(100)
             }
-            thread.start()
         }
     }
+
 
     private fun updateServerMouse() {
         val isMouseWPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT))
         val wWasReleased = mouseWasPressed && !isMouseWPressed
         mouseWasPressed = isMouseWPressed
 
-        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.weapon.bulletsInChamber < 1
-                && player.weapon.canShoot()) {
+        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.weapon.bulletsInChamber < 1 && player.weapon.canShoot()) {
             sounds.dryfire.play()
             player.weapon.shoot()
         }
@@ -658,10 +640,10 @@ class GameScreen(
 
     private fun removeProjectile(projectile: Projectile, key: String) {
         when (projectile) {
-            is PistolProjectile -> pistolProjectilePool.free(projectile)
-            is MachineGunProjectile -> machineGunProjectilePool.free(projectile)
-            is ShotgunProjectile -> shotgunProjectilePool.free(projectile)
-            is BazookaProjectile -> bazookaProjectilePool.free(projectile)
+            is PistolProjectile -> pools.pistolProjectilePool.free(projectile)
+            is MachineGunProjectile -> pools.machineGunProjectilePool.free(projectile)
+            is ShotgunProjectile -> pools.shotgunProjectilePool.free(projectile)
+            is BazookaProjectile -> pools.bazookaProjectilePool.free(projectile)
         }
         projectiles.remove(key)
     }
@@ -688,7 +670,7 @@ class GameScreen(
             }
             explosion.animate()
             if (explosion.isFinished()) {
-                bazookaExplosionPool.free(explosion)
+                pools.bazookaExplosionPool.free(explosion)
                 iterator.remove()
             }
             explosion.sprite.draw(batch)
@@ -701,7 +683,7 @@ class GameScreen(
             }
             explosion.animate()
             if (explosion.isFinished()) {
-                barrelExplosionPool.free(explosion)
+                pools.barrelExplosionPool.free(explosion)
                 iterator.remove()
             }
             explosion.sprite.draw(batch)

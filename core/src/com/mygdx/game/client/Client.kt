@@ -20,11 +20,11 @@ import com.mygdx.game.model.weapon.Bazooka
 import com.mygdx.game.model.weapon.MachineGun
 import com.mygdx.game.model.weapon.Pistol
 import com.mygdx.game.model.weapon.Shotgun
+import com.mygdx.game.screen.Pools
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.getZonesForRectangle
 import io.socket.client.IO
 import io.socket.client.Socket
-import ktx.assets.pool
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
@@ -34,44 +34,25 @@ class Client {
         lateinit var socket: Socket
         val pickups = ConcurrentHashMap<String, Pickup>()
 
-        lateinit var projectileTexture: Texture
-        lateinit var pistolTexture: Texture
-        lateinit var machineGunTexture: Texture
-        lateinit var shotgunTexture: Texture
-        lateinit var bazookaTexture: Texture
         var shouldPlayReload = false
 
         private lateinit var player: Player
+        private lateinit var textures: Textures
+        private lateinit var atlases: Atlases
+        private lateinit var pools: Pools
 
         val projectiles = ConcurrentHashMap<String, Projectile>()
-        val pistolProjectilePool = pool { PistolProjectile(texture = projectileTexture) }
-        val machineGunProjectilePool = pool { MachineGunProjectile(texture = projectileTexture) }
-        val shotgunProjectilePool = pool { ShotgunProjectile(texture = projectileTexture) }
-        val bazookaProjectilePool = pool { BazookaProjectile(texture = projectileTexture) }
-
-        lateinit var bazookaExplosionTextureAtlas: TextureAtlas
-        val bazookaExplosionPool = pool { BazookaExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
-        val barrelExplosionPool = pool { BarrelExplosion(textureAtlas = bazookaExplosionTextureAtlas) }
         val bazookaExplosions = Array<BazookaExplosion>()
         val barrelExplosions = Array<BarrelExplosion>()
-
-        private var pistolPickupPool = pool { PistolPickup(texture = pistolTexture) }
-        private var machineGunPickupPool = pool { MachineGunPickup(texture = machineGunTexture) }
-        private var shotgunPickupPool = pool { ShotgunPickup(texture = shotgunTexture) }
-        private var bazookaPickupPool = pool { BazookaPickup(texture = bazookaTexture) }
-
-        private var explosiveBarrelPool = pool { ExplosiveBarrel(texture = explosiveBarrelTexture) }
 
         var explosiveBarrels = ConcurrentHashMap<String, ExplosiveBarrel>()
 
         val opponents = ConcurrentHashMap<String, Opponent>()
-        private lateinit var playerAtlas: TextureAtlas
-        private lateinit var healthBarTexture: Texture
+
         private lateinit var wallMatrix: HashMap<String, Array<Wall>>
-        private lateinit var wallTexture: Texture
-        private lateinit var explosiveBarrelTexture: Texture
         private lateinit var walls: Array<Wall>
-        var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap<String, Agent>()
+
+        var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap()
 
         fun connectionSocket(ipAddress: String) {
             try {
@@ -89,22 +70,12 @@ class Client {
             return null
         }
 
-        fun configSocketEvents(textures: Textures, atlases: Atlases, wallMatrix: HashMap<String,
+        fun configSocketEvents(textures: Textures, atlases: Atlases, pools: Pools, wallMatrix: HashMap<String,
                 Array<Wall>>, walls: Array<Wall>) {
 
-            projectileTexture = textures.projectileTexture
-            pistolTexture = textures.pistolTexture
-            machineGunTexture = textures.machineGunTexture
-            shotgunTexture = textures.shotgunTexture
-            bazookaTexture = textures.bazookaTexture
-
-            healthBarTexture = textures.healthBarTexture
-            explosiveBarrelTexture = textures.explosiveBarrelTexture
-
-            wallTexture = textures.wallTexture
-
-            playerAtlas = atlases.playerAtlas
-            bazookaExplosionTextureAtlas = atlases.bazookaExplosionAtlas
+            Companion.atlases = atlases
+            Companion.textures = textures
+            Companion.pools = pools
 
             Companion.wallMatrix = wallMatrix
             Companion.walls = walls
@@ -116,7 +87,7 @@ class Client {
                         val obj: JSONObject = data[0] as JSONObject
                         val playerId = obj.getString("id")
 
-                        createPlayer(playerId, healthBarTexture, playerAtlas)
+                        createPlayer(playerId, textures.healthBarTexture, atlases.playerAtlas)
 
                         Gdx.app.log("SocketIO", "My ID: $playerId")
                     }
@@ -156,8 +127,8 @@ class Client {
                         player.deaths = deaths
                     } else {
                         playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
-                                0f, false, 0f, 0f, playerAtlas, id,
-                                healthBarTexture)
+                                0f, false, 0f, 0f, atlases.playerAtlas, id,
+                                textures.healthBarTexture)
                     }
                 }
             }
@@ -171,7 +142,7 @@ class Client {
                 val obj = walls[i] as JSONObject
                 val x = obj.getDouble("x").toFloat()
                 val y = obj.getDouble("y").toFloat()
-                val wall = Wall(x, y, wallTexture)
+                val wall = Wall(x, y, textures.wallTexture)
                 for (zone in getZonesForRectangle(wall.bounds)) {
                     wallMatrix[zone]?.add(wall)
                 }
@@ -185,10 +156,10 @@ class Client {
 
             for (pickup in pickups.values) {
                 when (pickup) {
-                    is PistolPickup -> pistolPickupPool.free(pickup)
-                    is MachineGunPickup -> machineGunPickupPool.free(pickup)
-                    is ShotgunPickup -> shotgunPickupPool.free(pickup)
-                    is BazookaPickup -> bazookaPickupPool.free(pickup)
+                    is PistolPickup -> pools.pistolPickupPool.free(pickup)
+                    is MachineGunPickup -> pools.machineGunPickupPool.free(pickup)
+                    is ShotgunPickup -> pools.shotgunPickupPool.free(pickup)
+                    is BazookaPickup -> pools.bazookaPickupPool.free(pickup)
                 }
             }
 
@@ -202,10 +173,10 @@ class Client {
                 val type = pickup.getString("type")
 
                 pickups[id] = when (type) {
-                    ProjectileType.PISTOL -> pistolPickupPool.obtain()
-                    ProjectileType.SHOTGUN -> shotgunPickupPool.obtain()
-                    ProjectileType.BAZOOKA -> bazookaPickupPool.obtain()
-                    else -> machineGunPickupPool.obtain()
+                    ProjectileType.PISTOL -> pools.pistolPickupPool.obtain()
+                    ProjectileType.SHOTGUN -> pools.shotgunPickupPool.obtain()
+                    ProjectileType.BAZOOKA -> pools.bazookaPickupPool.obtain()
+                    else -> pools.machineGunPickupPool.obtain()
                 }.apply { setPosition(x, y) }
             }
         }
@@ -226,10 +197,10 @@ class Client {
 
                 if (projectiles[id] == null) {
                     projectiles[id] = when (type) {
-                        ProjectileType.PISTOL -> pistolProjectilePool.obtain()
-                        ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
-                        ProjectileType.BAZOOKA -> bazookaProjectilePool.obtain()
-                        else -> machineGunProjectilePool.obtain()
+                        ProjectileType.PISTOL -> pools.pistolProjectilePool.obtain()
+                        ProjectileType.SHOTGUN -> pools.shotgunProjectilePool.obtain()
+                        ProjectileType.BAZOOKA -> pools.bazookaProjectilePool.obtain()
+                        else -> pools.machineGunProjectilePool.obtain()
                     }.apply {
                         setPosition(x, y)
                         velocity.x = xSpeed
@@ -248,7 +219,7 @@ class Client {
         }
 
         private fun processBarrelData(data: kotlin.Array<Any>) {
-            for (barrel in explosiveBarrels.values) explosiveBarrelPool.free(barrel)
+            for (barrel in explosiveBarrels.values) pools.explosiveBarrelPool.free(barrel)
             explosiveBarrels.clear()
             val barrels = data[0] as JSONArray
 
@@ -257,7 +228,7 @@ class Client {
                 val x = barrel.getDouble("x").toFloat()
                 val y = barrel.getDouble("y").toFloat()
                 val id = barrel.getString("id")
-                explosiveBarrels[id] = explosiveBarrelPool.obtain().apply { setPosition(x, y) }
+                explosiveBarrels[id] = pools.explosiveBarrelPool.obtain().apply { setPosition(x, y) }
             }
         }
 
@@ -305,7 +276,8 @@ class Client {
                     } else player.isDead = true
                 } else {
                     if (opponents[id] == null) {
-                        createOpponent(id, x, y, name, currentHealth, playerAtlas, healthBarTexture).apply {
+                        createOpponent(id, x, y, name, currentHealth, atlases.playerAtlas,
+                                textures.healthBarTexture).apply {
                             velocity.x = xVelocity
                             setAngle(angle)
                             velocity.y = yVelocity
@@ -338,14 +310,14 @@ class Client {
             val y = explosion.getDouble("y").toFloat()
             val type = explosion.getString("type")
             if (type == ExplosionType.BAZOOKA) {
-                bazookaExplosions.add(bazookaExplosionPool.obtain().apply {
+                bazookaExplosions.add(pools.bazookaExplosionPool.obtain().apply {
                     this.justSpawned = true
                     this.x = x
                     this.y = y
                     resetTimer()
                 })
             } else if (type == ExplosionType.BARREL) {
-                barrelExplosions.add(barrelExplosionPool.obtain().apply {
+                barrelExplosions.add(pools.barrelExplosionPool.obtain().apply {
                     this.justSpawned = true
                     this.x = x
                     this.y = y
@@ -368,12 +340,10 @@ class Client {
 
             if (projectiles[id] == null) {
                 projectiles[id] = when (type) {
-                    ProjectileType.PISTOL -> pistolProjectilePool.obtain()
-                    ProjectileType.SHOTGUN -> shotgunProjectilePool.obtain()
-                    ProjectileType.BAZOOKA -> {
-                        bazookaProjectilePool.obtain()
-                    }
-                    else -> machineGunProjectilePool.obtain()
+                    ProjectileType.PISTOL -> pools.pistolProjectilePool.obtain()
+                    ProjectileType.SHOTGUN -> pools.shotgunProjectilePool.obtain()
+                    ProjectileType.BAZOOKA -> pools.bazookaProjectilePool.obtain()
+                    else -> pools.machineGunProjectilePool.obtain()
                 }.apply {
                     setPosition(x, y)
                     velocity.x = xSpeed
@@ -437,9 +407,9 @@ class Client {
             socket.emit("restart")
         }
 
-        fun playerRotation(s: String, facingDirectionAngle: Float) {
+        fun sendPlayerRotationData() {
             val data = JSONObject()
-            data.put(s, player.facingDirectionAngle)
+            data.put("degrees", player.facingDirectionAngle)
             socket.emit("playerRotation", data)
         }
 
@@ -461,12 +431,12 @@ class Client {
 
         private fun generateEdgeWalls() {
             for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
-                walls.add(Wall(0f, i.toFloat(), wallTexture))
-                walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), wallTexture))
+                walls.add(Wall(0f, i.toFloat(), textures.wallTexture))
+                walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), textures.wallTexture))
             }
             for (i in WALL_SPRITE_WIDTH.toInt() until MAP_WIDTH - WALL_SPRITE_WIDTH.toInt() step WALL_SPRITE_WIDTH.toInt()) {
-                walls.add(Wall(i.toFloat(), 0f, wallTexture))
-                walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT, wallTexture))
+                walls.add(Wall(i.toFloat(), 0f, textures.wallTexture))
+                walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT, textures.wallTexture))
             }
         }
     }
