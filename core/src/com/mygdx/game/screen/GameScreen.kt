@@ -6,37 +6,25 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.*
-import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.TimeUtils
 import com.mygdx.game.Game
 import com.mygdx.game.assets.*
 import com.mygdx.game.settings.*
-import com.mygdx.game.util.generateWallMatrix
 import com.mygdx.game.util.getZonesForCircle
 import com.mygdx.game.util.getZonesForRectangle
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import com.mygdx.game.client.Client
-import java.util.concurrent.ConcurrentHashMap
-import com.mygdx.game.model.pickup.Pickup
-import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Player
-import com.mygdx.game.model.explosion.BarrelExplosion
-import com.mygdx.game.model.explosion.BazookaExplosion
-import com.mygdx.game.model.obstacles.ExplosiveBarrel
-import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.projectile.*
-import ktx.assets.pool
 import ktx.collections.iterate
 import com.mygdx.game.model.projectile.Projectile
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-
 
 private enum class ShakeDirection { RIGHT, LEFT }
 
@@ -53,11 +41,11 @@ class GameScreen(
     private val sounds = Sounds(assets)
 
     private val pools = Pools(textures, atlases)
+    private val gameObj = GameObjects(textures)
 
     private val cursor = Pixmap(Gdx.files.internal(TextureAssets.MouseCrossHair.path))
 
     private var shouldPlayReload = false
-    private var opponents = ConcurrentHashMap<String, Opponent>()
     private var wWasPressed = false
     private var aWasPressed = false
     private var dWasPressed = false
@@ -68,56 +56,19 @@ class GameScreen(
     private var playersOnScoreboardFont = BitmapFont()
 
     private val mousePosition = Vector2()
-    private val walls = Array<Wall>()
-    private val wallMatrix: HashMap<String, Array<Wall>>
-
-    private val projectiles: ConcurrentHashMap<String, Projectile>
-
-    private val bazookaExplosions: Array<BazookaExplosion>
-    private val barrelExplosions: Array<BarrelExplosion>
-
-    private val pickups: ConcurrentHashMap<String, Pickup>
-    private val explosiveBarrels: ConcurrentHashMap<String, ExplosiveBarrel>
     private var imgpos = 0.0
     private var imgposdir = 0.1
     private var showMiniMap = 0
 
-    private val ground = Array<Sprite>()
     private lateinit var player: Player
 
-    private var bloodOnTheFloor = ArrayList<Blood>()
-    private val bloodOnTheFloorPool = pool { Blood(textures.bloodOnTheFloorTexture) }
     private var shouldDeathSoundPlay = false
-
-    private var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap()
 
     private var shakeDirection = ShakeDirection.RIGHT
     private var lastExplosion = 0L
 
     init {
-        wallMatrix = generateWallMatrix()
-
-        for (i in 0 until (MAP_HEIGHT % GROUND_TEXTURE_HEIGHT + 1).toInt()) {
-            for (j in 0 until (MAP_WIDTH % GROUND_TEXTURE_WIDTH + 1).toInt()) {
-                val groundSprite = Sprite(textures.groundTexture)
-                groundSprite.setPosition(i * GROUND_TEXTURE_WIDTH, j * GROUND_TEXTURE_HEIGHT)
-                groundSprite.setSize(GROUND_TEXTURE_WIDTH, GROUND_TEXTURE_HEIGHT)
-                ground.add(groundSprite)
-            }
-        }
-
-        Client.configSocketEvents(textures, atlases, pools, wallMatrix, walls)
-
-        projectiles = Client.projectiles
-        opponents = Client.opponents
-
-        bazookaExplosions = Client.bazookaExplosions
-
-        barrelExplosions = Client.barrelExplosions
-
-        pickups = Client.pickups
-        explosiveBarrels = Client.explosiveBarrels
-
+        Client.configSocketEvents(textures, atlases, pools, gameObj)
         playerRotationUpdateLoop()
     }
 
@@ -131,7 +82,6 @@ class GameScreen(
         shouldPlayReload = Client.shouldPlayReload
         if (Client.getPlayer() != null) {
             player = Client.getPlayer()!!
-            playerOnScoreboardTable = Client.playerOnScoreboardTable
         }
 
         Gdx.gl.glClearColor(45f / 255f, 40f / 255f, 50f / 255f, 1f)
@@ -155,7 +105,7 @@ class GameScreen(
 
         if (::player.isInitialized) {
             batch.use {
-                ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
+                gameObj.ground.forEach { sprite -> if (inFrustum(camera, sprite)) sprite.draw(it) }
                 drawBloodOnTheFloor(it)
                 drawPickups(it)
                 drawProjectiles(it)
@@ -196,21 +146,21 @@ class GameScreen(
         if (Gdx.input.isKeyPressed(Input.Keys.TAB)) {
             var t = 1.14f
             var sortedByKills = ArrayList<Agent>()
-            playerOnScoreboardTable.values.forEach {
-                sortedByKills.add(it)
-            }
+            gameObj.playerOnScoreboardTable.values.forEach { sortedByKills.add(it) }
 
             sortedByKills = ArrayList(sortedByKills.sortedWith(compareBy { it.kills }).reversed())
 
             for (it in sortedByKills) {
-                if (it.id == player.id) playersOnScoreboardFont.color = Color.GREEN else playersOnScoreboardFont.color = Color.RED
+                playersOnScoreboardFont.color = if (it.id == player.id) Color.GREEN else Color.RED
                 t += 0.05f
-                playersOnScoreboardFont.draw(batch, "${sortedByKills.indexOf(it) + 1}", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
+
+                playersOnScoreboardFont.draw(batch, "${sortedByKills.indexOf(it) + 1}",
+                        WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / t)
+
                 playersOnScoreboardFont.draw(batch, it.name, WINDOW_WIDTH / 2.4f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.kills}", WINDOW_WIDTH / 1.73f, WINDOW_HEIGHT / t)
                 playersOnScoreboardFont.draw(batch, "${it.deaths}", WINDOW_WIDTH / 1.43f, WINDOW_HEIGHT / t)
             }
-
         }
     }
 
@@ -222,30 +172,33 @@ class GameScreen(
             batch.draw(scoreboard, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
 
             batch.setColor(c.r, c.g, c.b, .6f)
-            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.1f)
+            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f, WINDOW_WIDTH / 2,
+                    WINDOW_HEIGHT / 1.1f)
 
             val table = assets.get("scoreboard/scoreboardTable.png", Texture::class.java)
             batch.setColor(c.r, c.g, c.b, .8f)
-            batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.15f)
+            batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2,
+                    WINDOW_HEIGHT / 1.15f)
 
-            scoreboardFont.draw(batch, "RANK           PLAYER              KILLS            DEATHS", WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
+            scoreboardFont.draw(batch, "RANK           PLAYER              KILLS            DEATHS",
+                    WINDOW_WIDTH / 3.4f, WINDOW_HEIGHT / 1.09f)
             scoreboardFont.data.setScale(1.7f)
         }
     }
 
     private fun removeUnnecessaryBloodOnTheFloor() {
-        val iterator = bloodOnTheFloor.iterator()
+        val iterator = gameObj.bloodOnTheFloor.iterator()
         while (iterator.hasNext()) {
             val value = iterator.next()
             if (value.transparent < 0) {
-                bloodOnTheFloorPool.free(value)
+                pools.bloodOnTheFloorPool.free(value)
                 iterator.remove()
             }
         }
     }
 
     private fun drawBloodOnTheFloor(batch: Batch) {
-        this.bloodOnTheFloor.forEach {
+        gameObj.bloodOnTheFloor.forEach {
             if (it.gotShot && it.transparent >= 0f) {
                 it.bloodOnTheFloorSprite.draw(batch, it.transparent)
                 it.changeTransparent()
@@ -254,11 +207,11 @@ class GameScreen(
     }
 
     private fun checkOpponentsGotShot(batch: Batch) {
-        opponents.values.forEach {
+        gameObj.opponents.values.forEach {
             if (it.gotShot && !it.isDead) {
                 drawBloodOnPlayerBody(batch, it.bounds.x - 10f, it.bounds.y)
-                bloodOnTheFloor.add(
-                        bloodOnTheFloorPool.obtain().apply {
+                gameObj.bloodOnTheFloor.add(
+                        pools.bloodOnTheFloorPool.obtain().apply {
                             bloodOnTheFloorSprite.setPosition(it.bounds.x - 20f, it.bounds.y - 50f)
                             gotShot = true
                             transparent = 1f
@@ -268,11 +221,12 @@ class GameScreen(
         }
     }
 
+    //todo two times same code - break into own func
     private fun checkPlayerGotShot(batch: Batch) {
         if (player.gotShot && !player.isDead) {
             drawBloodOnPlayerBody(batch, player.bounds.x - 10f, player.bounds.y)
-            bloodOnTheFloor.add(
-                    bloodOnTheFloorPool.obtain().apply {
+            gameObj.bloodOnTheFloor.add(
+                    pools.bloodOnTheFloorPool.obtain().apply {
                         bloodOnTheFloorSprite.setPosition(player.bounds.x - 20f, player.bounds.y - 50f)
                         gotShot = true
                         transparent = 1f
@@ -322,7 +276,7 @@ class GameScreen(
 
                 val playersInMiniMapexture = assets.get("images/opponentsInMiniMap.png", Texture::class.java)
                 batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
-                opponents.values.forEach {
+                gameObj.opponents.values.forEach {
                     if (!it.isDead)
                         batch.draw(playersInMiniMapexture,
                                 ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
@@ -487,9 +441,9 @@ class GameScreen(
     }
 
     private fun moveOpponents(delta: Float) {
-        for (entry in opponents.entries) {
+        for (entry in gameObj.opponents.entries) {
 
-            if (agentOutSideViewport(entry.value)) opponents.remove(entry.key)
+            if (agentOutSideViewport(entry.value)) gameObj.opponents.remove(entry.key)
 
             val oldX = entry.value.bounds.x
             val oldY = entry.value.bounds.y
@@ -501,8 +455,8 @@ class GameScreen(
 
             var collided = false
             for (i in 0 until zones.size) {
-                for (j in 0 until wallMatrix[zones[i]]!!.size) {
-                    if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
+                for (j in 0 until gameObj.wallMatrix[zones[i]]!!.size) {
+                    if (Intersector.overlaps(gameObj.wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
                         entry.value.setPosition(oldX, oldY)
                         collided = true
                         break
@@ -528,8 +482,8 @@ class GameScreen(
         var collided = false
         for (i in 0 until zones.size) {
             if (collided) return
-            for (j in 0 until wallMatrix[zones[i]]!!.size) {
-                if (Intersector.overlaps(wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
+            for (j in 0 until gameObj.wallMatrix[zones[i]]!!.size) {
+                if (Intersector.overlaps(gameObj.wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
                     player.setPosition(oldX, oldY)
                     collided = true
                     break
@@ -537,7 +491,7 @@ class GameScreen(
                 if (collided) break
             }
         }
-        for (barrel in explosiveBarrels) {
+        for (barrel in gameObj.explosiveBarrels) {
             if (Intersector.overlaps(barrel.value.bounds, player.bounds)) {
                 player.setPosition(oldX, oldY)
 //                collided = true
@@ -549,7 +503,7 @@ class GameScreen(
 
     private fun calculateProjectilePositions(delta: Float) {
         var removed = false
-        for (entry in projectiles.entries) {
+        for (entry in gameObj.projectiles.entries) {
             removed = false
             if (entry.value.justFired) {
                 entry.value.justFired = false
@@ -596,7 +550,7 @@ class GameScreen(
     }
 
     private fun checkOpponentCollisions(projectile: Projectile, key: String): Boolean {
-        for (opponent in opponents.entries) {
+        for (opponent in gameObj.opponents.entries) {
             if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead &&
                     projectile.agentId != opponent.value.id) {
                 removeProjectile(projectile, key)
@@ -617,7 +571,7 @@ class GameScreen(
     }
 
     private fun checkBarrelCollisions(projectile: Projectile, key: String): Boolean {
-        for (barrel in explosiveBarrels) {
+        for (barrel in gameObj.explosiveBarrels) {
             if (Intersector.overlaps(projectile.bounds, barrel.value.bounds)) {
                 removeProjectile(projectile, key)
                 return true
@@ -628,8 +582,8 @@ class GameScreen(
 
     private fun checkWallsCollisions(projectile: Projectile, key: String): Boolean {
         for (zone in getZonesForCircle(projectile.bounds)) {
-            if (wallMatrix[zone] != null) for (i in 0 until wallMatrix[zone]!!.size) {
-                if (Intersector.overlaps(projectile.bounds, wallMatrix[zone]!![i].bounds)) {
+            if (gameObj.wallMatrix[zone] != null) for (i in 0 until gameObj.wallMatrix[zone]!!.size) {
+                if (Intersector.overlaps(projectile.bounds, gameObj.wallMatrix[zone]!![i].bounds)) {
                     removeProjectile(projectile, key)
                     return true
                 }
@@ -645,7 +599,7 @@ class GameScreen(
             is ShotgunProjectile -> pools.shotgunProjectilePool.free(projectile)
             is BazookaProjectile -> pools.bazookaProjectilePool.free(projectile)
         }
-        projectiles.remove(key)
+        gameObj.projectiles.remove(key)
     }
 
     private fun drawPlayer(batch: Batch, agent: Agent) {
@@ -657,12 +611,12 @@ class GameScreen(
         }
     }
 
-    private fun drawProjectiles(batch: Batch) = projectiles.values.forEach {
+    private fun drawProjectiles(batch: Batch) = gameObj.projectiles.values.forEach {
         it.sprite.draw(batch)
     }
 
     private fun drawExplosions(batch: Batch) {
-        bazookaExplosions.iterate { explosion, iterator ->
+        gameObj.bazookaExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
                 sounds.explosionSoundEffect.play()
@@ -675,7 +629,7 @@ class GameScreen(
             }
             explosion.sprite.draw(batch)
         }
-        barrelExplosions.iterate { explosion, iterator ->
+        gameObj.barrelExplosions.iterate { explosion, iterator ->
             if (explosion.justSpawned) {
                 lastExplosion = TimeUtils.millis()
                 sounds.explosionSoundEffect.play()
@@ -691,7 +645,7 @@ class GameScreen(
     }
 
     private fun drawOpponents(batch: Batch) {
-        opponents.values.forEach {
+        gameObj.opponents.values.forEach {
             if (!it.isDead) {
                 it.healthBarSprite.draw(batch)
                 it.sprite.draw(batch)
@@ -701,15 +655,15 @@ class GameScreen(
     }
 
     private fun drawWalls(batch: Batch) {
-        for (i in 0 until walls.size) if (inFrustum(camera, walls[i])) walls[i].draw(batch)
+        for (i in 0 until gameObj.walls.size) if (inFrustum(camera, gameObj.walls[i])) gameObj.walls[i].draw(batch)
     }
 
     private fun drawExplosiveBarrels(batch: Batch) {
-        for (barrel in explosiveBarrels.values) barrel.draw(batch)
+        for (barrel in gameObj.explosiveBarrels.values) barrel.draw(batch)
     }
 
     private fun drawPickups(batch: Batch) {
-        for (pickup in pickups.values) pickup.sprite.draw(batch)
+        for (pickup in gameObj.pickups.values) pickup.sprite.draw(batch)
     }
 
     private fun drawMagazineInfo(batch: Batch) {

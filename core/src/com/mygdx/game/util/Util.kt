@@ -27,17 +27,17 @@ fun inFrustum(camera: Camera, r: Sprite): Boolean {
     return true
 }
 
-fun generateWallMatrix(): HashMap<String, Array<Wall>> {
-    val matrix = HashMap<String, Array<Wall>>()
-
-    for (i in 0 until (MAP_WIDTH / ZONE_SIZE) + 1) {
-        for (j in 0 until (MAP_HEIGHT / ZONE_SIZE) + 1) {
-            matrix["_${i}_${j}"] = Array()
-        }
-    }
-
-    return matrix
-}
+//fun generateWallMatrix(): HashMap<String, Array<Wall>> {
+//    val matrix = HashMap<String, Array<Wall>>()
+//
+//    for (i in 0 until (MAP_WIDTH / ZONE_SIZE) + 1) {
+//        for (j in 0 until (MAP_HEIGHT / ZONE_SIZE) + 1) {
+//            matrix["_${i}_${j}"] = Array()
+//        }
+//    }
+//
+//    return matrix
+//}
 
 fun getZonesForRectangle(rectangle: Rectangle): Array<String> {
     val zones = Array<String>()

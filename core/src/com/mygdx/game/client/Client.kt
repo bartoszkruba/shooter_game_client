@@ -20,6 +20,7 @@ import com.mygdx.game.model.weapon.Bazooka
 import com.mygdx.game.model.weapon.MachineGun
 import com.mygdx.game.model.weapon.Pistol
 import com.mygdx.game.model.weapon.Shotgun
+import com.mygdx.game.screen.GameObjects
 import com.mygdx.game.screen.Pools
 import com.mygdx.game.settings.*
 import com.mygdx.game.util.getZonesForRectangle
@@ -27,32 +28,17 @@ import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.ConcurrentHashMap
 
 class Client {
     companion object {
         lateinit var socket: Socket
-        val pickups = ConcurrentHashMap<String, Pickup>()
-
         var shouldPlayReload = false
 
         private lateinit var player: Player
         private lateinit var textures: Textures
         private lateinit var atlases: Atlases
         private lateinit var pools: Pools
-
-        val projectiles = ConcurrentHashMap<String, Projectile>()
-        val bazookaExplosions = Array<BazookaExplosion>()
-        val barrelExplosions = Array<BarrelExplosion>()
-
-        var explosiveBarrels = ConcurrentHashMap<String, ExplosiveBarrel>()
-
-        val opponents = ConcurrentHashMap<String, Opponent>()
-
-        private lateinit var wallMatrix: HashMap<String, Array<Wall>>
-        private lateinit var walls: Array<Wall>
-
-        var playerOnScoreboardTable: ConcurrentHashMap<String, Agent> = ConcurrentHashMap()
+        private lateinit var gameObj: GameObjects
 
         fun connectionSocket(ipAddress: String) {
             try {
@@ -70,30 +56,16 @@ class Client {
             return null
         }
 
-        fun configSocketEvents(textures: Textures, atlases: Atlases, pools: Pools, wallMatrix: HashMap<String,
-                Array<Wall>>, walls: Array<Wall>) {
+        fun configSocketEvents(textures: Textures, atlases: Atlases, pools: Pools, gameObjects: GameObjects) {
 
             Companion.atlases = atlases
             Companion.textures = textures
             Companion.pools = pools
+            Companion.gameObj = gameObjects
 
-            Companion.wallMatrix = wallMatrix
-            Companion.walls = walls
-
-            socket.on(Socket.EVENT_CONNECT) {
-                Gdx.app.log("SocketIO", "Connected")
-            }
-                    .on("socketID") { data ->
-                        val obj: JSONObject = data[0] as JSONObject
-                        val playerId = obj.getString("id")
-
-                        createPlayer(playerId, textures.healthBarTexture, atlases.playerAtlas)
-
-                        Gdx.app.log("SocketIO", "My ID: $playerId")
-                    }
-                    .on("playerDisconnected") { data ->
-                        removeOpponent(data)
-                    }
+            socket.on(Socket.EVENT_CONNECT) { Gdx.app.log("SocketIO", "Connected") }
+                    .on("socketID") { processSocketID(it) }
+                    .on("playerDisconnected") { removeOpponent(it) }
                     .on("newProjectile") { processNewProjectile(it) }
                     .on("agentData") { processAgentData(it) }
                     .on("projectileData") { processProjectileData(it) }
@@ -105,10 +77,19 @@ class Client {
                     .on("killConfirm") { processKillConfirm(it) }
         }
 
-        var shouldPlayDeathSound = false;
+        var shouldPlayDeathSound = false
+
+        private fun processSocketID(data: kotlin.Array<Any>) {
+            val obj: JSONObject = data[0] as JSONObject
+            val playerId = obj.getString("id")
+
+            createPlayer(playerId, textures.healthBarTexture, atlases.playerAtlas)
+
+            Gdx.app.log("SocketIO", "My ID: $playerId")
+        }
 
         private fun processKillConfirm(data: kotlin.Array<Any>) {
-            shouldPlayDeathSound = true;
+            shouldPlayDeathSound = true
         }
 
         private fun processScoreboardData(data: kotlin.Array<Any>) {
@@ -121,12 +102,12 @@ class Client {
                 val deaths = agent.getInt("deaths")
                 val name = agent.getString("name")
 
-                for (player in playerOnScoreboardTable.values) {
+                for (player in gameObj.playerOnScoreboardTable.values) {
                     if (player.id == id) {
                         player.kills = kills
                         player.deaths = deaths
                     } else {
-                        playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
+                        gameObj.playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
                                 0f, false, 0f, 0f, atlases.playerAtlas, id,
                                 textures.healthBarTexture)
                     }
@@ -135,7 +116,7 @@ class Client {
         }
 
         private fun processWallData(data: kotlin.Array<Any>) {
-            walls.clear()
+            gameObj.walls.clear()
             generateEdgeWalls()
             val walls = data[0] as JSONArray
             for (i in 0 until walls.length()) {
@@ -144,9 +125,9 @@ class Client {
                 val y = obj.getDouble("y").toFloat()
                 val wall = Wall(x, y, textures.wallTexture)
                 for (zone in getZonesForRectangle(wall.bounds)) {
-                    wallMatrix[zone]?.add(wall)
+                    gameObj.wallMatrix[zone]?.add(wall)
                 }
-                Companion.walls.add(wall)
+                gameObj.walls.add(wall)
             }
         }
 
@@ -154,7 +135,7 @@ class Client {
             val obj = data[0] as JSONObject
             val picks = obj.getJSONArray("pickupData")
 
-            for (pickup in pickups.values) {
+            for (pickup in gameObj.pickups.values) {
                 when (pickup) {
                     is PistolPickup -> pools.pistolPickupPool.free(pickup)
                     is MachineGunPickup -> pools.machineGunPickupPool.free(pickup)
@@ -163,7 +144,7 @@ class Client {
                 }
             }
 
-            pickups.clear()
+            gameObj.pickups.clear()
 
             for (i in 0 until picks.length()) {
                 val pickup = picks[i] as JSONObject
@@ -172,7 +153,7 @@ class Client {
                 val y = pickup.getDouble("y").toFloat()
                 val type = pickup.getString("type")
 
-                pickups[id] = when (type) {
+                gameObj.pickups[id] = when (type) {
                     ProjectileType.PISTOL -> pools.pistolPickupPool.obtain()
                     ProjectileType.SHOTGUN -> pools.shotgunPickupPool.obtain()
                     ProjectileType.BAZOOKA -> pools.bazookaPickupPool.obtain()
@@ -195,8 +176,8 @@ class Client {
                 val ySpeed = projectile.getDouble("ySpeed").toFloat()
                 val agentId = projectile.getString("agentId")
 
-                if (projectiles[id] == null) {
-                    projectiles[id] = when (type) {
+                if (gameObj.projectiles[id] == null) {
+                    gameObj.projectiles[id] = when (type) {
                         ProjectileType.PISTOL -> pools.pistolProjectilePool.obtain()
                         ProjectileType.SHOTGUN -> pools.shotgunProjectilePool.obtain()
                         ProjectileType.BAZOOKA -> pools.bazookaProjectilePool.obtain()
@@ -208,7 +189,7 @@ class Client {
                         this.agentId = agentId
                     }
                 } else {
-                    projectiles[id]?.apply {
+                    gameObj.projectiles[id]?.apply {
                         setPosition(x, y)
                         velocity.x = xSpeed
                         velocity.y = ySpeed
@@ -219,8 +200,8 @@ class Client {
         }
 
         private fun processBarrelData(data: kotlin.Array<Any>) {
-            for (barrel in explosiveBarrels.values) pools.explosiveBarrelPool.free(barrel)
-            explosiveBarrels.clear()
+            for (barrel in gameObj.explosiveBarrels.values) pools.explosiveBarrelPool.free(barrel)
+            gameObj.explosiveBarrels.clear()
             val barrels = data[0] as JSONArray
 
             for (i in 0 until barrels.length()) {
@@ -228,7 +209,7 @@ class Client {
                 val x = barrel.getDouble("x").toFloat()
                 val y = barrel.getDouble("y").toFloat()
                 val id = barrel.getString("id")
-                explosiveBarrels[id] = pools.explosiveBarrelPool.obtain().apply { setPosition(x, y) }
+                gameObj.explosiveBarrels[id] = pools.explosiveBarrelPool.obtain().apply { setPosition(x, y) }
             }
         }
 
@@ -275,7 +256,7 @@ class Client {
                         }
                     } else player.isDead = true
                 } else {
-                    if (opponents[id] == null) {
+                    if (gameObj.opponents[id] == null) {
                         createOpponent(id, x, y, name, currentHealth, atlases.playerAtlas,
                                 textures.healthBarTexture).apply {
                             velocity.x = xVelocity
@@ -285,9 +266,9 @@ class Client {
                             this.invisible = invisible
                         }
                     } else {
-                        opponents[id]?.apply {
+                        gameObj.opponents[id]?.apply {
                             this.name = name
-                            gotShot = opponents[id]?.currentHealth != currentHealth
+                            gotShot = gameObj.opponents[id]?.currentHealth != currentHealth
                             setPosition(x, y)
                             setAngle(angle)
                             velocity.x = xVelocity
@@ -310,14 +291,14 @@ class Client {
             val y = explosion.getDouble("y").toFloat()
             val type = explosion.getString("type")
             if (type == ExplosionType.BAZOOKA) {
-                bazookaExplosions.add(pools.bazookaExplosionPool.obtain().apply {
+                gameObj.bazookaExplosions.add(pools.bazookaExplosionPool.obtain().apply {
                     this.justSpawned = true
                     this.x = x
                     this.y = y
                     resetTimer()
                 })
             } else if (type == ExplosionType.BARREL) {
-                barrelExplosions.add(pools.barrelExplosionPool.obtain().apply {
+                gameObj.barrelExplosions.add(pools.barrelExplosionPool.obtain().apply {
                     this.justSpawned = true
                     this.x = x
                     this.y = y
@@ -338,8 +319,8 @@ class Client {
 
             if (agentId == player.id) player.weapon.shoot()
 
-            if (projectiles[id] == null) {
-                projectiles[id] = when (type) {
+            if (gameObj.projectiles[id] == null) {
+                gameObj.projectiles[id] = when (type) {
                     ProjectileType.PISTOL -> pools.pistolProjectilePool.obtain()
                     ProjectileType.SHOTGUN -> pools.shotgunProjectilePool.obtain()
                     ProjectileType.BAZOOKA -> pools.bazookaProjectilePool.obtain()
@@ -352,7 +333,7 @@ class Client {
                     this.agentId = agentId
                 }
             } else {
-                projectiles[id]?.apply {
+                gameObj.projectiles[id]?.apply {
                     setPosition(x, y)
                     velocity.x = xSpeed
                     velocity.y = ySpeed
@@ -371,24 +352,24 @@ class Client {
         private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
                                    playerTextures: TextureAtlas,
                                    healthBarTexture: Texture): Opponent {
-            val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false, 0f, 0f,
-                    playerTextures, id, healthBarTexture)
-            opponents[id] = opponent
+            val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false, 0f
+                    , 0f, playerTextures, id, healthBarTexture)
+            gameObj.opponents[id] = opponent
             return opponent
         }
 
         private fun removeOpponent(data: kotlin.Array<Any>) {
             val obj: JSONObject = data[0] as JSONObject
             val playerId = obj.getString("id")
-            opponents.remove(playerId)
-            playerOnScoreboardTable.remove(playerId)
+            gameObj.opponents.remove(playerId)
+            gameObj.playerOnScoreboardTable.remove(playerId)
         }
 
         private fun createPlayer(playerId: String, healthBarTexture: Texture, playerTextures: TextureAtlas) {
             val player = Player(500f, 500f, "", 0, 0, false,
                     PLAYER_MAX_HEALTH, false, playerTextures, healthBarTexture, playerId)
             Companion.player = player
-            playerOnScoreboardTable[playerId] = player
+            gameObj.playerOnScoreboardTable[playerId] = player
         }
 
         fun startKey(keyLetter: String, b: Boolean) {
@@ -431,12 +412,12 @@ class Client {
 
         private fun generateEdgeWalls() {
             for (i in 0 until MAP_HEIGHT step WALL_SPRITE_HEIGHT.toInt()) {
-                walls.add(Wall(0f, i.toFloat(), textures.wallTexture))
-                walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), textures.wallTexture))
+                gameObj.walls.add(Wall(0f, i.toFloat(), textures.wallTexture))
+                gameObj.walls.add(Wall(MAP_WIDTH - WALL_SPRITE_WIDTH, i.toFloat(), textures.wallTexture))
             }
             for (i in WALL_SPRITE_WIDTH.toInt() until MAP_WIDTH - WALL_SPRITE_WIDTH.toInt() step WALL_SPRITE_WIDTH.toInt()) {
-                walls.add(Wall(i.toFloat(), 0f, textures.wallTexture))
-                walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT, textures.wallTexture))
+                gameObj.walls.add(Wall(i.toFloat(), 0f, textures.wallTexture))
+                gameObj.walls.add(Wall(i.toFloat(), MAP_HEIGHT - WALL_SPRITE_HEIGHT, textures.wallTexture))
             }
         }
     }

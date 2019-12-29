@@ -31,4 +31,5 @@ class Pools(textures: Textures, atlases: Atlases) {
     val bazookaPickupPool = pool { BazookaPickup(texture = textures.bazookaTexture) }
 
     val explosiveBarrelPool = pool { ExplosiveBarrel(texture = textures.explosiveBarrelTexture) }
+    val bloodOnTheFloorPool = pool { Blood(textures.bloodOnTheFloorTexture) }
 }
