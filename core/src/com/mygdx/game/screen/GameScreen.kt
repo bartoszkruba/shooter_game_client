@@ -16,6 +16,7 @@ import ktx.app.KtxScreen
 import ktx.graphics.use
 import com.mygdx.game.util.inFrustum
 import com.mygdx.game.client.Client
+import com.mygdx.game.client.KeyMappings
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Player
 import com.mygdx.game.model.projectile.*
@@ -324,52 +325,31 @@ class GameScreen(
     }
 
     private fun updateServerMoves() {
-        val isWPressed = Gdx.input.isKeyPressed(Input.Keys.W)
-        val isAPressed = Gdx.input.isKeyPressed(Input.Keys.A)
-        val isSPressed = Gdx.input.isKeyPressed(Input.Keys.S)
-        val isDPressed = Gdx.input.isKeyPressed(Input.Keys.D)
-        val isRPressed = Gdx.input.isKeyPressed(Input.Keys.R)
+        val wIsPressed = Gdx.input.isKeyPressed(Input.Keys.W)
+        val aIsPressed = Gdx.input.isKeyPressed(Input.Keys.A)
+        val sIsPressed = Gdx.input.isKeyPressed(Input.Keys.S)
+        val dIsPressed = Gdx.input.isKeyPressed(Input.Keys.D)
+        val rIsPressed = Gdx.input.isKeyPressed(Input.Keys.R)
 
-        val wWasReleased = wWasPressed && !isWPressed
-        val aWasReleased = aWasPressed && !isAPressed
-        val sWasReleased = sWasPressed && !isSPressed
-        val dWasReleased = dWasPressed && !isDPressed
-        val rWasReleased = rWasPressed && !isRPressed
+        if (wWasPressed && !wIsPressed) Client.stopKey(KeyMappings.UP)
+        else if (wIsPressed && !wWasPressed) Client.startKey(KeyMappings.UP)
 
-        wWasPressed = isWPressed
-        aWasPressed = isAPressed
-        sWasPressed = isSPressed
-        dWasPressed = isDPressed
-        rWasPressed = isRPressed
+        if (sWasPressed && !sIsPressed) Client.stopKey(KeyMappings.DOWN)
+        else if (sIsPressed && !sWasPressed) Client.startKey(KeyMappings.DOWN)
 
-        checkKeyJustPressed(Input.Keys.W, "W")
-        checkKeyJustReleased(wWasReleased, "W")
+        if (aWasPressed && !aIsPressed) Client.stopKey(KeyMappings.LEFT)
+        else if (aIsPressed && !aWasPressed) Client.startKey(KeyMappings.LEFT)
 
-        checkKeyJustPressed(Input.Keys.A, "A")
-        checkKeyJustReleased(aWasReleased, "A")
+        if (dWasPressed && !dIsPressed) Client.stopKey(KeyMappings.RIGHT)
+        else if (dIsPressed && !dWasPressed) Client.startKey(KeyMappings.RIGHT)
 
-        checkKeyJustPressed(Input.Keys.S, "S")
-        checkKeyJustReleased(sWasReleased, "S")
-
-        checkKeyJustPressed(Input.Keys.D, "D")
-        checkKeyJustReleased(dWasReleased, "D")
-
-        checkKeyJustPressed(Input.Keys.R, "R")
-        checkKeyJustReleased(rWasReleased, "R")
+        wWasPressed = wIsPressed
+        aWasPressed = aIsPressed
+        sWasPressed = sIsPressed
+        dWasPressed = dIsPressed
+        rWasPressed = rIsPressed
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.E)) Client.pickWeapon()
-    }
-
-    private fun checkKeyJustPressed(keyNumber: Int, keyLetter: String) {
-        if (Gdx.input.isKeyJustPressed(keyNumber)) {
-            Client.startKey(keyLetter, true)
-        }
-    }
-
-    private fun checkKeyJustReleased(keyJustPressed: Boolean, key: String) {
-        if (keyJustPressed) {
-            Client.stopKey(key, true)
-        }
     }
 
     private fun getMousePosInGameWorld() {

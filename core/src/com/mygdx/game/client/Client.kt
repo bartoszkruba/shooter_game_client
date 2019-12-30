@@ -3,16 +3,11 @@ package com.mygdx.game.client
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
-import com.badlogic.gdx.utils.Array
 import com.mygdx.game.assets.Atlases
 import com.mygdx.game.assets.Textures
-import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Opponent
 import com.mygdx.game.model.agent.Player
-import com.mygdx.game.model.explosion.BarrelExplosion
-import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.explosion.ExplosionType
-import com.mygdx.game.model.obstacles.ExplosiveBarrel
 import com.mygdx.game.model.obstacles.Wall
 import com.mygdx.game.model.pickup.*
 import com.mygdx.game.model.projectile.*
@@ -372,15 +367,15 @@ class Client {
             gameObj.playerOnScoreboardTable[playerId] = player
         }
 
-        fun startKey(keyLetter: String, b: Boolean) {
+        fun startKey(key: String) {
             val data = JSONObject()
-            data.put(keyLetter, b)
+            data.put("key", key)
             socket.emit("startKey", data)
         }
 
-        fun stopKey(key: String, b: Boolean) {
+        fun stopKey(key: String) {
             val data = JSONObject()
-            data.put(key, true)
+            data.put("key", key)
             socket.emit("stopKey", data)
         }
 
