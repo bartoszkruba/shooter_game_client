@@ -26,4 +26,6 @@ class Textures(assets: AssetManager) {
     val bloodAnimation = assets[TextureAssets.BloodAnimation]
 
     val gameOver = assets[TextureAssets.GameOverScreen]
+
+    val weaponUIPanel = assets[TextureAssets.WeaponUIPanel]
 }

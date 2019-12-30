@@ -21,6 +21,8 @@ enum class TextureAssets(val path: String) {
     Shotgun("images/shotgun.png"),
     Bazooka("images/bazooka.png"),
 
+    WeaponUIPanel("images/weapon_panel.png"),
+
     Logo("images/logo.png"),
     MenuBackground("images/splashscreen/background.png"),
     MenuForeground("images/splashscreen/foreground.png"),

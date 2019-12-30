@@ -650,16 +650,24 @@ class GameScreen(
     }
 
     private fun drawWeaponInfo(batch: Batch) {
+        batch.draw(textures.weaponUIPanel, WINDOW_WIDTH - 175f, WINDOW_HEIGHT - 80f, 175f, 80f)
+        val weaponName = when (player.weapon.type) {
+            ProjectileType.PISTOL -> "Pistol"
+            ProjectileType.MACHINE_GUN -> "Machine Gun"
+            ProjectileType.SHOTGUN -> "Shotgun"
+            ProjectileType.BAZOOKA -> "Bazooka"
+            else -> "Unknown"
+        }
+        font.draw(batch, weaponName, WINDOW_WIDTH - 100f, WINDOW_HEIGHT - 17f)
+
         if (player.weapon.bulletsInChamber != -1 && !player.isDead) {
-            font.draw(batch, "${player.weapon.type}, Ammo: ${player.weapon.bulletsInChamber}/${player.weapon.maxBulletsInChamber}",
-                    WINDOW_WIDTH - 150f,
-                    WINDOW_HEIGHT - 55f)
+
+            font.draw(batch, "Ammo: ${player.weapon.bulletsInChamber}/${player.weapon.maxBulletsInChamber}",
+                    WINDOW_WIDTH - 100f, WINDOW_HEIGHT - 47f)
+
             font.data.setScale(1f, 1f)
         } else {
-            if (!player.isDead)
-                font.draw(batch, "Reloading...",
-                        WINDOW_WIDTH - 150f,
-                        WINDOW_HEIGHT - 55f)
+            if (!player.isDead) font.draw(batch, "Reloading...", WINDOW_WIDTH - 100f, WINDOW_HEIGHT - 47f)
             font.data.setScale(1f, 1f)
         }
     }
@@ -694,6 +702,6 @@ class GameScreen(
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16))
         musics.music.isLooping = true
         musics.music.volume = 0.4f
-        musics.music.play()
+//        musics.music.play()
     }
 }
