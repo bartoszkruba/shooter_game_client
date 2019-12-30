@@ -58,7 +58,7 @@ class GameScreen(
     private val mousePosition = Vector2()
     private var imgpos = 0.0
     private var imgposdir = 0.1
-    private var showMiniMap = 0
+    private var showMiniMap = false
 
     private lateinit var player: Player
 
@@ -134,8 +134,8 @@ class GameScreen(
         if (::player.isInitialized) {
             batch.use {
                 drawGameOver(it)
-                drawMagazineInfo(it)
-                checkAllPlayersOnMap(it)
+                drawWeaponInfo(it)
+                renderMiniMap(it)
                 scoreboard(it)
                 drawScoresOnBoard(it)
             }
@@ -166,18 +166,18 @@ class GameScreen(
 
     private fun scoreboard(batch: SpriteBatch) {
         if (Gdx.input.isKeyPressed(Input.Keys.TAB)) {
-            val scoreboard = assets.get("scoreboard/scoreboardBackground.png", Texture::class.java)
+//            val scoreboard = assets.get("scoreboard/scoreboardBackground.png", Texture::class.java)
             val c = batch.color
             batch.setColor(c.r, c.g, c.b, .3f)
-            batch.draw(scoreboard, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
+            batch.draw(textures.scoreboardBackground, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
 
             batch.setColor(c.r, c.g, c.b, .6f)
-            batch.draw(scoreboard, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f, WINDOW_WIDTH / 2,
-                    WINDOW_HEIGHT / 1.1f)
+            batch.draw(textures.scoreboardBackground, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 20f,
+                    WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.1f)
 
-            val table = assets.get("scoreboard/scoreboardTable.png", Texture::class.java)
+//            val table = assets.get("scoreboard/scoreboardTable.png", Texture::class.java)
             batch.setColor(c.r, c.g, c.b, .8f)
-            batch.draw(table, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2,
+            batch.draw(textures.scoreBoardTable, WINDOW_WIDTH / 3.8f, WINDOW_HEIGHT / 14f, WINDOW_WIDTH / 2,
                     WINDOW_HEIGHT / 1.15f)
 
             scoreboardFont.draw(batch, "RANK           PLAYER              KILLS            DEATHS",
@@ -236,54 +236,39 @@ class GameScreen(
     }
 
     private fun drawBloodOnPlayerBody(batch: Batch, x: Float, y: Float) {
-        val blood = assets.get("images/blood-animation.png", Texture::class.java)
-        batch.draw(blood, x, y, 65f, 65f)
+        batch.draw(textures.bloodAnimation, x, y, 65f, 65f)
     }
 
 
-    private fun checkAllPlayersOnMap(batch: Batch) {
+    private fun renderMiniMap(batch: Batch) {
         if (!player.isDead) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap++
-            if (showMiniMap == 2) showMiniMap = 0
-            if (showMiniMap != 1) {
-                font.draw(batch, "Press \"M\" to show map", WINDOW_WIDTH - 160f, 15f)
-            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) showMiniMap = !showMiniMap
 
-            if (showMiniMap == 1) {
-                imgpos += (imgposdir / 3)
-                if (imgpos < 0.0) imgposdir = -imgposdir
-                if (imgpos > 1.0) imgposdir = -imgposdir
-                val miniMapSize = 200f
-                val playerSize = 6f
-                val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize
-                val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize
+            if (!showMiniMap) return
 
-                font.draw(batch, "Press \"M\" to hide map", WINDOW_WIDTH - 160f, 15f)
+            imgpos += (imgposdir / 3)
+            if (imgpos < 0.0) imgposdir = -imgposdir
+            if (imgpos > 1.0) imgposdir = -imgposdir
 
-                val miniMapexture = assets.get("images/miniMap.png", Texture::class.java)
-                val c = batch.color
-                batch.setColor(c.r, c.g, c.b, .5f)
-                batch.draw(miniMapexture, 0f, 0f, miniMapSize, miniMapSize)
-                val meInMiniMapexture = assets.get("images/meInMiniMap.png", Texture::class.java)
-                batch.setColor(c.r, c.g, c.b, 1f)
+            val playerSize = 6f
+            val playerPosPercentageX = (player.bounds.x / MAP_WIDTH.toFloat()) * MINIMAP_SIZE
+            val playerPosPercentageY = (player.bounds.y / MAP_HEIGHT.toFloat()) * MINIMAP_SIZE
 
-                batch.draw(meInMiniMapexture,
-                        playerPosPercentageX - playerSize / 2f,
-                        playerPosPercentageY - playerSize / 2f,
+            val c = batch.color
+            batch.setColor(c.r, c.g, c.b, .5f)
+            batch.draw(textures.minimap, 0f, 0f, MINIMAP_SIZE, MINIMAP_SIZE)
+            batch.setColor(c.r, c.g, c.b, 1f)
+
+            batch.draw(textures.playerOnMinimap, playerPosPercentageX - playerSize / 2f,
+                    playerPosPercentageY - playerSize / 2f, playerSize, playerSize)
+
+            batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
+            for (opponent in gameObj.opponents.values) if (!opponent.isDead) {
+                batch.draw(textures.opponentOnMinimap,
+                        ((opponent.bounds.x / MAP_WIDTH.toFloat()) * MINIMAP_SIZE) - playerSize / 2f,
+                        ((opponent.bounds.y / MAP_HEIGHT.toFloat()) * MINIMAP_SIZE) - playerSize / 2f,
                         playerSize,
                         playerSize)
-
-
-                val playersInMiniMapexture = assets.get("images/opponentsInMiniMap.png", Texture::class.java)
-                batch.setColor(c.r, c.g, c.b, imgpos.toFloat())
-                gameObj.opponents.values.forEach {
-                    if (!it.isDead)
-                        batch.draw(playersInMiniMapexture,
-                                ((it.bounds.x / MAP_WIDTH.toFloat()) * miniMapSize) - playerSize / 2f,
-                                ((it.bounds.y / MAP_HEIGHT.toFloat()) * miniMapSize) - playerSize / 2f,
-                                playerSize,
-                                playerSize)
-                }
             }
         }
     }
@@ -302,10 +287,9 @@ class GameScreen(
                 sounds.deathSound.play()
                 shouldDeathSoundPlay = false
             }
-            val gameOverTexture = assets.get("images/gameOver.png", Texture::class.java)
             val c: Color = batch.color
             batch.setColor(c.r, c.g, c.b, .7f)
-            batch.draw(gameOverTexture, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
+            batch.draw(textures.gameOver, 0f, 0f, WINDOW_WIDTH, WINDOW_HEIGHT)
         } else {
             shouldDeathSoundPlay = true
         }
@@ -494,7 +478,6 @@ class GameScreen(
         for (barrel in gameObj.explosiveBarrels) {
             if (Intersector.overlaps(barrel.value.bounds, player.bounds)) {
                 player.setPosition(oldX, oldY)
-//                collided = true
                 break
             }
         }
@@ -666,7 +649,7 @@ class GameScreen(
         for (pickup in gameObj.pickups.values) pickup.sprite.draw(batch)
     }
 
-    private fun drawMagazineInfo(batch: Batch) {
+    private fun drawWeaponInfo(batch: Batch) {
         if (player.weapon.bulletsInChamber != -1 && !player.isDead) {
             font.draw(batch, "${player.weapon.type}, Ammo: ${player.weapon.bulletsInChamber}/${player.weapon.maxBulletsInChamber}",
                     WINDOW_WIDTH - 150f,
@@ -703,7 +686,6 @@ class GameScreen(
     }
 
     private fun setCameraPosition() {
-
         camera.position.x = MathUtils.clamp(player.bounds.x, WINDOW_WIDTH / 2f, MAP_WIDTH - WINDOW_WIDTH / 2f)
         camera.position.y = MathUtils.clamp(player.bounds.y, WINDOW_HEIGHT / 2f, MAP_HEIGHT - WINDOW_HEIGHT / 2f)
     }

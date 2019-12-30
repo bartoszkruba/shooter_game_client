@@ -15,4 +15,15 @@ class Textures(assets: AssetManager) {
     val groundTexture = assets[TextureAssets.Ground]
     val bloodOnTheFloorTexture = assets[TextureAssets.BloodOnTheFloor]
     val explosiveBarrelTexture = assets[TextureAssets.Barrel]
+
+    val minimap = assets[TextureAssets.MiniMap]
+    val playerOnMinimap = assets[TextureAssets.PlayerOnMap]
+    val opponentOnMinimap = assets[TextureAssets.OpponentOnMap]
+
+    val scoreboardBackground = assets[TextureAssets.ScoreboardBackground]
+    val scoreBoardTable = assets[TextureAssets.ScoreboardTable]
+
+    val bloodAnimation = assets[TextureAssets.BloodAnimation]
+
+    val gameOver = assets[TextureAssets.GameOverScreen]
 }
