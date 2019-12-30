@@ -650,6 +650,8 @@ class GameScreen(
     }
 
     private fun drawWeaponInfo(batch: Batch) {
+        batch.setColor(batch.color.r, batch.color.g, batch.color.b, 0.5f)
+
         batch.draw(textures.weaponUIPanel, WINDOW_WIDTH - 175f, WINDOW_HEIGHT - 80f, 175f, 80f)
         val weaponName = when (player.weapon.type) {
             ProjectileType.PISTOL -> "Pistol"
@@ -659,6 +661,15 @@ class GameScreen(
             else -> "Unknown"
         }
         font.draw(batch, weaponName, WINDOW_WIDTH - 100f, WINDOW_HEIGHT - 17f)
+
+        val weaponTexture = when (player.weapon.type) {
+            ProjectileType.MACHINE_GUN -> textures.machineGunTexture
+            ProjectileType.SHOTGUN -> textures.shotgunTexture
+            ProjectileType.BAZOOKA -> textures.bazookaTexture
+            else -> textures.pistolTexture
+        }
+        batch.setColor(batch.color.r, batch.color.g, batch.color.b, 1f)
+        batch.draw(weaponTexture, WINDOW_WIDTH - 165f, WINDOW_HEIGHT - weaponTexture.height - 14f)
 
         if (player.weapon.bulletsInChamber != -1 && !player.isDead) {
 
