@@ -343,6 +343,9 @@ class GameScreen(
         if (dWasPressed && !dIsPressed) Client.stopKey(KeyMappings.RIGHT)
         else if (dIsPressed && !dWasPressed) Client.startKey(KeyMappings.RIGHT)
 
+        if(rWasPressed && ! rIsPressed) Client.stopKey(KeyMappings.RELOAD)
+        else if (rIsPressed && rWasPressed) Client.startKey(KeyMappings.RELOAD)
+
         wWasPressed = wIsPressed
         aWasPressed = aIsPressed
         sWasPressed = sIsPressed
