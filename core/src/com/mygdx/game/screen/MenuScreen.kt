@@ -3,8 +3,6 @@ package com.mygdx.game.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.assets.AssetManager
-import com.badlogic.gdx.audio.Music
-import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
@@ -15,12 +13,17 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.mygdx.game.settings.WINDOW_WIDTH
 import com.mygdx.game.ui.MenuChoice
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.TimeUtils
+import com.badlogic.gdx.utils.viewport.FitViewport
 import com.mygdx.game.Game
 import com.mygdx.game.assets.*
+import com.mygdx.game.client.Client
 import com.mygdx.game.screen.Menu.*
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import ktx.app.KtxScreen
@@ -59,19 +62,33 @@ class MenuScreen(
     private val background = Sprite(assets[TextureAssets.MenuBackground])
     private val foreground = Sprite(assets[TextureAssets.MenuForeground])
 
-    private val text = Sprite(assets[TextureAssets.Logo])
+    lateinit var txfUsername: TextField
+    lateinit var txfIP: TextField
+    private var stage = Stage(FitViewport(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()))
+    var skin: Skin = Skin(Gdx.files.internal("terra-mother/skin/terra-mother-ui.json"))
+    private var username = ""
+    private var ipAddress = ""
+    private var goToGame = false
+
+    private val logo = Sprite(assets[TextureAssets.Logo])
 
     private val hoverSound = assets[SoundAssets.MenuHover]
     private val selectSound = assets[SoundAssets.MenuSelect]
 
+    private var showConnectionSign = false
+    private val ipFont = BitmapFont()
+    private val errorMassageFont = BitmapFont()
+    private val connectorFont = BitmapFont()
+    private var errorMassage = false
+    private var massageText = ""
+
+    var imgpos = 0.0
+    var imgposdir = 0.1
+
     private val shape = ShapeRenderer()
-
     private val droplets = Array<Droplet>()
-
     private val lastSpawn = 0L
-
     private val spawnRate = 100f
-
     private val dropletSpeed = 1000f
 
     private val maxDropletLength = 20f
@@ -89,8 +106,8 @@ class MenuScreen(
     init {
         foreground.setBounds(-WINDOW_WIDTH * 2, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
         background.setBounds(0f, 0f, WINDOW_WIDTH * 3, WINDOW_HEIGHT)
-        text.setBounds(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH / 3, WINDOW_HEIGHT / 3)
-        text.y = WINDOW_HEIGHT - 280f
+        logo.setBounds(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH / 3, WINDOW_HEIGHT / 3)
+        logo.y = WINDOW_HEIGHT - 280f
 
         bigFont.data.setScale(4f)
         bigFont.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
@@ -127,8 +144,8 @@ class MenuScreen(
     override fun render(delta: Float) {
         foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
         background.setPosition(background.x - 0.03f * 60 * delta, background.y)
-        if (text.x > 60 && text.y > 100) {
-            text.x -= WINDOW_WIDTH / 1000 * text.width * delta
+        if (logo.x > 60 && logo.y > 100) {
+            logo.x -= WINDOW_WIDTH / 1000 * logo.width * delta
 //            text.translate(-WINDOW_WIDTH/1000*text.width*delta, -WINDOW_HEIGHT/1000*text.height*delta)
         }
 
@@ -146,7 +163,7 @@ class MenuScreen(
         batch.use {
             background.draw(it)
             foreground.draw(it)
-            text.draw(it)
+            logo.draw(it)
         }
 
         drawRain()
@@ -161,8 +178,6 @@ class MenuScreen(
             SPLASH_SCREEN -> checkSplashScreenControls()
             MAIN -> checkMainMenuControls()
             CREDITS -> checkCreditsControls()
-            START_GAME -> checkStartGameControls()
-            OPTIONS -> checkOptionsControls()
         }
     }
 
@@ -170,9 +185,7 @@ class MenuScreen(
         if (currentChoice != "" && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             selectSound.play()
             when (currentChoice) {
-                startGameChoice -> {
-                    game.changeToNameInputScreen(text.x)
-                }
+                startGameChoice -> currentWindow = START_GAME
                 creditsChoice -> currentWindow = CREDITS
                 quitChoice -> exitProcess(0)
             }
@@ -189,21 +202,9 @@ class MenuScreen(
             currentWindow = MAIN
     }
 
-    private fun checkStartGameControls() {
-
-    }
-
-    private fun checkOptionsControls() {
-
-    }
-
     private fun checkMouseOverlay() {
         when (currentWindow) {
             MAIN -> checkMainMenuOverlays()
-            CREDITS -> checkCreditsOverlays()
-            START_GAME -> checkStartGameOverlays()
-            OPTIONS -> checkOptionsOverlays()
-            SPLASH_SCREEN -> checkSplashScreenOverlays()
         }
 
     }
@@ -224,34 +225,35 @@ class MenuScreen(
         currentChoice = newValue
     }
 
-    private fun checkSplashScreenOverlays() {
-
-    }
-
-    private fun checkCreditsOverlays() {
-
-    }
-
-    private fun checkStartGameOverlays() {
-
-    }
-
-    private fun checkOptionsOverlays() {
-
-    }
 
     private fun drawMenuChoices(batch: SpriteBatch) = when (currentWindow) {
         MAIN -> drawMainMenuChoices(batch)
         CREDITS -> drawCredits(batch)
-        START_GAME -> {
-        }
+        START_GAME -> drawStartGameMenu(batch)
         OPTIONS -> {
         }
         SPLASH_SCREEN -> drawSplashScreen(batch)
     }
 
+    private fun drawStartGameMenu(batch: SpriteBatch) {
+        background.draw(batch)
+        foreground.draw(batch)
+        logo.draw(batch)
+        drawNameSign(batch)
+        nameInputFiled(batch)
+        ipInputField(batch)
+        checkNameInput(batch)
+        drawErrorMassage(batch)
+        drawConnectionLabel(batch)
+        setToGame()
+
+        goBackToMenu()
+        stage.draw();
+        drawRain();
+    }
+
     private fun drawSplashScreen(batch: SpriteBatch) {
-        text.draw(batch)
+        logo.draw(batch)
     }
 
     private fun drawMainMenuChoices(batch: SpriteBatch) = mainMenuChoices.forEach { it.sprite.draw(batch) }
@@ -302,13 +304,115 @@ class MenuScreen(
         }
     }
 
+    private fun goBackToMenu() {
+        if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) currentWindow = MAIN
+    }
+
+    private fun drawErrorMassage(batch: SpriteBatch) {
+        if (errorMassage) {
+            errorMassageFont.draw(batch, massageText, WINDOW_WIDTH / 3.9f, WINDOW_HEIGHT / 3.5f);
+            errorMassageFont.color = Color.RED
+        }
+    }
+
+    private fun ipInputField(batch: SpriteBatch) {
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
+        batch.setColor(batch.color.r, batch.color.g, batch.color.b, .5f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.9f, WINDOW_HEIGHT / 3.2f,
+                WINDOW_WIDTH / 3f, WINDOW_HEIGHT / 6.2f);
+
+        ipFont.draw(batch, "For example: 10.152.190.106", WINDOW_WIDTH / 2f, WINDOW_HEIGHT / 2.5f);
+        txfIP = TextField("", skin)
+        setupTextField(txfIP, 5f, 2.85f)
+
+        txfIP.setTextFieldListener { textField, key -> ipAddress = textField.text }
+
+        font.draw(batch, "PRESS ENTER TO START THE GAME!", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 2.9f);
+    }
+
+    private fun inputFieldBackground(batch: SpriteBatch, x: Float, y: Float) {
+        val c = batch.color;
+        val txfUsernameBackground = assets.get("images/txfUsernameBackground.png", Texture::class.java)
+        batch.setColor(c.r, c.g, c.b, .5f)
+        batch.draw(txfUsernameBackground, WINDOW_WIDTH / 4.3f, WINDOW_HEIGHT / y,
+                WINDOW_WIDTH / x, WINDOW_HEIGHT / 6.5f);
+    }
+
+    private fun checkNameInput(batch: SpriteBatch) {
+        if (Gdx.input.isKeyPressed(Input.Keys.ENTER))
+            if (username != "" && ipAddress != "") {
+                if (username.length > 2 && ipAddress.length > 6) {
+                    Client.connectionSocket(ipAddress)
+                    game.createGame()
+                    Client.setPlayerName(username)
+                    errorMassage = false
+                    goToGame = true
+                    showConnectionSign = true
+                } else {
+                    showConnectionSign = false
+                    errorMassage = true
+                    massageText = "THE LENGTH OF YOUR NAME OR IP IS NOT ENOUGH"
+                }
+            } else {
+                showConnectionSign = false
+                errorMassage = true
+                massageText = "YOU HAVE TO ENTER YOUR NAME AND IP"
+            }
+
+    }
+
+    private fun setToGame() {
+        if (goToGame)
+            if (Client.getPlayer() != null) {
+                rainMusic.stop()
+                backgroundMusic.stop()
+                game.playGameScreenMusic()
+                game.changeToGame()
+            }
+    }
+
+    private fun drawConnectionLabel(batch: SpriteBatch) {
+        if (showConnectionSign) {
+            imgpos += (imgposdir / 6);
+            if (imgpos < 0.0) imgposdir = -imgposdir;
+            if (imgpos > 1.0) imgposdir = -imgposdir;
+
+            val c = batch.color;
+            connectorFont.draw(batch, "TRYING TO CONNECT...", WINDOW_WIDTH / 4f, WINDOW_HEIGHT / 3.8f);
+            connectorFont.setColor(c.r, c.g, c.b, imgpos.toFloat())
+            connectorFont.data.setScale(1.1f)
+        }
+    }
+
+    private fun nameInputFiled(batch: SpriteBatch) {
+        inputFieldBackground(batch, 7f, 2.68f)
+        font.draw(batch, "OBS! max 8 characters", WINDOW_WIDTH / 2.7f, WINDOW_HEIGHT / 2.18f);
+        txfUsername = TextField("", skin)
+        txfUsername.maxLength = 8
+        setupTextField(txfUsername, 8f, 2.45f)
+        txfUsername.setTextFieldListener { textField, key -> username = textField.text }
+    }
+
+    private fun setupTextField(txf: TextField, x: Float, y: Float) {
+        txf.setPosition(Gdx.graphics.width / 3.8f, Gdx.graphics.height / y)
+        txf.setSize(Gdx.graphics.width / x, Gdx.graphics.height / 9.5f)
+        stage.addActor(txf)
+        Gdx.input.inputProcessor = this.stage;
+    }
+
+    private fun drawNameSign(batch: SpriteBatch) {
+        val enterYourNameTexture = assets.get("images/enterYourName.png", Texture::class.java)
+        batch.setColor(batch.color.r, batch.color.g, batch.color.b, 1f)
+        batch.draw(enterYourNameTexture, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2, WINDOW_WIDTH / 3, 50f);
+    }
+
     override fun show() {
         super.show()
         rainMusic.isLooping = true
-//        rainMusic.play()
+        rainMusic.play()
         backgroundMusic.isLooping = true
         backgroundMusic.volume = 0.3f
-//        backgroundMusic.play()
+        backgroundMusic.play()
     }
 
     override fun dispose() {

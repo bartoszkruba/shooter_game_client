@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.mygdx.game.screen.GameScreen
 import com.mygdx.game.screen.LoadingScreen
 import com.mygdx.game.screen.MenuScreen
-import com.mygdx.game.screen.NameInputScreen
 import com.mygdx.game.settings.WINDOW_HEIGHT
 import com.mygdx.game.settings.WINDOW_WIDTH
 import ktx.app.KtxGame
@@ -18,7 +17,6 @@ class Game : KtxGame<KtxScreen>() {
     private val context = Context()
     private val assets = AssetManager()
     private lateinit var gameScreen: GameScreen
-    private var setNameInputScreen = true
     override fun create() {
         context.register {
             bindSingleton(this@Game)
@@ -56,14 +54,4 @@ class Game : KtxGame<KtxScreen>() {
     fun playGameScreenMusic() {
         gameScreen.playGameScreenMusic()
     }
-
-    fun changeToNameInputScreen(x: Float) {
-        val nameInputScreen = NameInputScreen(x,this, context.inject(), context.inject(), context.inject(), context.inject())
-
-        if (setNameInputScreen) {
-            addScreen(nameInputScreen)
-            setNameInputScreen = false
-        }
-        removeScreen<MenuScreen>()
-        setScreen<NameInputScreen>()    }
 }
