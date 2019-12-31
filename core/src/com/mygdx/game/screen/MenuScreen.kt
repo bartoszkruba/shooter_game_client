@@ -141,9 +141,15 @@ class MenuScreen(
 
     }
 
+    var direction = 1
+
     override fun render(delta: Float) {
-        foreground.setPosition(foreground.x + 0.1f * 60 * delta, foreground.y)
-        background.setPosition(background.x - 0.03f * 60 * delta, background.y)
+        foreground.setPosition(foreground.x + 0.2f * 60 * delta, foreground.y)
+        background.setPosition(background.x - 0.06f * 60 * delta, background.y)
+
+        if (foreground.x > 0) direction = -1
+        else if (foreground.x + foreground.width < WINDOW_WIDTH) direction = 1
+
         if (logo.x > 60 && logo.y > 100) {
             logo.x -= WINDOW_WIDTH / 1000 * logo.width * delta
 //            text.translate(-WINDOW_WIDTH/1000*text.width*delta, -WINDOW_HEIGHT/1000*text.height*delta)
