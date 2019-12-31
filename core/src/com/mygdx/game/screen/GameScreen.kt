@@ -52,7 +52,7 @@ class GameScreen(
     private var dWasPressed = false
     private var sWasPressed = false
     private var rWasPressed = false
-    private var mouseWasPressed = false
+    private var lmWasPressed = false
     private var scoreboardFont = BitmapFont()
     private var playersOnScoreboardFont = BitmapFont()
 
@@ -91,8 +91,8 @@ class GameScreen(
         if (::player.isInitialized) {
             getMousePosInGameWorld()
             setPlayerRotation()
-            updateServerMouse()
-            updateServerMoves()
+//            updateServerMouse()
+            sendControlsData()
 
             calculateProjectilePositions(delta)
             checkControls(delta)
@@ -277,7 +277,7 @@ class GameScreen(
     private fun checkRestart() {
         if (player.isDead) {
             if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
-                Client.restart()
+                Client.broadcastRestart()
             }
         }
     }
@@ -299,60 +299,51 @@ class GameScreen(
     private fun playerRotationUpdateLoop() = GlobalScope.launch {
         while (true) {
             if (::player.isInitialized) {
-                Client.sendPlayerRotationData()
+                Client.brodcastPlayerFacingDirection()
                 delay(100)
             }
         }
     }
 
-
-    private fun updateServerMouse() {
-        val isMouseWPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT))
-        val wWasReleased = mouseWasPressed && !isMouseWPressed
-        mouseWasPressed = isMouseWPressed
-
-        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && player.weapon.bulletsInChamber < 1 && player.weapon.canShoot()) {
-            sounds.dryfire.play()
-            player.weapon.shoot()
-        }
-
-        if (Gdx.input.isButtonJustPressed((Input.Buttons.LEFT))) {
-            Client.mouseStart()
-        }
-        if (wWasReleased) {
-            Client.mouseStop()
-        }
-    }
-
-    private fun updateServerMoves() {
+    private fun sendControlsData() {
         val wIsPressed = Gdx.input.isKeyPressed(Input.Keys.W)
         val aIsPressed = Gdx.input.isKeyPressed(Input.Keys.A)
         val sIsPressed = Gdx.input.isKeyPressed(Input.Keys.S)
         val dIsPressed = Gdx.input.isKeyPressed(Input.Keys.D)
         val rIsPressed = Gdx.input.isKeyPressed(Input.Keys.R)
+        val lmIsPressed = Gdx.input.isButtonPressed((Input.Buttons.LEFT))
 
-        if (wWasPressed && !wIsPressed) Client.stopKey(KeyMappings.UP)
-        else if (wIsPressed && !wWasPressed) Client.startKey(KeyMappings.UP)
+        if (wWasPressed && !wIsPressed) Client.broadcastKeyReleased(KeyMappings.UP)
+        else if (wIsPressed && !wWasPressed) Client.broadcastKeyPressed(KeyMappings.UP)
 
-        if (sWasPressed && !sIsPressed) Client.stopKey(KeyMappings.DOWN)
-        else if (sIsPressed && !sWasPressed) Client.startKey(KeyMappings.DOWN)
+        if (sWasPressed && !sIsPressed) Client.broadcastKeyReleased(KeyMappings.DOWN)
+        else if (sIsPressed && !sWasPressed) Client.broadcastKeyPressed(KeyMappings.DOWN)
 
-        if (aWasPressed && !aIsPressed) Client.stopKey(KeyMappings.LEFT)
-        else if (aIsPressed && !aWasPressed) Client.startKey(KeyMappings.LEFT)
+        if (aWasPressed && !aIsPressed) Client.broadcastKeyReleased(KeyMappings.LEFT)
+        else if (aIsPressed && !aWasPressed) Client.broadcastKeyPressed(KeyMappings.LEFT)
 
-        if (dWasPressed && !dIsPressed) Client.stopKey(KeyMappings.RIGHT)
-        else if (dIsPressed && !dWasPressed) Client.startKey(KeyMappings.RIGHT)
+        if (dWasPressed && !dIsPressed) Client.broadcastKeyReleased(KeyMappings.RIGHT)
+        else if (dIsPressed && !dWasPressed) Client.broadcastKeyPressed(KeyMappings.RIGHT)
 
-        if(rWasPressed && ! rIsPressed) Client.stopKey(KeyMappings.RELOAD)
-        else if (rIsPressed && rWasPressed) Client.startKey(KeyMappings.RELOAD)
+        if (rWasPressed && !rIsPressed) Client.broadcastKeyReleased(KeyMappings.RELOAD)
+        else if (rIsPressed && rWasPressed) Client.broadcastKeyPressed(KeyMappings.RELOAD)
+
+        if (lmWasPressed && !lmIsPressed) Client.broadcastKeyReleased(KeyMappings.LEFT_MOUSE)
+        else if (lmIsPressed && !lmWasPressed) Client.broadcastKeyPressed(KeyMappings.LEFT_MOUSE)
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) Client.broadcastKeyPressed(KeyMappings.PICK_WEAPON)
+
+        if (lmIsPressed && player.weapon.bulletsInChamber < 1 && player.weapon.canShoot()) {
+            sounds.dryfire.play()
+            player.weapon.shoot()
+        }
 
         wWasPressed = wIsPressed
         aWasPressed = aIsPressed
         sWasPressed = sIsPressed
         dWasPressed = dIsPressed
         rWasPressed = rIsPressed
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) Client.pickWeapon()
+        lmWasPressed = lmIsPressed
     }
 
     private fun getMousePosInGameWorld() {

@@ -178,7 +178,7 @@ class NameInputScreen (
                 if (username.length > 2 && ipAddress.length > 6) {
                     Client.connectionSocket(ipAddress)
                     game.createGame()
-                    Client.setName(username)
+                    Client.setPlayerName(username)
                     errorMassage = false
                     goToGame = true
                     showConnectionSign = true

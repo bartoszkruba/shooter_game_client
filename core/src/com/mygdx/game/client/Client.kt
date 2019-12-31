@@ -338,7 +338,7 @@ class Client {
             }
         }
 
-        fun setName(name: String) {
+        fun setPlayerName(name: String) {
             val data = JSONObject()
             data.put("name", name)
             socket.emit("playerName", data)
@@ -367,42 +367,26 @@ class Client {
             gameObj.playerOnScoreboardTable[playerId] = player
         }
 
-        fun startKey(key: String) {
+        fun broadcastKeyPressed(key: String) {
             val data = JSONObject()
             data.put("key", key)
             socket.emit("startKey", data)
         }
 
-        fun stopKey(key: String) {
+        fun broadcastKeyReleased(key: String) {
             val data = JSONObject()
             data.put("key", key)
             socket.emit("stopKey", data)
         }
 
-        fun restart() {
+        fun broadcastRestart() {
             socket.emit("restart")
         }
 
-        fun sendPlayerRotationData() {
+        fun brodcastPlayerFacingDirection() {
             val data = JSONObject()
             data.put("degrees", player.facingDirectionAngle)
             socket.emit("playerRotation", data)
-        }
-
-        fun mouseStart() {
-            val data = JSONObject()
-            data.put("Mouse", true)
-            socket.emit("mouseStart", data)
-        }
-
-        fun mouseStop() {
-            val data = JSONObject()
-            data.put("Mouse", true)
-            socket.emit("mouseStop", data)
-        }
-
-        fun pickWeapon() {
-            socket.emit("pickWeapon")
         }
 
         private fun generateEdgeWalls() {
