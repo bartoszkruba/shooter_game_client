@@ -428,6 +428,7 @@ class GameScreen(
 
     private fun moveZombies(delta: Float) {
         for (entry in gameObj.zombies.entries) {
+            if (entry.value.isDead) sounds.deathSound.play()
             if (entry.value.isDead || agentOutSideViewport(entry.value)) {
                 gameObj.zombies.remove(entry.key)
                 return
