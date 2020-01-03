@@ -20,9 +20,19 @@ class Player(
         textureAtlas: TextureAtlas,
         healthBarTexture: Texture,
         id: String,
-        weapon: Weapon = Pistol(),
-        facingDirectionAngle: Float = 0f) : Agent(x, y, name, kills, deaths, isDead, currentHealth,gotShot, textureAtlas, healthBarTexture, weapon, facingDirectionAngle, id, PLAYER_SPRITE_COLOR) {
-
-    fun canShoot() = weapon.canShoot()
-    fun shoot() = weapon.shoot()
-}
+        var weapon: Weapon = Pistol(),
+        facingDirectionAngle: Float = 0f)
+    : Agent(
+        x,
+        y,
+        name,
+        kills,
+        deaths,
+        isDead,
+        currentHealth,
+        gotShot,
+        textureAtlas,
+        healthBarTexture,
+        facingDirectionAngle,
+        id,
+        PLAYER_SPRITE_COLOR)

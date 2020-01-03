@@ -110,8 +110,9 @@ class GameScreen(
                 drawBloodOnTheFloor(it)
                 drawPickups(it)
                 drawProjectiles(it)
-                drawOpponents(it)
                 moveOpponents(delta)
+                drawOpponents(it)
+                drawZombies(it)
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
@@ -601,13 +602,19 @@ class GameScreen(
         }
     }
 
-    private fun drawOpponents(batch: Batch) {
-        gameObj.opponents.values.forEach {
-            if (!it.isDead) {
-                it.healthBarSprite.draw(batch)
-                it.sprite.draw(batch)
-                font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f)
-            }
+    private fun drawOpponents(batch: Batch) = gameObj.opponents.values.forEach {
+        if (!it.isDead) {
+            it.healthBarSprite.draw(batch)
+            it.sprite.draw(batch)
+            font.draw(batch, it.name, it.bounds.x + 10f, it.bounds.y + 88f)
+        }
+    }
+
+
+    private fun drawZombies(batch: Batch) = gameObj.zombies.values.forEach {
+        if (!it.isDead) {
+            it.healthBarSprite.draw(batch)
+            it.sprite.draw(batch)
         }
     }
 

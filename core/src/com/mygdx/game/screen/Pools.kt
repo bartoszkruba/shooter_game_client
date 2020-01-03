@@ -3,6 +3,7 @@ package com.mygdx.game.screen
 import com.mygdx.game.assets.Atlases
 import com.mygdx.game.assets.Textures
 import com.mygdx.game.client.Client
+import com.mygdx.game.model.agent.Zombie
 import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.obstacles.ExplosiveBarrel
@@ -14,6 +15,7 @@ import com.mygdx.game.model.projectile.BazookaProjectile
 import com.mygdx.game.model.projectile.MachineGunProjectile
 import com.mygdx.game.model.projectile.PistolProjectile
 import com.mygdx.game.model.projectile.ShotgunProjectile
+import com.mygdx.game.settings.ZOMBIE_MAX_HEALTH
 import ktx.assets.pool
 
 class Pools(textures: Textures, atlases: Atlases) {
@@ -32,4 +34,9 @@ class Pools(textures: Textures, atlases: Atlases) {
 
     val explosiveBarrelPool = pool { ExplosiveBarrel(texture = textures.explosiveBarrelTexture) }
     val bloodOnTheFloorPool = pool { Blood(textures.bloodOnTheFloorTexture) }
+
+    val zombiePool = pool {
+        Zombie(0f, 0f, false, ZOMBIE_MAX_HEALTH, false, atlases.playerAtlas, "",
+                textures.healthBarTexture, 0f)
+    }
 }

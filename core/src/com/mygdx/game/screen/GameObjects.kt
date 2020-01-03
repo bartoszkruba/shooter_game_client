@@ -5,6 +5,7 @@ import com.badlogic.gdx.utils.Array
 import com.mygdx.game.assets.Textures
 import com.mygdx.game.model.agent.Agent
 import com.mygdx.game.model.agent.Opponent
+import com.mygdx.game.model.agent.Zombie
 import com.mygdx.game.model.explosion.BarrelExplosion
 import com.mygdx.game.model.explosion.BazookaExplosion
 import com.mygdx.game.model.obstacles.ExplosiveBarrel
@@ -20,6 +21,7 @@ class GameObjects(textures: Textures) {
     val barrelExplosions = Array<BarrelExplosion>()
     val explosiveBarrels = ConcurrentHashMap<String, ExplosiveBarrel>()
     val opponents = ConcurrentHashMap<String, Opponent>()
+    val zombies = ConcurrentHashMap<String, Zombie>()
     val wallMatrix = generateWallMatrix()
     val walls = Array<Wall>()
     val ground = generateGround(textures)

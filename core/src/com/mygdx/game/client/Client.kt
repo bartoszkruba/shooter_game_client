@@ -63,6 +63,7 @@ class Client {
                     .on("playerDisconnected") { removeOpponent(it) }
                     .on("newProjectile") { processNewProjectile(it) }
                     .on("agentData") { processAgentData(it) }
+                    .on("zombieData") { processZombieData(it) }
                     .on("projectileData") { processProjectileData(it) }
                     .on("pickupData") { processPickupData(it) }
                     .on("barrelData") { processBarrelData(it) }
@@ -103,8 +104,7 @@ class Client {
                         player.deaths = deaths
                     } else {
                         gameObj.playerOnScoreboardTable[id] = Opponent(0f, 0f, name, kills, deaths, false,
-                                0f, false, 0f, 0f, atlases.playerAtlas, id,
-                                textures.healthBarTexture)
+                                0f, false, atlases.playerAtlas, id, textures.healthBarTexture)
                     }
                 }
             }
@@ -244,7 +244,6 @@ class Client {
                             this.isDead = isDead
                             setPosition(x, y)
                             this.weapon.bulletsInChamber = bulletsLeft
-                            setPosition(x, y)
                             gotShot = player.currentHealth != currentHealth
                             this.currentHealth = currentHealth
                             setHealthBar(currentHealth, x, y)
@@ -252,8 +251,7 @@ class Client {
                     } else player.isDead = true
                 } else {
                     if (gameObj.opponents[id] == null) {
-                        createOpponent(id, x, y, name, currentHealth, atlases.playerAtlas,
-                                textures.healthBarTexture).apply {
+                        createOpponent(id, x, y, name, currentHealth).apply {
                             velocity.x = xVelocity
                             setAngle(angle)
                             velocity.y = yVelocity
@@ -276,6 +274,35 @@ class Client {
                             this.invisible = invisible
                         }
                     }
+                }
+            }
+        }
+
+        private fun processZombieData(data: Array<Any>) {
+            val obj = data[0] as JSONObject
+            val zombies = obj.getJSONArray("zombieData")
+
+            for (i in 0 until zombies.length()) {
+                val zombie = zombies[i] as JSONObject
+                val x = zombie.getDouble("x").toFloat()
+                val y = zombie.getDouble("y").toFloat()
+                val xVelocity = zombie.getDouble("xVelocity").toFloat()
+                val yVelocity = zombie.getDouble("yVelocity").toFloat()
+                val isDead = zombie.getBoolean("isDead")
+                val currentHealth = zombie.getDouble("currentHealth").toFloat()
+                val id = zombie.getString("id")
+                val angle = zombie.getDouble("angle").toFloat()
+
+                if (gameObj.zombies[id] == null) gameObj.zombies[id] = pools.zombiePool.obtain()
+                gameObj.zombies[id]?.apply {
+                    setPosition(x, y)
+                    this.isDead = isDead
+                    this.facingDirectionAngle = angle
+                    this.velocity.x = xVelocity
+                    this.velocity.y = yVelocity
+                    gotShot = player.currentHealth != currentHealth
+                    this.currentHealth = currentHealth
+                    setHealthBar(currentHealth, x, y)
                 }
             }
         }
@@ -344,11 +371,9 @@ class Client {
             socket.emit("playerName", data)
         }
 
-        private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float,
-                                   playerTextures: TextureAtlas,
-                                   healthBarTexture: Texture): Opponent {
-            val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false, 0f
-                    , 0f, playerTextures, id, healthBarTexture)
+        private fun createOpponent(id: String, x: Float, y: Float, name: String, currentHealth: Float): Opponent {
+            val opponent = Opponent(x, y, name, 0, 0, false, currentHealth, false,
+                    atlases.playerAtlas, id, textures.healthBarTexture)
             gameObj.opponents[id] = opponent
             return opponent
         }

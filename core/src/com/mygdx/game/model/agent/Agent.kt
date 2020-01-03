@@ -13,21 +13,29 @@ import com.mygdx.game.model.weapon.Weapon
 
 abstract class Agent(x: Float, y: Float, var name: String, var kills: Int, var deaths: Int, var isDead: Boolean,
                      var currentHealth: Float, var gotShot: Boolean, textureAtlas: TextureAtlas,
-                     healthBarTexture: Texture, var weapon: Weapon, var facingDirectionAngle: Float,
+                     healthBarTexture: Texture, var facingDirectionAngle: Float,
                      var id: String, spritecolor: Color) {
 
 
-    private val animateRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("right"), PlayMode.LOOP_REVERSED)
-    private val animateLeft = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("left"), PlayMode.LOOP_REVERSED)
-    private val animateUp = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("up"), PlayMode.LOOP_REVERSED)
-    private val animateDown = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("down"), PlayMode.LOOP_REVERSED)
-    private val animateUpLeft = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("upleft"), PlayMode.LOOP_REVERSED)
-    private val animateDownLeft = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("downleft"), PlayMode.LOOP_REVERSED)
-    private val animateUpRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("upright"), PlayMode.LOOP_REVERSED)
-    private val animateDownRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("downright"), PlayMode.LOOP_REVERSED)
+    private val animateRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("right"),
+            PlayMode.LOOP_REVERSED)
+    private val animateLeft = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("left"),
+            PlayMode.LOOP_REVERSED)
+    private val animateUp = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("up"),
+            PlayMode.LOOP_REVERSED)
+    private val animateDown = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("down"),
+            PlayMode.LOOP_REVERSED)
+    private val animateUpLeft = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("upleft"),
+            PlayMode.LOOP_REVERSED)
+    private val animateDownLeft = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("downleft"),
+            PlayMode.LOOP_REVERSED)
+    private val animateUpRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("upright"),
+            PlayMode.LOOP_REVERSED)
+    private val animateDownRight = Animation<Sprite>(PLAYER_FRAME_DURATION, textureAtlas.createSprites("downright"),
+            PlayMode.LOOP_REVERSED)
 
     var sprite: Sprite
-    val spritecolor = spritecolor
+    private val spritecolor = spritecolor
     private var stateTime = 0f
     private var currentAnimation: Animation<Sprite>
     val healthBarSprite = Sprite(healthBarTexture)
@@ -75,13 +83,6 @@ abstract class Agent(x: Float, y: Float, var name: String, var kills: Int, var d
         sprite.setPosition(newX, newY)
         bounds.setPosition(newX, newY)
         healthBarSprite.setPosition((newX - ((currentHealth - 45) / 2)), newY)
-    }
-
-    fun reduceHealthBarWidth() {
-        counter -= 2
-        if (healthBarSpriteWidth >= 4) healthBarSpriteWidth -= 5f else healthBarSpriteWidth = 0f
-        healthBarSprite.x = sprite.x - counter
-        healthBarSprite.setSize(healthBarSpriteWidth, HEALTH_BAR_SPRITE_HEIGHT)
     }
 
     fun setAngle(newAngle: Float) {

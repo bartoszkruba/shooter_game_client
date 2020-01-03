@@ -3,18 +3,12 @@ package com.mygdx.game.model.agent
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
-import com.badlogic.gdx.math.Vector2
-import com.mygdx.game.model.weapon.Pistol
-import com.mygdx.game.model.weapon.Weapon
 
-val OPPONENT_SPRITE_COLOR = Color(0.9f, 0.3f, 0f, 1f)
+val ZOMBIE_SPRITE_COLOR = Color(0.0f, 0.0f, 0.9f, 1f)
 
-class Opponent(
+class Zombie(
         x: Float,
         y: Float,
-        name: String,
-        kills: Int,
-        deaths: Int,
         isDead: Boolean,
         currentHealth: Float,
         gotShot: Boolean,
@@ -25,9 +19,9 @@ class Opponent(
     : Agent(
         x,
         y,
-        name,
-        kills,
-        deaths,
+        "",
+        0,
+        0,
         isDead,
         currentHealth,
         gotShot,
@@ -35,4 +29,4 @@ class Opponent(
         healthBarTexture,
         facingDirectionAngle,
         id,
-        OPPONENT_SPRITE_COLOR)
+        ZOMBIE_SPRITE_COLOR)
