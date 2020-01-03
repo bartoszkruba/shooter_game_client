@@ -91,7 +91,6 @@ class GameScreen(
         if (::player.isInitialized) {
             getMousePosInGameWorld()
             setPlayerRotation()
-//            updateServerMouse()
             sendControlsData()
 
             calculateProjectilePositions(delta)
@@ -112,6 +111,7 @@ class GameScreen(
                 drawProjectiles(it)
                 moveOpponents(delta)
                 drawOpponents(it)
+                moveZombies(delta)
                 drawZombies(it)
                 drawPlayer(it, player)
                 checkPlayerGotShot(it)
@@ -401,26 +401,53 @@ class GameScreen(
 
     private fun moveOpponents(delta: Float) {
         for (entry in gameObj.opponents.entries) {
+            if (agentOutSideViewport(entry.value)) {
+                gameObj.opponents.remove(entry.key)
+                return
+            }
 
-            if (agentOutSideViewport(entry.value)) gameObj.opponents.remove(entry.key)
-
+            entry.value.isMoving = entry.value.velocity.x != 0.0f || entry.value.velocity.y != 0.0f
+            if (!entry.value.isMoving) return
             val oldX = entry.value.bounds.x
             val oldY = entry.value.bounds.y
-            entry.value.isMoving = entry.value.velocity.x != 0.0f || entry.value.velocity.y != 0.0f
             entry.value.setPosition(
                     entry.value.bounds.x + entry.value.velocity.x * delta,
                     entry.value.bounds.y + entry.value.velocity.y * delta)
-            val zones = getZonesForRectangle(player.bounds)
+            val zones = getZonesForRectangle(entry.value.bounds)
 
-            var collided = false
-            for (i in 0 until zones.size) {
+            loop@ for (i in 0 until zones.size) {
                 for (j in 0 until gameObj.wallMatrix[zones[i]]!!.size) {
-                    if (Intersector.overlaps(gameObj.wallMatrix[zones[i]]!![j].bounds, player.bounds)) {
+                    if (Intersector.overlaps(gameObj.wallMatrix[zones[i]]!![j].bounds, entry.value.bounds)) {
                         entry.value.setPosition(oldX, oldY)
-                        collided = true
-                        break
+                        break@loop
                     }
-                    if (collided) break
+                }
+            }
+        }
+    }
+
+    private fun moveZombies(delta: Float) {
+        for (entry in gameObj.zombies.entries) {
+            if (entry.value.isDead || agentOutSideViewport(entry.value)) {
+                gameObj.zombies.remove(entry.key)
+                return
+            }
+
+            entry.value.isMoving = entry.value.velocity.x != 0.0f || entry.value.velocity.y != 0.0f
+            if (!entry.value.isMoving) return
+            val oldX = entry.value.bounds.x
+            val oldY = entry.value.bounds.y
+            entry.value.setPosition(
+                    entry.value.bounds.x + entry.value.velocity.x * delta,
+                    entry.value.bounds.y + entry.value.velocity.y * delta)
+            val zones = getZonesForRectangle(entry.value.bounds)
+
+            loop@ for (zone in zones) {
+                if (gameObj.wallMatrix[zone] != null) for (wall in gameObj.wallMatrix[zone]!!) {
+                    if (Intersector.overlaps(wall.bounds, entry.value.bounds)) {
+                        entry.value.setPosition(oldX, oldY)
+                        break@loop
+                    }
                 }
             }
         }
@@ -479,6 +506,7 @@ class GameScreen(
             removed = checkIfOutsideMap(entry.value, entry.key)
             if (!removed) removed = checkIfOutsideViewport(entry.value, entry.key)
             if (!removed) removed = checkOpponentCollisions(entry.value, entry.key)
+            if (!removed) removed = checkZombieCollisions(entry.value, entry.key)
             if (!removed) removed = checkPlayerCollision(entry.value, entry.key)
             if (!removed) removed = checkBarrelCollisions(entry.value, entry.key)
             if (!removed) checkWallsCollisions(entry.value, entry.key)
@@ -512,7 +540,18 @@ class GameScreen(
             if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead &&
                     projectile.agentId != opponent.value.id) {
                 removeProjectile(projectile, key)
-                if (!opponent.value.isDead) sounds.damageSound.play()
+                sounds.damageSound.play()
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun checkZombieCollisions(projectile: Projectile, key: String): Boolean {
+        for (zombie in gameObj.zombies.entries) {
+            if (Intersector.overlaps(projectile.bounds, zombie.value.bounds) && !zombie.value.isDead) {
+                removeProjectile(projectile, key)
+                sounds.damageSound.play()
                 return true
             }
         }
