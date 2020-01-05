@@ -4,7 +4,8 @@ import com.badlogic.gdx.assets.AssetManager
 
 class Sounds(assets: AssetManager) {
     val deathSound = assets[SoundAssets.Death]
-    val damageSound = assets[SoundAssets.Damage]
+    val playerDamage = assets[SoundAssets.PlayerDamage]
+    val zombieDamage = assets[SoundAssets.ZombieDamage]
 
     val pistolShotSoundEffect = assets[SoundAssets.PistolShot]
     val shotgunShotSoundEffect = assets[SoundAssets.ShotgunShot]

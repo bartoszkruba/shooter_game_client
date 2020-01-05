@@ -540,7 +540,7 @@ class GameScreen(
             if (Intersector.overlaps(projectile.bounds, opponent.value.bounds) && !opponent.value.isDead &&
                     projectile.agentId != opponent.value.id) {
                 removeProjectile(projectile, key)
-                sounds.damageSound.play()
+                sounds.playerDamage.play()
                 return true
             }
         }
@@ -551,6 +551,7 @@ class GameScreen(
         for (zombie in gameObj.zombies.entries) {
             if (Intersector.overlaps(projectile.bounds, zombie.value.bounds) && !zombie.value.isDead) {
                 removeProjectile(projectile, key)
+                sounds.zombieDamage.play()
                 return true
             }
         }
@@ -560,7 +561,7 @@ class GameScreen(
     private fun checkPlayerCollision(projectile: Projectile, key: String): Boolean {
         if (Intersector.overlaps(projectile.bounds, player.bounds) && projectile.agentId != player.id) {
             removeProjectile(projectile, key)
-            if (!player.isDead) sounds.damageSound.play()
+            if (!player.isDead) sounds.playerDamage.play()
             return true
         }
         return false
@@ -732,6 +733,6 @@ class GameScreen(
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16))
         musics.music.isLooping = true
         musics.music.volume = 0.4f
-//        musics.music.play()
+        musics.music.play()
     }
 }
