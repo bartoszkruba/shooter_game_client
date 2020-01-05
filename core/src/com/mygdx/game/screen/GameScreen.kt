@@ -428,7 +428,6 @@ class GameScreen(
 
     private fun moveZombies(delta: Float) {
         for (entry in gameObj.zombies.entries) {
-            if (entry.value.isDead) sounds.deathSound.play()
             if (entry.value.isDead || agentOutSideViewport(entry.value)) {
                 gameObj.zombies.remove(entry.key)
                 return
@@ -552,7 +551,6 @@ class GameScreen(
         for (zombie in gameObj.zombies.entries) {
             if (Intersector.overlaps(projectile.bounds, zombie.value.bounds) && !zombie.value.isDead) {
                 removeProjectile(projectile, key)
-                sounds.damageSound.play()
                 return true
             }
         }
