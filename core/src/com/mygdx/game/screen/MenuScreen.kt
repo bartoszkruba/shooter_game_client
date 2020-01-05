@@ -415,10 +415,10 @@ class MenuScreen(
     override fun show() {
         super.show()
         rainMusic.isLooping = true
-        rainMusic.play()
+//        rainMusic.play()
         backgroundMusic.isLooping = true
         backgroundMusic.volume = 0.3f
-        backgroundMusic.play()
+//        backgroundMusic.play()
     }
 
     override fun dispose() {

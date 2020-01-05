@@ -71,9 +71,15 @@ class Client {
                     .on("newExplosion") { processNewExplosion(it) }
                     .on("scoreboardData") { processScoreboardData(it) }
                     .on("killConfirm") { processKillConfirm(it) }
+                    .on("zombieDead") { processZombieDead(it) }
         }
 
         var shouldPlayDeathSound = false
+
+        private fun processZombieDead(data: Array<Any>) {
+            val id = (data[0] as JSONObject).getString("id")
+            gameObj.zombies[id]?.isDead = true
+        }
 
         private fun processSocketID(data: kotlin.Array<Any>) {
             val obj: JSONObject = data[0] as JSONObject
