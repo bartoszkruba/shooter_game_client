@@ -433,7 +433,9 @@ class GameScreen(
                 return
             }
 
-            entry.value.isMoving = entry.value.velocity.x != 0.0f || entry.value.velocity.y != 0.0f
+            println("xVelocity ${entry.value.velocity.x}")
+            println("yVelocity ${entry.value.velocity.y}")
+            println("isMoving: ${entry.value.isMoving}")
             if (!entry.value.isMoving) return
             val oldX = entry.value.bounds.x
             val oldY = entry.value.bounds.y
@@ -733,6 +735,6 @@ class GameScreen(
         Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor, 16, 16))
         musics.music.isLooping = true
         musics.music.volume = 0.4f
-        musics.music.play()
+//        musics.music.play()
     }
 }

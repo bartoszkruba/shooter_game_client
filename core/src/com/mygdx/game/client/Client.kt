@@ -304,9 +304,10 @@ class Client {
                 gameObj.zombies[id]?.apply {
                     setPosition(x, y)
                     this.isDead = isDead
-                    this.facingDirectionAngle = angle
+                    setAngle(angle)
                     this.velocity.x = xVelocity
                     this.velocity.y = yVelocity
+                    isMoving = velocity.x != 0.0f || velocity.y != 0.0f
                     gotShot = player.currentHealth != currentHealth
                     this.currentHealth = currentHealth
                     setHealthBar(currentHealth, x, y)
