@@ -432,10 +432,6 @@ class GameScreen(
                 gameObj.zombies.remove(entry.key)
                 return
             }
-
-            println("xVelocity ${entry.value.velocity.x}")
-            println("yVelocity ${entry.value.velocity.y}")
-            println("isMoving: ${entry.value.isMoving}")
             if (!entry.value.isMoving) return
             val oldX = entry.value.bounds.x
             val oldY = entry.value.bounds.y
