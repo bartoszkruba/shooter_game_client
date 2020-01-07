@@ -28,6 +28,8 @@ class Client {
     companion object {
         lateinit var socket: Socket
         var shouldPlayReload = false
+        var shouldPlayDeathSound = false
+        var shouldPlayBiteSound = false
 
         private lateinit var player: Player
         private lateinit var textures: Textures
@@ -72,9 +74,13 @@ class Client {
                     .on("scoreboardData") { processScoreboardData(it) }
                     .on("killConfirm") { processKillConfirm(it) }
                     .on("zombieDead") { processZombieDead(it) }
+                    .on("zombieBite") { processZombieBite(it) }
         }
 
-        var shouldPlayDeathSound = false
+
+        private fun processZombieBite(data: Array<Any>) {
+            shouldPlayBiteSound = true
+        }
 
         private fun processZombieDead(data: Array<Any>) {
             val id = (data[0] as JSONObject).getString("id")

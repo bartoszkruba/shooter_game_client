@@ -80,6 +80,11 @@ class GameScreen(
             Client.shouldPlayDeathSound = false
         }
 
+        if (Client.shouldPlayBiteSound) {
+            sounds.zombieBite.play()
+            Client.shouldPlayBiteSound = false
+        }
+
         shouldPlayReload = Client.shouldPlayReload
         if (Client.getPlayer() != null) {
             player = Client.getPlayer()!!

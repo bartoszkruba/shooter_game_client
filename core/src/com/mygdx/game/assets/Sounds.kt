@@ -6,6 +6,7 @@ class Sounds(assets: AssetManager) {
     val deathSound = assets[SoundAssets.Death]
     val playerDamage = assets[SoundAssets.PlayerDamage]
     val zombieDamage = assets[SoundAssets.ZombieDamage]
+    val zombieBite = assets[SoundAssets.ZombieBite]
 
     val pistolShotSoundEffect = assets[SoundAssets.PistolShot]
     val shotgunShotSoundEffect = assets[SoundAssets.ShotgunShot]

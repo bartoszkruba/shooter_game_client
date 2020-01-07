@@ -74,6 +74,7 @@ enum class SoundAssets(val path: String) {
 
     PlayerDamage("sounds/damage.mp3"),
     ZombieDamage("sounds/zombie_damage_sound.mp3"),
+    ZombieBite("sounds/zombie_bite.mp3"),
     Death("sounds/deathSound.wav")
 }
 
