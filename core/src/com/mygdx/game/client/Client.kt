@@ -30,6 +30,7 @@ class Client {
         var shouldPlayReload = false
         var shouldPlayDeathSound = false
         var shouldPlayBiteSound = false
+        var shouldPlayZombieMoan = false
 
         private lateinit var player: Player
         private lateinit var textures: Textures
@@ -313,7 +314,9 @@ class Client {
                     setAngle(angle)
                     this.velocity.x = xVelocity
                     this.velocity.y = yVelocity
-                    isMoving = velocity.x != 0.0f || velocity.y != 0.0f
+                    val movingNow = velocity.x != 0.0f || velocity.y != 0.0f
+                    if (!isMoving && movingNow) shouldPlayZombieMoan = true
+                    isMoving = movingNow
                     gotShot = player.currentHealth != currentHealth
                     this.currentHealth = currentHealth
                     setHealthBar(currentHealth, x, y)

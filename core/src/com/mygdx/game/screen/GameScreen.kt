@@ -74,18 +74,8 @@ class GameScreen(
     }
 
     private var pressedKeys = 0
+
     override fun render(delta: Float) {
-        if (Client.shouldPlayDeathSound) {
-            sounds.deathSound.play()
-            Client.shouldPlayDeathSound = false
-        }
-
-        if (Client.shouldPlayBiteSound) {
-            sounds.zombieBite.play()
-            Client.shouldPlayBiteSound = false
-        }
-
-        shouldPlayReload = Client.shouldPlayReload
         if (Client.getPlayer() != null) {
             player = Client.getPlayer()!!
         }
@@ -122,11 +112,6 @@ class GameScreen(
                 checkPlayerGotShot(it)
                 checkOpponentsGotShot(it)
                 removeUnnecessaryBloodOnTheFloor()
-                if (shouldPlayReload) {
-                    sounds.reloadSoundEffect.play()
-                    shouldPlayReload = false
-                    Client.shouldPlayReload = false
-                }
                 drawExplosiveBarrels(it)
                 drawWalls(it)
                 drawExplosions(it)
@@ -146,6 +131,32 @@ class GameScreen(
                 scoreboard(it)
                 drawScoresOnBoard(it)
             }
+        }
+        playSoundEffects()
+    }
+
+    var shouldPlayZombieDamageSound = false
+
+    private fun playSoundEffects() {
+        if (Client.shouldPlayDeathSound) {
+            sounds.deathSound.play()
+            Client.shouldPlayDeathSound = false
+        }
+        if (Client.shouldPlayBiteSound) {
+            sounds.zombieBite.play()
+            Client.shouldPlayBiteSound = false
+        }
+        if (Client.shouldPlayZombieMoan) {
+            sounds.zombieMoan.play()
+            Client.shouldPlayZombieMoan = false
+        }
+        if (Client.shouldPlayReload) {
+            sounds.reloadSoundEffect.play()
+            Client.shouldPlayReload = false
+        }
+        if (shouldPlayZombieDamageSound) {
+            sounds.zombieDamage.play()
+            shouldPlayZombieDamageSound = false
         }
     }
 
@@ -554,7 +565,7 @@ class GameScreen(
         for (zombie in gameObj.zombies.entries) {
             if (Intersector.overlaps(projectile.bounds, zombie.value.bounds) && !zombie.value.isDead) {
                 removeProjectile(projectile, key)
-                sounds.zombieDamage.play()
+                shouldPlayZombieDamageSound = true
                 return true
             }
         }
